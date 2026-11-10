@@ -1,0 +1,21 @@
+# dependencies
+node_modules
+
+# build
+dist
+
+# env — API 주소·키는 Git에 올리지 않음 (.env.example 참고)
+.env
+.env.local
+.env.*.local
+
+# logs
+*.log
+npm-debug.log*
+
+# editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
