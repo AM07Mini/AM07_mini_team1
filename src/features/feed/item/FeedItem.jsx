@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import Card from '../../../components/styled/Card';
 import { colors, radius } from '../../../components/styled/theme';
 import { formatAgo, formatCount, formatDifficulty } from '../feedData';
+import { DEFAULT_AVATAR, DEFAULT_IMAGE } from '../feedMapper';
 
 // 좋아요 빨강 — theme.js에 아직 없어서 피드 안에서만 사용 (팀 합의 후 theme.js로 옮기기)
 const HEART = '#E8545C';
@@ -110,16 +111,22 @@ const StyledLink = styled(Link)`
   text-decoration: none;
 `;
 
-// 피드 카드 — 작성자(프로필·팔로우), 큰 사진, 좋아요·댓글 수, 북마크, 레시피 이름·해시태그
+// 서버 이미지 주소가 깨졌을 때 기본 이미지로 (한 번만 바꿔서 무한 반복 방지)
+const fallbackTo = (src) => (event) => {
+  if (!event.currentTarget.src.endsWith(src)) event.currentTarget.src = src;
+};
+
+// 피드 카드 — 작성자(프로필·팔로우), 큰 사진, 좋아요·후기 수, 북마크, 레시피 이름·난이도·해시태그
+// 응답에 없는 값(후기 수·난이도·태그)은 그 줄을 숨김
 const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
-  // 상세 페이지가 있는 레시피만 사진·제목을 누르면 이동
+  // 사진·제목을 누르면 레시피 상세로 이동
   const linkTo = data.recipeId ? `/recipe/read/${data.recipeId}` : null;
   const wrapLink = (children) => (linkTo ? <StyledLink to={linkTo}>{children}</StyledLink> : children);
 
   return (
     <Card $padding={0} as="article" style={{ overflow: 'hidden' }}>
       <Header>
-        <Avatar src={data.author.avatar} alt="" />
+        <Avatar src={data.author.avatar} alt="" onError={fallbackTo(DEFAULT_AVATAR)} />
         <div>
           <Name>{data.author.name}</Name>
           <When>{formatAgo(data.minutesAgo)}</When>
@@ -134,7 +141,7 @@ const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
         </FollowButton>
       </Header>
 
-      {wrapLink(<Photo src={data.image} alt={data.title} />)}
+      {wrapLink(<Photo src={data.image} alt={data.title} onError={fallbackTo(DEFAULT_IMAGE)} />)}
 
       <Actions>
         <IconButton
@@ -146,7 +153,7 @@ const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
         >
           {data.liked ? '♥' : '♡'} {formatCount(data.likes)}
         </IconButton>
-        <span>💬 {formatCount(data.comments)}</span>
+        {data.comments !== null && <span>💬 {formatCount(data.comments)}</span>}
         <IconButton
           type="button"
           aria-pressed={data.bookmarked}
@@ -168,12 +175,14 @@ const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
 
       <Body>
         <Title>{wrapLink(data.title)}</Title>
-        <Meta>{formatDifficulty(data.difficulty, data.minutes)}</Meta>
-        <Tags>
-          {data.tags.map((tag) => (
-            <Tag key={tag}>{tag}</Tag>
-          ))}
-        </Tags>
+        {data.difficulty && <Meta>{formatDifficulty(data.difficulty, data.minutes)}</Meta>}
+        {data.tags.length > 0 && (
+          <Tags>
+            {data.tags.map((tag) => (
+              <Tag key={tag}>{tag}</Tag>
+            ))}
+          </Tags>
+        )}
       </Body>
     </Card>
   );

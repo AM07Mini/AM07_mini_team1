@@ -17,9 +17,6 @@ const Tab = styled.button`
   cursor: pointer;
 `;
 
-// 피드 상단 밑줄 탭 — 팔로잉 / 인기 / 최신
-// (공용 SegmentTab은 알약 모양이라 피드 시안의 밑줄 탭은 따로 만듦)
-// tabs: [{ value, title }], selected: 지금 선택된 value
 const FeedTab = ({ tabs, selected, changeHandler }) => (
   <Wrapper role="tablist" aria-label="피드 정렬">
     {tabs.map((tab) => (

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { colors, radius } from '../../../components/styled/theme';
 import { formatCount } from '../feedData';
+import { DEFAULT_IMAGE } from '../feedMapper';
 
 // 좋아요 빨강 — theme.js에 아직 없어서 피드 안에서만 사용 (팀 합의 후 theme.js로 옮기기)
 const HEART = '#E8545C';
@@ -62,12 +63,18 @@ const TrendingItem = ({ data, rank }) => {
   const card = (
     <Wrapper>
       <Thumb>
-        <img src={data.image} alt="" />
+        <img
+          src={data.image}
+          alt=""
+          onError={(event) => {
+            if (!event.currentTarget.src.endsWith(DEFAULT_IMAGE)) event.currentTarget.src = DEFAULT_IMAGE;
+          }}
+        />
         <Rank>{rank}</Rank>
       </Thumb>
       <Title>{data.title}</Title>
       <Meta>
-        <span style={{ color: colors.secondary }}>{data.tag}</span>
+        {data.tag && <span style={{ color: colors.secondary }}>{data.tag}</span>}
         <span style={{ color: HEART }}>♥ {formatCount(data.likes)}</span>
       </Meta>
     </Wrapper>
