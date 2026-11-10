@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import api from '../../../api/axios';
 import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import SegmentTab from '../../../components/styled/SegmentTab';
 import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import { authHeader, isAuthError } from '../authToken';
+import { RECIPE_PAGE_SIZE } from '../constants';
 import ProfileCard from '../item/ProfileCard';
 import MyRecipeList from '../list/MyRecipeList';
 import MyPageTopBar from '../ui/MyPageTopBar';
-import { mockBookmarks, mockMyRecipes, mockProfile, recipeCategories } from '../mockData';
+import StatusMessage from '../ui/StatusMessage';
 
 const Wrapper = styled.div`
   display: flex;
@@ -52,25 +55,61 @@ const ChipRow = styled.div`
   gap: 8px;
 `;
 
+const emptyPage = { content: [], totalElements: 0 };
+
 // 06 마이 페이지 — 프로필, 내 레시피 / 북마크 탭, 분류 필터, 레시피 2열 그리드
 const MyPage = () => {
   const moveUrl = useNavigate();
+  const [profile, setProfile] = useState(null);
+  const [myRecipes, setMyRecipes] = useState(emptyPage);
+  const [bookmarks, setBookmarks] = useState(emptyPage);
+  const [error, setError] = useState(null); // { message, needLogin }
   const [tab, setTab] = useState('mine');
   const [category, setCategory] = useState('전체');
 
-  // TODO: API 연결 — 내 정보, 내 레시피, 북마크 목록 불러오기
-  const profile = mockProfile;
-  const myRecipes = mockMyRecipes;
-  const bookmarks = mockBookmarks;
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  // 선택한 탭·분류에 맞는 레시피만 보여주기 (따로 state로 두지 않고 계산)
-  const tabRecipes = tab === 'mine' ? myRecipes : bookmarks;
+  // 내 정보 · 내 레시피 · 북마크 불러오기
+  // 서버 응답은 { isSuccess, message, result } 모양이라 실제 데이터는 response.data.result
+  const loadData = async () => {
+    try {
+      const config = { headers: authHeader(), params: { page: 0, size: RECIPE_PAGE_SIZE } };
+      const profileResponse = await api.get('/users/me', { headers: authHeader() });
+      const myRecipesResponse = await api.get('/recipes/me', config);
+      const bookmarksResponse = await api.get('/recipes/bookmarks', config);
+
+      setProfile(profileResponse.data.result);
+      setMyRecipes(myRecipesResponse.data.result);
+      setBookmarks(bookmarksResponse.data.result);
+    } catch (e) {
+      console.error(e);
+      if (isAuthError(e)) {
+        setError({ message: '로그인이 필요해요.', needLogin: true });
+      } else {
+        setError({ message: e.response?.data?.message ?? '정보를 불러오지 못했어요.' });
+      }
+    }
+  };
+
+  // 선택한 탭의 레시피
+  const tabRecipes = tab === 'mine' ? myRecipes.content : bookmarks.content;
+
+  // 분류 칩 — 지금 탭의 레시피에 들어 있는 카테고리 이름으로 만들기
+  // TODO: 서버에 분류 필터가 생기면 서버에서 거르기 (지금은 불러온 목록 안에서만 거름)
+  const categoryNames = [
+    '전체',
+    ...new Set(tabRecipes.flatMap((recipe) => recipe.categories.map((item) => item.name))),
+  ];
   const shownRecipes =
-    category === '전체' ? tabRecipes : tabRecipes.filter((recipe) => recipe.category === category);
+    category === '전체'
+      ? tabRecipes
+      : tabRecipes.filter((recipe) => recipe.categories.some((item) => item.name === category));
 
   const tabs = [
-    { value: 'mine', title: `내가 기록한 ${myRecipes.length}` },
-    { value: 'bookmark', title: `북마크 ${bookmarks.length}` },
+    { value: 'mine', title: `내가 기록한 ${myRecipes.totalElements}` },
+    { value: 'bookmark', title: `북마크 ${bookmarks.totalElements}` },
   ];
 
   const tabChangeHandler = (value) => {
@@ -78,15 +117,13 @@ const MyPage = () => {
     setCategory('전체');
   };
 
-  return (
-    <>
-      <MyPageTopBar title="마이 페이지" settingHandler={() => moveUrl('/mypage/edit')} />
+  const renderContent = () => {
+    if (error) return <StatusMessage message={error.message} needLogin={error.needLogin} />;
+    if (!profile) return <StatusMessage message="불러오는 중이에요…" />;
+
+    return (
       <Wrapper>
-        <ProfileCard
-          profile={profile}
-          recipeCount={myRecipes.length}
-          editHandler={() => moveUrl('/mypage/edit')}
-        />
+        <ProfileCard profile={profile} editHandler={() => moveUrl('/mypage/edit')} />
 
         <Header>
           <TitleBox>
@@ -98,14 +135,23 @@ const MyPage = () => {
 
         <SegmentTab tabs={tabs} selected={tab} changeHandler={tabChangeHandler} />
 
-        <ChipRow>
-          {recipeCategories.map((item) => (
-            <Chip key={item} title={item} selected={category === item} onClick={() => setCategory(item)} />
-          ))}
-        </ChipRow>
+        {categoryNames.length > 1 && (
+          <ChipRow>
+            {categoryNames.map((item) => (
+              <Chip key={item} title={item} selected={category === item} onClick={() => setCategory(item)} />
+            ))}
+          </ChipRow>
+        )}
 
         <MyRecipeList recipes={shownRecipes} />
       </Wrapper>
+    );
+  };
+
+  return (
+    <>
+      <MyPageTopBar title="마이 페이지" settingHandler={() => moveUrl('/mypage/edit')} />
+      {renderContent()}
     </>
   );
 };
