@@ -8,13 +8,10 @@ import TextInput from '../../../components/styled/TextInput';
 import Icon from '../../../components/styled/Icon';
 import { colors, PAGE_PADDING } from '../../../components/styled/theme';
 
-// 로그인 페이지 전체 레이아웃
 const Wrapper = styled.div`
   min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
   padding: clamp(40px, 9vh, 80px) ${PAGE_PADDING}px 32px;
-  background-color: ${colors.white};
+  background: ${colors.white};
 `;
 
 const Intro = styled.header`
@@ -22,6 +19,20 @@ const Intro = styled.header`
   flex-direction: column;
   align-items: center;
   text-align: center;
+
+  h1 {
+    margin: 18px 0 8px;
+    color: ${colors.dark};
+    font-size: 25px;
+    line-height: 1.4;
+  }
+
+  p {
+    margin: 0;
+    color: ${colors.grey1};
+    font-size: 13px;
+    line-height: 1.6;
+  }
 `;
 
 const LogoCircle = styled.div`
@@ -31,27 +42,11 @@ const LogoCircle = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: ${colors.primary};
+  background: ${colors.primary};
   color: ${colors.white};
   box-shadow: 0 4px 14px rgba(4, 38, 40, 0.2);
 `;
 
-const Title = styled.h1`
-  margin: 18px 0 8px;
-  color: ${colors.dark};
-  font-size: 25px;
-  font-weight: 700;
-  line-height: 1.4;
-`;
-
-const Description = styled.p`
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-  color: ${colors.grey1};
-`;
-
-// 이메일·비밀번호 입력 영역
 const LoginForm = styled.form`
   display: flex;
   flex-direction: column;
@@ -59,35 +54,22 @@ const LoginForm = styled.form`
   margin-top: 28px;
 `;
 
-const ErrorMessage = styled.p`
-  margin: -8px 0 0;
-  font-size: 12px;
-  color: #d64545;
-`;
-
-const StatusMessage = styled.p`
+const Message = styled.p`
   margin: 0;
   font-size: 12px;
-  line-height: 1.5;
-  color: ${colors.grey1};
+  color: ${({ $error }) => $error ? '#d64545' : colors.grey1};
 `;
 
-const LoginButtonArea = styled.div`
-  margin-top: 6px;
-`;
-
-// 아이디 찾기 / 비밀번호 찾기 / 회원가입
 const LinkArea = styled.nav`
   display: flex;
   justify-content: center;
-  align-items: center;
   gap: 12px;
   margin-top: 17px;
 `;
 
 const MenuLink = styled(Link)`
-  font-size: 12px;
   color: ${colors.grey1};
+  font-size: 12px;
   text-decoration: none;
 
   &:last-child {
@@ -104,12 +86,11 @@ const Divider = styled.div`
   color: ${colors.grey2};
   font-size: 12px;
 
-  &::before,
-  &::after {
+  &::before, &::after {
     content: '';
     flex: 1;
     height: 1px;
-    background-color: ${colors.grey3};
+    background: ${colors.grey3};
   }
 `;
 
@@ -135,61 +116,40 @@ const SocialButton = styled.button`
   }
 `;
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 const SignInPage = () => {
-  // 강사님 수업에서 배운 React 상태 관리
   const [form, setForm] = useState({
-    email: '',
+    loginId: '',
     password: '',
   });
 
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('');
 
-  // 입력값 변경 처리
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    setErrors((prev) => ({
-      ...prev,
-      [name]: '',
-    }));
-
+    setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: '' }));
     setStatus('');
   };
 
-  // 로그인 버튼 클릭
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const nextErrors = {};
 
-    if (!form.email.trim()) {
-      nextErrors.email = '이메일을 입력해 주세요.';
-    } else if (!EMAIL_PATTERN.test(form.email.trim())) {
-      nextErrors.email = '올바른 이메일 형식이 아닙니다.';
+    if (!form.loginId.trim()) {
+      nextErrors.loginId = '아이디를 입력해주세요.';
     }
 
     if (!form.password) {
-      nextErrors.password = '비밀번호를 입력해 주세요.';
+      nextErrors.password = '비밀번호를 입력해주세요.';
     }
 
     setErrors(nextErrors);
-    setStatus('');
+    if (Object.keys(nextErrors).length > 0) return;
 
-    if (Object.keys(nextErrors).length > 0) {
-      return;
-    }
-
-    // TODO: 강사님 Spring 로그인 API 연결
-    // 입력 검증을 통과해도 실제 로그인된 것은 아님
-    setStatus('로그인 API 연동 전입니다.');
+    // TODO: POST /auth/signin API 연결
+    setStatus('로그인 API 연결 전입니다.');
   };
 
   return (
@@ -199,32 +159,29 @@ const SignInPage = () => {
           <Icon name="chef" size={28} />
         </LogoCircle>
 
-        <Title>
+        <h1>
           냉장고 속 재료로
           <br />
           오늘의 요리를 찾아요
-        </Title>
+        </h1>
 
-        <Description>
+        <p>
           가진 재료만 고르면 만들 수 있는
           <br />
           레시피를 추천해드려요.
-        </Description>
+        </p>
       </Intro>
 
       <LoginForm onSubmit={handleSubmit} noValidate>
         <TextInput
-          label="이메일"
-          name="email"
-          type="email"
-          value={form.email}
+          label="아이디"
+          name="loginId"
+          value={form.loginId}
           changeHandler={handleChange}
-          placeholder="example@email.com"
+          placeholder="아이디를 입력해주세요"
         />
-        {errors.email && (
-          <ErrorMessage role="alert">
-            {errors.email}
-          </ErrorMessage>
+        {errors.loginId && (
+          <Message $error role="alert">{errors.loginId}</Message>
         )}
 
         <TextInput
@@ -236,50 +193,27 @@ const SignInPage = () => {
           placeholder="비밀번호를 입력해주세요"
         />
         {errors.password && (
-          <ErrorMessage role="alert">
-            {errors.password}
-          </ErrorMessage>
+          <Message $error role="alert">{errors.password}</Message>
         )}
 
-        <LoginButtonArea>
-          <Button title="로그인" type="submit" />
-        </LoginButtonArea>
+        <Button title="로그인" type="submit" />
 
-        {status && (
-          <StatusMessage role="status">
-            {status}
-          </StatusMessage>
-        )}
+        {status && <Message role="status">{status}</Message>}
       </LoginForm>
 
       <LinkArea>
-        <MenuLink to="/find-account">
-          아이디 찾기
-        </MenuLink>
-        <MenuLink to="/forgot-password">
-          비밀번호 찾기
-        </MenuLink>
-        <MenuLink to="/signup">
-          회원가입
-        </MenuLink>
+        <MenuLink to="/find-account">아이디 찾기</MenuLink>
+        <MenuLink to="/forgot-password">비밀번호 찾기</MenuLink>
+        <MenuLink to="/signup">회원가입</MenuLink>
       </LinkArea>
 
       <Divider>또는</Divider>
 
       <SocialArea>
-        <SocialButton
-          type="button"
-          disabled
-          title="카카오 로그인 연동 예정"
-        >
+        <SocialButton type="button" disabled>
           카카오로 시작하기
         </SocialButton>
-
-        <SocialButton
-          type="button"
-          disabled
-          title="Google 로그인 연동 예정"
-        >
+        <SocialButton type="button" disabled>
           Google로 시작하기
         </SocialButton>
       </SocialArea>

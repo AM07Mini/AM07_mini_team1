@@ -1,360 +1,349 @@
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import styled from 'styled-components';
-
 import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
 import Checkbox from '../../../components/styled/Checkbox';
 import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import {
+  checkLoginId, checkNickname, checkEmail,
+  sendEmailCode, verifyEmailCode,
+} from '../../../api/authApi';
 
-// 회원가입 화면 레이아웃
+const checkApis = {
+  loginId: checkLoginId,
+  nickname: checkNickname,
+  email: checkEmail,
+};
+
+const fields = [
+  { name: 'loginId', label: '아이디', placeholder: '영문·숫자 4~20자', check: true },
+  { name: 'nickname', label: '닉네임', placeholder: '2~20자로 입력해주세요', check: true },
+  { name: 'email', label: '이메일', type: 'email', placeholder: 'example@email.com', check: true },
+  { name: 'code', label: '이메일 인증번호', placeholder: '인증번호 6자리' },
+  { name: 'password', label: '비밀번호', type: 'password', placeholder: '영문·숫자 포함 8~20자' },
+  { name: 'confirmPassword', label: '비밀번호 확인', type: 'password', placeholder: '비밀번호를 다시 입력해주세요' },
+];
+
 const Wrapper = styled.div`
   min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  background-color: ${colors.white};
+  background: ${colors.white};
 `;
 
 const Content = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
   padding: 24px ${PAGE_PADDING}px 32px;
 `;
 
 const Intro = styled.header`
   margin-bottom: 28px;
+
+  h1 { margin: 0 0 8px; font-size: 25px; line-height: 1.4; }
+  p { margin: 0; font-size: 13px; color: ${colors.grey1}; }
 `;
 
-const Title = styled.h1`
-  margin: 0 0 8px;
-  font-size: 25px;
-  font-weight: 700;
-  line-height: 1.4;
-  color: ${colors.dark};
-`;
-
-const Description = styled.p`
-  margin: 0;
-  font-size: 13px;
-  color: ${colors.grey1};
-  line-height: 1.5;
-`;
-
-const SignUpForm = styled.form`
-  flex: 1;
+const Form = styled.form`
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
 `;
 
-const FieldGroup = styled.div`
+const Field = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 7px;
 `;
 
-const HelperText = styled.p`
+const Message = styled.p`
   margin: 0;
   font-size: 12px;
-  color: ${colors.grey1};
   line-height: 1.5;
+  color: ${({ $error }) => $error ? '#d64545' : colors.accent1};
 `;
 
-const ErrorText = styled.p`
-  margin: 0;
-  font-size: 12px;
-  color: #d64545;
-  line-height: 1.5;
-`;
+const validate = (name, value) => {
+  switch (name) {
+    case 'loginId':
+      return /^[a-zA-Z0-9]{4,20}$/.test(value.trim())
+        ? '' : '아이디는 영문·숫자 4~20자로 입력해주세요.';
+    case 'nickname':
+      return value.trim().length >= 2 && value.trim().length <= 20
+        ? '' : '닉네임은 2~20자로 입력해주세요.';
+    case 'email':
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
+        ? '' : '올바른 이메일을 입력해주세요.';
+    case 'code':
+      return value.trim().length === 6
+        ? '' : '인증번호 6자리를 입력해주세요.';
+    case 'password':
+      return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*]{8,20}$/.test(value)
+        ? '' : '영문·숫자를 포함한 8~20자로 입력해주세요.';
+    default:
+      return '';
+  }
+};
 
-const InfoText = styled.p`
-  margin: 0;
-  font-size: 12px;
-  color: ${colors.accent1};
-  line-height: 1.5;
-`;
-
-const AgreeArea = styled.div`
-  margin-top: 2px;
-`;
-
-const SubmitArea = styled.div`
-  margin-top: auto;
-  padding-top: 32px;
-`;
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const getError = (err) =>
+  err.response?.data?.message || err.message || '서버 요청에 실패했습니다.';
 
 const SignUpPage = () => {
-  // 회원가입 입력값 관리
   const [form, setForm] = useState({
-    nickname: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    loginId: '', nickname: '', email: '',
+    code: '', password: '', confirmPassword: '',
   });
 
+  const latestForm = useRef(form);
   const [agree, setAgree] = useState(false);
   const [errors, setErrors] = useState({});
-  const [emailStatus, setEmailStatus] = useState('');
-  const [formStatus, setFormStatus] = useState('');
+  const [notice, setNotice] = useState('');
+  const [checked, setChecked] = useState({
+    loginId: false, nickname: false, email: false,
+  });
+  const [codeSent, setCodeSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // 이메일 중복 확인이 완료되었는지
-  // 실제 API 연동 후에만 true로 변경
-  const [emailChecked, setEmailChecked] = useState(false);
+  const visibleFields = fields.filter(f => f.name !== 'code' || codeSent);
 
-  // 모든 입력값 변경 처리
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setForm((prev) => ({
-      ...prev,
+    const next = {
+      ...latestForm.current,
       [name]: value,
-    }));
+      ...(name === 'email' && { code: '' }),
+    };
 
-    setErrors((prev) => ({
+    latestForm.current = next;
+    setForm(next);
+    setErrors(prev => ({
       ...prev,
       [name]: '',
+      ...(name === 'email' && { code: '' }),
     }));
+    setNotice('');
 
-    setFormStatus('');
+    if (name in checkApis) {
+      setChecked(prev => ({ ...prev, [name]: false }));
+    }
 
-    // 이메일이 변경되면 기존 중복 확인 결과 무효화
     if (name === 'email') {
-      setEmailChecked(false);
-      setEmailStatus('');
+      setCodeSent(false);
+      setEmailVerified(false);
+    }
+    if (name === 'code') setEmailVerified(false);
+  };
+
+  const handleCheck = async (name) => {
+    const value = form[name].trim();
+    const error = validate(name, value);
+    setErrors(prev => ({ ...prev, [name]: error }));
+    if (error || loading) return;
+
+    setLoading(true);
+    setNotice('');
+
+    try {
+      const { data } = await checkApis[name](value);
+      if (latestForm.current[name].trim() !== value) return;
+
+      if (!data.isSuccess || typeof data.result?.available !== 'boolean') {
+        throw new Error(data.message || '중복 확인에 실패했습니다.');
+      }
+
+      setChecked(prev => ({ ...prev, [name]: data.result.available }));
+
+      if (data.result.available) {
+        const label = fields.find(f => f.name === name).label;
+        setNotice(`사용 가능한 ${label}입니다.`);
+      } else {
+        setErrors(prev => ({ ...prev, [name]: '이미 사용 중입니다.' }));
+      }
+    } catch (err) {
+      if (latestForm.current[name].trim() === value) {
+        setNotice(getError(err));
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 이메일 중복 확인 버튼
-  const handleEmailCheck = () => {
+  const handleSendCode = async () => {
+    if (!checked.email || loading) return;
+
     const email = form.email.trim();
+    setLoading(true);
+    setEmailVerified(false);
+    setNotice('');
 
-    if (!EMAIL_PATTERN.test(email)) {
-      setErrors((prev) => ({
-        ...prev,
-        email: '올바른 이메일을 입력해 주세요.',
-      }));
-      setEmailStatus('');
-      return;
+    try {
+      const { data } = await sendEmailCode(email, 'SIGN_UP');
+      if (latestForm.current.email.trim() !== email) return;
+      if (!data.isSuccess) throw new Error(data.message || '발송 실패');
+
+      latestForm.current = { ...latestForm.current, code: '' };
+      setForm(latestForm.current);
+      setCodeSent(true);
+      setNotice('인증번호 발송 요청이 처리되었습니다. 메일함을 확인해주세요.');
+    } catch (err) {
+      if (latestForm.current.email.trim() === email) {
+        setNotice(getError(err));
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setErrors((prev) => ({
-      ...prev,
-      email: '',
-    }));
-
-    // TODO: Spring 이메일 중복 확인 API 연동
-    // API 응답에서 사용 가능할 때만 setEmailChecked(true)
-    setEmailChecked(false);
-    setEmailStatus('이메일 중복 확인 API 연동 전입니다.');
   };
 
-  // 가입하기 버튼 클릭
+  const handleVerifyCode = async () => {
+    const email = form.email.trim();
+    const code = form.code.trim();
+    const error = validate('code', code);
+
+    setErrors(prev => ({ ...prev, code: error }));
+    if (error || !codeSent || loading) return;
+
+    setLoading(true);
+    setEmailVerified(false);
+    setNotice('');
+
+    try {
+      const { data } = await verifyEmailCode(email, code, 'SIGN_UP');
+
+      if (latestForm.current.email.trim() !== email ||
+          latestForm.current.code.trim() !== code) return;
+
+      if (!data.isSuccess || data.result?.verified !== true) {
+        throw new Error(data.message || '인증번호 확인 실패');
+      }
+
+      setEmailVerified(true);
+      setNotice('이메일 인증이 완료되었습니다.');
+    } catch (err) {
+      if (latestForm.current.email.trim() === email &&
+          latestForm.current.code.trim() === code) {
+        setNotice(getError(err));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (loading) return;
 
     const nextErrors = {};
-    const nickname = form.nickname.trim();
-    const email = form.email.trim();
 
-    // 닉네임 검사
-    if (nickname.length < 2 || nickname.length > 10) {
-      nextErrors.nickname = '닉네임은 2~10자로 입력해 주세요.';
-    }
+    visibleFields.forEach(({ name }) => {
+      const error = name === 'confirmPassword'
+        ? (!form.confirmPassword
+            ? '비밀번호 확인을 입력해주세요.'
+            : form.password !== form.confirmPassword
+              ? '비밀번호가 일치하지 않습니다.' : '')
+        : validate(name, form[name]);
 
-    // 이메일 검사
-    if (!EMAIL_PATTERN.test(email)) {
-      nextErrors.email = '올바른 이메일을 입력해 주세요.';
-    } else if (!emailChecked) {
-      nextErrors.email = '이메일 중복 확인이 필요합니다.';
-    }
+      if (error) nextErrors[name] = error;
+    });
 
-    // 비밀번호 검사
-    if (
-      form.password.length < 8 ||
-      !/[A-Za-z]/.test(form.password) ||
-      !/[0-9]/.test(form.password)
-    ) {
-      nextErrors.password =
-        '비밀번호는 영문과 숫자를 포함해 8자 이상 입력해 주세요.';
-    }
-
-    // 비밀번호 확인 검사
-    if (form.password !== form.confirmPassword) {
-      nextErrors.confirmPassword =
-        '비밀번호가 일치하지 않습니다.';
-    } else if (!form.confirmPassword) {
-      nextErrors.confirmPassword =
-        '비밀번호를 다시 입력해 주세요.';
-    }
-
-    // 필수 약관 동의 검사
-    if (!agree) {
-      nextErrors.agree = '필수 약관에 동의해 주세요.';
-    }
-
+    if (!agree) nextErrors.agree = '필수 약관에 동의해주세요.';
     setErrors(nextErrors);
+    setNotice('');
 
-    if (Object.keys(nextErrors).length > 0) {
+    if (Object.keys(nextErrors).length) return;
+
+    if (Object.values(checked).some(value => !value)) {
+      setNotice('아이디·닉네임·이메일 중복 확인을 완료해주세요.');
       return;
     }
 
-    // TODO: Spring 회원가입 API 연동
-    // 실제 가입 성공 응답을 받았을 때만
-    // navigate('/signup/complete') 실행
-    setFormStatus('회원가입 API 연동 전입니다.');
+    if (!emailVerified) {
+      setNotice('이메일 인증을 먼저 완료해주세요.');
+      return;
+    }
+
+    // SMTP 설정 확인 후 signUp API 연결
+    setNotice('입력 검증 완료. 회원가입 API는 아직 연결 전입니다.');
   };
 
   return (
     <Wrapper>
       <TopBar title="회원가입" showBack />
-
       <Content>
         <Intro>
-          <Title>
-            반가워요!
-            <br />
-            계정을 만들어 주세요
-          </Title>
-          <Description>
-            나만의 레시피를 기록하고 다른 사람과 나눠보세요.
-          </Description>
+          <h1>반가워요!<br />계정을 만들어 주세요</h1>
+          <p>나만의 레시피를 기록하고 다른 사람과 나눠보세요.</p>
         </Intro>
 
-        <SignUpForm onSubmit={handleSubmit} noValidate>
-          {/* 닉네임 */}
-          <FieldGroup>
-            <TextInput
-              label="닉네임"
-              name="nickname"
-              value={form.nickname}
-              changeHandler={handleChange}
-              placeholder="2~10자로 입력해주세요"
-            />
-            {errors.nickname && (
-              <ErrorText role="alert">
-                {errors.nickname}
-              </ErrorText>
-            )}
-          </FieldGroup>
+        <Form onSubmit={handleSubmit} noValidate>
+          {visibleFields.map(({ name, label, type, placeholder, check }) => (
+            <Field key={name}>
+              <TextInput
+                label={label}
+                name={name}
+                type={type || 'text'}
+                placeholder={placeholder}
+                value={form[name]}
+                changeHandler={handleChange}
+              >
+                {check && (
+                  <Button
+                    type="button"
+                    variant="inline"
+                    disabled={loading}
+                    title={name === 'email' && checked.email
+                      ? codeSent ? '재발송' : '인증번호 발송'
+                      : '중복 확인'}
+                    onClick={() => name === 'email' && checked.email
+                      ? handleSendCode() : handleCheck(name)}
+                  />
+                )}
 
-          {/* 이메일 */}
-          <FieldGroup>
-            <TextInput
-              label="이메일"
-              name="email"
-              type="email"
-              value={form.email}
-              changeHandler={handleChange}
-              placeholder="example@email.com"
-            >
-              <Button
-                title="중복 확인"
-                variant="inline"
-                onClick={handleEmailCheck}
-              />
-            </TextInput>
+                {name === 'code' && (
+                  <Button
+                    type="button"
+                    variant="inline"
+                    title={emailVerified ? '인증 완료' : '인증 확인'}
+                    disabled={emailVerified || loading}
+                    onClick={handleVerifyCode}
+                  />
+                )}
+              </TextInput>
 
-            {errors.email && (
-              <ErrorText role="alert">
-                {errors.email}
-              </ErrorText>
-            )}
-
-            {emailStatus && (
-              <InfoText role="status">
-                {emailStatus}
-              </InfoText>
-            )}
-          </FieldGroup>
-
-          {/* 비밀번호 */}
-          <FieldGroup>
-            <TextInput
-              label="비밀번호"
-              name="password"
-              type="password"
-              value={form.password}
-              changeHandler={handleChange}
-              placeholder="영문, 숫자 포함 8자 이상"
-            />
-
-            <HelperText>
-              영문과 숫자를 포함해 8자 이상 입력해 주세요.
-            </HelperText>
-
-            {errors.password && (
-              <ErrorText role="alert">
-                {errors.password}
-              </ErrorText>
-            )}
-          </FieldGroup>
-
-          {/* 비밀번호 확인 */}
-          <FieldGroup>
-            <TextInput
-              label="비밀번호 확인"
-              name="confirmPassword"
-              type="password"
-              value={form.confirmPassword}
-              changeHandler={handleChange}
-              placeholder="비밀번호를 한 번 더 입력해주세요"
-            />
-
-            {form.confirmPassword &&
-              form.password === form.confirmPassword && (
-                <InfoText>
-                  비밀번호가 일치합니다.
-                </InfoText>
+              {name === 'code' && (
+                <Message>
+                  {emailVerified
+                    ? '이메일 인증이 완료되었습니다.'
+                    : '이메일로 받은 인증번호를 입력해주세요.'}
+                </Message>
               )}
 
-            {errors.confirmPassword && (
-              <ErrorText role="alert">
-                {errors.confirmPassword}
-              </ErrorText>
-            )}
-          </FieldGroup>
+              {name === 'confirmPassword' &&
+                form.confirmPassword &&
+                form.password === form.confirmPassword && (
+                  <Message>비밀번호가 일치합니다.</Message>
+                )}
 
-          {/* 약관 동의 */}
-          <AgreeArea>
+              {errors[name] && (
+                <Message $error role="alert">{errors[name]}</Message>
+              )}
+            </Field>
+          ))}
+
+          <Field>
             <Checkbox
               name="agree"
               label="이용약관 및 개인정보 처리방침에 동의합니다 (필수)"
               checked={agree}
               changeHandler={(e) => {
                 setAgree(e.target.checked);
-                setErrors((prev) => ({
-                  ...prev,
-                  agree: '',
-                }));
+                setErrors(prev => ({ ...prev, agree: '' }));
               }}
             />
+            {errors.agree && <Message $error>{errors.agree}</Message>}
+          </Field>
 
-            {errors.agree && (
-              <ErrorText role="alert">
-                {errors.agree}
-              </ErrorText>
-            )}
-          </AgreeArea>
-
-          {/* 가입 버튼 */}
-          <SubmitArea>
-            {formStatus && (
-              <InfoText role="status">
-                {formStatus}
-              </InfoText>
-            )}
-
-            <Button
-              title="가입하기"
-              type="submit"
-              variant="primary"
-            />
-          </SubmitArea>
-        </SignUpForm>
+          {notice && <Message role="status">{notice}</Message>}
+          <Button title="가입하기" type="submit" disabled={loading} />
+        </Form>
       </Content>
     </Wrapper>
   );
