@@ -122,8 +122,10 @@ const ResetPasswordPage = () => {
     }
 
     if (!passwordRegex.test(password)) {
-      setError('영문·숫자를 포함한 8~20자로 입력해주세요.');
-      return;
+        setError(
+            '영문·숫자를 포함한 8~20자로 입력해주세요. 특수문자는 !@#$%^&*만 사용할 수 있습니다.'
+        );
+        return;
     }
 
     if (password !== confirmPassword) {

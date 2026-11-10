@@ -321,6 +321,10 @@ const SignUpPage = () => {
                 placeholder={placeholder}
                 value={form[name]}
                 changeHandler={handleChange}
+                invalid={Boolean(errors[name])}
+                describedBy={
+                  errors[name] ? `signup-${name}-error` : undefined
+                }
               >
                 {check && (
                   <Button
@@ -361,8 +365,11 @@ const SignUpPage = () => {
                 )}
 
               {errors[name] && (
-                <Message $error role="alert">{errors[name]}</Message>
+                <Message id={`signup-${name}-error`} $error role="alert">
+                  {errors[name]}
+                </Message>
               )}
+
             </Field>
           ))}
 
