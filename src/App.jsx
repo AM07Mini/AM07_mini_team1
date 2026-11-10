@@ -5,6 +5,7 @@ import BottomBar from './components/layout/BottomBar';
 // user
 import SignInPage from './features/user/page/SignInPage';
 import SignUpPage from './features/user/page/SignUpPage';
+import SignUpCompletePage from './features/user/page/SignUpCompletePage';
 import MyPage from './features/user/page/MyPage';
 // ingredient
 import IngredientSelectPage from './features/ingredient/page/IngredientSelectPage';
@@ -49,6 +50,7 @@ const App = () => (
           {/* recipe */}
           <Route path="/recipe/recommend" element={<RecipeRecommendPage />} />
           <Route path="/recipe/write" element={<RecipeWritePage />} />
+          <Route path="/signup/complete" element={<SignUpCompletePage />} />
           <Route path="/recipe/read/:id" element={<RecipeReadPage />} />
           {/* search */}
           <Route path="/search" element={<SearchPage />} />
