@@ -1,22 +1,23 @@
 import styled from 'styled-components';
-import { colors, radius } from './theme';
+import { colors } from './theme';
 
 const Wrapper = styled.div`
   display: flex;
+  gap: 4px;
   padding: 4px;
-  border-radius: ${radius.button}px;
+  border-radius: 14px;
   background-color: ${colors.grey4};
 `;
 
 const Tab = styled.button`
   flex: 1;
-  height: 36px;
+  padding: 10px 0;
   border: none;
-  border-radius: ${radius.small}px;
+  border-radius: 10px;
   background-color: ${(props) => (props.$selected ? colors.primary : 'transparent')};
   color: ${(props) => (props.$selected ? colors.white : colors.grey1)};
   font-size: 14px;
-  font-weight: ${(props) => (props.$selected ? 700 : 500)};
+  font-weight: ${(props) => (props.$selected ? 700 : 400)};
   cursor: pointer;
 `;
 

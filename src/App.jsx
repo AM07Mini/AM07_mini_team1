@@ -6,6 +6,7 @@ import BottomBar from './components/layout/BottomBar';
 import SignInPage from './features/user/page/SignInPage';
 import SignUpPage from './features/user/page/SignUpPage';
 import MyPage from './features/user/page/MyPage';
+import ProfileEditPage from './features/user/page/ProfileEditPage';
 // ingredient
 import IngredientSelectPage from './features/ingredient/page/IngredientSelectPage';
 // recipe
@@ -44,6 +45,7 @@ const App = () => (
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/mypage" element={<MyPage />} />
+          <Route path="/mypage/edit" element={<ProfileEditPage />} />
           {/* ingredient — 홈: 보유 식재료 선택 */}
           <Route path="/" element={<IngredientSelectPage />} />
           {/* recipe */}

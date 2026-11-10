@@ -14,7 +14,7 @@ const rightTabs = [
 ];
 
 // 하단바를 숨기는 화면 — 피그마에서 하단바가 없는 화면들
-const hiddenPaths = ['/signin', '/signup', '/recipe/write', '/design-system'];
+const hiddenPaths = ['/signin', '/signup', '/recipe/write', '/design-system', '/mypage/edit'];
 const hiddenPrefixes = ['/recipe/read/'];
 
 const Wrapper = styled.nav`
