@@ -54,8 +54,12 @@ export const initialFeeds = [
 const difficultyTitle = { 1: '쉬움', 2: '보통', 3: '어려움' };
 
 // 2 → "★★☆ 보통 · 20분"
-export const formatDifficulty = (level, minutes) =>
-  `${'★'.repeat(level)}${'☆'.repeat(3 - level)} ${difficultyTitle[level]} · ${minutes}분`;
+// API에서 범위 밖 값(0, 4, 문자열, 빈 값)이 와도 화면이 깨지지 않게 1~3으로 맞춤
+// ('★'.repeat(-1) 같은 음수 반복은 에러가 나서 화면 전체가 안 그려짐)
+export const formatDifficulty = (level, minutes) => {
+  const safeLevel = Math.min(3, Math.max(1, Math.round(Number(level)) || 1));
+  return `${'★'.repeat(safeLevel)}${'☆'.repeat(3 - safeLevel)} ${difficultyTitle[safeLevel]} · ${minutes}분`;
+};
 
 // 2300 → "2.3천", 128 → "128"
 export const formatCount = (n) => {

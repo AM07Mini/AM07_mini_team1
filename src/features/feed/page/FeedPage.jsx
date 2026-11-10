@@ -72,7 +72,7 @@ const FeedPage = () => {
 
   return (
     <>
-      <TopBar title="피드" rightIcon="settings" />
+      <TopBar title="피드" />
       <Wrapper>
         <FeedTab tabs={feedTabs} selected={tab} changeHandler={setTab} />
 
