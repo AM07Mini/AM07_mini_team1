@@ -6,7 +6,7 @@ import BottomBar from './components/layout/BottomBar';
 import SignInPage from './features/user/page/SignInPage';
 import SignUpPage from './features/user/page/SignUpPage';
 import SignUpCompletePage from './features/user/page/SignUpCompletePage';
-import MyPage from './features/user/page/MyPage';
+
 // ingredient
 import IngredientSelectPage from './features/ingredient/page/IngredientSelectPage';
 // recipe
@@ -15,6 +15,9 @@ import RecipeReadPage from './features/recipe/page/RecipeReadPage';
 import RecipeWritePage from './features/recipe/page/RecipeWritePage';
 // search
 import SearchPage from './features/search/page/SearchPage';
+// mypage
+import MyPage from './features/mypage/page/MyPage';
+import ProfileEditPage from './features/mypage/page/ProfileEditPage';
 // feed
 import FeedPage from './features/feed/page/FeedPage';
 // dev — 공용 컴포넌트 미리보기
@@ -44,7 +47,6 @@ const App = () => (
           {/* user */}
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/mypage" element={<MyPage />} />
           {/* ingredient — 홈: 보유 식재료 선택 */}
           <Route path="/" element={<IngredientSelectPage />} />
           {/* recipe */}
@@ -54,6 +56,9 @@ const App = () => (
           <Route path="/recipe/read/:id" element={<RecipeReadPage />} />
           {/* search */}
           <Route path="/search" element={<SearchPage />} />
+          {/* mypage */}
+          <Route path="/mypage" element={<MyPage />} />
+          <Route path="/mypage/edit" element={<ProfileEditPage />} />
           {/* feed */}
           <Route path="/feed" element={<FeedPage />} />
           {/* dev */}
