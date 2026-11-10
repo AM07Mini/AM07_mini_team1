@@ -37,8 +37,8 @@ export const resetPassword = (email, code, newPassword) =>
   api.post('/auth/password/reset', { email, code, newPassword });
 
 // 토큰 재발급 및 로그아웃
-export const refreshToken = (refreshToken) =>
-  api.post('/auth/refresh', { refreshToken });
+export const refreshToken = (token) =>
+  api.post('/auth/refresh', {refreshToken: token});
 
 export const logout = (refreshToken) =>
   api.post('/auth/logout', { refreshToken });

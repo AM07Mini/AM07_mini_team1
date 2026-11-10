@@ -1,6 +1,6 @@
-
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../utils/context/AuthContext';
 import styled from 'styled-components';
 
 import Button from '../../../components/styled/Button';
@@ -124,6 +124,9 @@ const SignInPage = () => {
 
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('');
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -132,24 +135,35 @@ const SignInPage = () => {
     setStatus('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const nextErrors = {};
-
     if (!form.loginId.trim()) {
       nextErrors.loginId = '아이디를 입력해주세요.';
     }
-
     if (!form.password) {
       nextErrors.password = '비밀번호를 입력해주세요.';
     }
 
     setErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) return;
+    setStatus('');
+    if (Object.keys(nextErrors).length || loading) return;
 
-    // TODO: POST /auth/signin API 연결
-    setStatus('로그인 API 연결 전입니다.');
+    setLoading(true);
+
+    try {
+      await login(form.loginId.trim(), form.password);
+      navigate('/', { replace: true });
+    } catch (err) {
+      setStatus(
+        err.response?.data?.message ||
+        err.message ||
+        '아이디 또는 비밀번호를 확인해주세요.'
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -204,7 +218,11 @@ const SignInPage = () => {
           </Message>
         )}
 
-        <Button title="로그인" type="submit" />
+        <Button
+          title={loading ? '로그인 중...' : '로그인'}
+          type="submit"
+          disabled={loading}
+        />
 
         {status && <Message role="status">{status}</Message>}
       </LoginForm>

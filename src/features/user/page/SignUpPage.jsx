@@ -1,4 +1,4 @@
-
+import { useNavigate } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
@@ -6,10 +6,7 @@ import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
 import Checkbox from '../../../components/styled/Checkbox';
 import { colors, PAGE_PADDING } from '../../../components/styled/theme';
-import {
-  checkLoginId, checkNickname, checkEmail,
-  sendEmailCode, verifyEmailCode,
-} from '../../../api/authApi';
+import {checkLoginId, checkNickname, checkEmail, sendEmailCode, verifyEmailCode, signUp} from '../../../api/authApi';
 
 const checkApis = {
   loginId: checkLoginId,
@@ -73,8 +70,8 @@ const validate = (name, value) => {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
         ? '' : '올바른 이메일을 입력해주세요.';
     case 'code':
-      return value.trim().length === 6
-        ? '' : '인증번호 6자리를 입력해주세요.';
+      return /^\d{6}$/.test(value.trim())
+        ? '' : '숫자 6자리 인증번호를 입력해주세요.';
     case 'password':
       return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*]{8,20}$/.test(value)
         ? '' : '영문·숫자를 포함한 8~20자로 입력해주세요.';
@@ -87,12 +84,15 @@ const getError = (err) =>
   err.response?.data?.message || err.message || '서버 요청에 실패했습니다.';
 
 const SignUpPage = () => {
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     loginId: '', nickname: '', email: '',
     code: '', password: '', confirmPassword: '',
   });
 
   const latestForm = useRef(form);
+  const submittingRef = useRef(false);
   const [agree, setAgree] = useState(false);
   const [errors, setErrors] = useState({});
   const [notice, setNotice] = useState('');
@@ -134,7 +134,7 @@ const SignUpPage = () => {
   };
 
   const handleCheck = async (name) => {
-    const value = form[name].trim();
+    const value = latestForm.current[name].trim();
     const error = validate(name, value);
     setErrors(prev => ({ ...prev, [name]: error }));
     if (error || loading) return;
@@ -227,42 +227,80 @@ const SignUpPage = () => {
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (loading) return;
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (loading || submittingRef.current) return;
 
-    const nextErrors = {};
+  const values = { ...latestForm.current };
+  const nextErrors = {};
 
-    visibleFields.forEach(({ name }) => {
-      const error = name === 'confirmPassword'
-        ? (!form.confirmPassword
-            ? '비밀번호 확인을 입력해주세요.'
-            : form.password !== form.confirmPassword
-              ? '비밀번호가 일치하지 않습니다.' : '')
-        : validate(name, form[name]);
+  // 입력값 검증
+  visibleFields.forEach(({ name }) => {
+    const error = name === 'confirmPassword'
+      ? (!values.confirmPassword
+          ? '비밀번호 확인을 입력해주세요.'
+          : values.password !== values.confirmPassword
+            ? '비밀번호가 일치하지 않습니다.' : '')
+      : validate(name, values[name]);
 
-      if (error) nextErrors[name] = error;
-    });
+    if (error) nextErrors[name] = error;
+  });
 
-    if (!agree) nextErrors.agree = '필수 약관에 동의해주세요.';
-    setErrors(nextErrors);
-    setNotice('');
+  if (!agree) {
+    nextErrors.agree = '필수 약관에 동의해주세요.';
+  }
 
-    if (Object.keys(nextErrors).length) return;
+  setErrors(nextErrors);
+  setNotice('');
 
-    if (Object.values(checked).some(value => !value)) {
-      setNotice('아이디·닉네임·이메일 중복 확인을 완료해주세요.');
-      return;
-    }
+  if (Object.keys(nextErrors).length > 0) return;
 
-    if (!emailVerified) {
-      setNotice('이메일 인증을 먼저 완료해주세요.');
-      return;
-    }
+  // 중복 확인 여부 검사
+  if (Object.values(checked).some(value => !value)) {
+    setNotice('아이디·닉네임·이메일 중복 확인을 완료해주세요.');
+    return;
+  }
 
-    // SMTP 설정 확인 후 signUp API 연결
-    setNotice('입력 검증 완료. 회원가입 API는 아직 연결 전입니다.');
+  // 이메일 인증 완료 여부 검사
+  if (!codeSent || !emailVerified) {
+    setNotice('이메일 인증을 먼저 완료해주세요.');
+    return;
+  }
+
+  const requestData = {
+    loginId: values.loginId.trim(),
+    nickname: values.nickname.trim(),
+    email: values.email.trim(),
+    password: values.password,
+    code: values.code.trim(),
   };
+
+  submittingRef.current = true;
+  setLoading(true);
+
+  try {
+    const { data } = await signUp(requestData);
+
+    if (data?.isSuccess !== true) {
+      throw new Error(data?.message || '회원가입에 실패했습니다.');
+    }
+
+    navigate('/signup/complete', {
+      replace: true,
+      state: {
+        completed: true,
+        nickname: requestData.nickname,
+        email: requestData.email,
+      },
+    });
+  } catch (err) {
+    setNotice(`회원가입 실패: ${getError(err)}`);
+  } finally {
+    submittingRef.current = false;
+    setLoading(false);
+  }
+};
+
 
   return (
     <Wrapper>
