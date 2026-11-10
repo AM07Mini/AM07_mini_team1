@@ -179,9 +179,13 @@ const SignInPage = () => {
           value={form.loginId}
           changeHandler={handleChange}
           placeholder="아이디를 입력해주세요"
+          invalid={Boolean(errors.loginId)}
+          describedBy={errors.loginId ? 'signin-login-id-error' : undefined}
         />
         {errors.loginId && (
-          <Message $error role="alert">{errors.loginId}</Message>
+          <Message id="signin-login-id-error" $error role="alert">
+            {errors.loginId}
+          </Message>
         )}
 
         <TextInput
@@ -191,9 +195,13 @@ const SignInPage = () => {
           value={form.password}
           changeHandler={handleChange}
           placeholder="비밀번호를 입력해주세요"
+          invalid={Boolean(errors.password)}
+          describedBy={errors.password ? 'signin-password-error' : undefined}
         />
         {errors.password && (
-          <Message $error role="alert">{errors.password}</Message>
+          <Message id="signin-password-error" $error role="alert">
+            {errors.password}
+          </Message>
         )}
 
         <Button title="로그인" type="submit" />
