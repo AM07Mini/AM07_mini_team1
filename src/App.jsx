@@ -16,6 +16,8 @@ import RecipeWritePage from './features/recipe/page/RecipeWritePage';
 import SearchPage from './features/search/page/SearchPage';
 // feed
 import FeedPage from './features/feed/page/FeedPage';
+// dev — 공용 컴포넌트 미리보기
+import DesignSystemPage from './features/dev/page/DesignSystemPage';
 
 // 데스크톱 브라우저에서도 휴대폰 화면 폭으로 보이게 가운데 고정
 const MobileFrame = styled.div`
@@ -52,6 +54,8 @@ const App = () => (
           <Route path="/search" element={<SearchPage />} />
           {/* feed */}
           <Route path="/feed" element={<FeedPage />} />
+          {/* dev */}
+          <Route path="/design-system" element={<DesignSystemPage />} />
         </Routes>
       </Content>
       <BottomBar />

@@ -1,6 +1,7 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import TabIcon from './TabIcon';
+import Icon from '../styled/Icon';
+import { colors, shadows } from '../styled/theme';
 
 // 피그마 하단바 — 좌우 2개씩 탭 + 가운데 플로팅 버튼(레시피 추가)
 const leftTabs = [
@@ -13,12 +14,8 @@ const rightTabs = [
 ];
 
 // 하단바를 숨기는 화면 — 피그마에서 하단바가 없는 화면들
-const hiddenPaths = ['/signin', '/signup', '/recipe/write'];
+const hiddenPaths = ['/signin', '/signup', '/recipe/write', '/design-system'];
 const hiddenPrefixes = ['/recipe/read/'];
-
-// 색은 스크린샷 기준 근사값 — 피그마 수치 확인 후 맞출 것
-const PRIMARY = '#1f4e4a';
-const INACTIVE = '#b0b8b8';
 
 const Wrapper = styled.nav`
   position: sticky;
@@ -26,8 +23,10 @@ const Wrapper = styled.nav`
   display: flex;
   align-items: center;
   height: 64px;
-  border-top: 1px solid #eeeeee;
-  background-color: #ffffff;
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  background-color: ${colors.white};
+  box-shadow: ${shadows.bottomBar};
 `;
 
 const Tab = styled.button`
@@ -39,7 +38,7 @@ const Tab = styled.button`
   border: none;
   background: none;
   cursor: pointer;
-  color: ${(props) => (props.$active ? PRIMARY : INACTIVE)};
+  color: ${(props) => (props.$active ? colors.secondary : colors.grey2)};
 `;
 
 // 플로팅 버튼 자리 비워두기
@@ -57,10 +56,10 @@ const FloatingButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 4px solid #ffffff;
+  border: 4px solid ${colors.white};
   border-radius: 50%;
-  background-color: ${PRIMARY};
-  color: #ffffff;
+  background-color: ${colors.primary};
+  color: ${colors.white};
   cursor: pointer;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 `;
@@ -83,7 +82,7 @@ const BottomBar = () => {
       $active={location.pathname === tab.path}
       onClick={() => moveUrl(tab.path)}
     >
-      <TabIcon name={tab.icon} />
+      <Icon name={tab.icon} />
     </Tab>
   );
 
@@ -93,7 +92,7 @@ const BottomBar = () => {
       <CenterSpace />
       {rightTabs.map(renderTab)}
       <FloatingButton aria-label="레시피 추가" onClick={() => moveUrl('/recipe/write')}>
-        <TabIcon name="chef" size={26} />
+        <Icon name="chef" size={26} />
       </FloatingButton>
     </Wrapper>
   );
