@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import RecipeCard from '../../../components/styled/RecipeCard';
 import { colors } from '../../../components/styled/theme';
+import MyRecipeItem from '../item/MyRecipeItem';
 
 // 레시피 카드 2열 그리드 (156px + 간격 15px)
 const Grid = styled.div`
@@ -27,7 +27,7 @@ const MyRecipeList = ({ recipes }) => {
   return (
     <Grid>
       {recipes.map((item) => (
-        <RecipeCard key={item.id} data={item} onClick={() => moveUrl(`/recipe/read/${item.id}`)} />
+        <MyRecipeItem key={item.id} data={item} onClick={() => moveUrl(`/recipe/read/${item.id}`)} />
       ))}
     </Grid>
   );

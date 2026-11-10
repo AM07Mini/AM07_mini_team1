@@ -22,11 +22,12 @@ const variants = {
     background-color: ${colors.white};
     color: ${colors.dark};
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 700;
   `,
   // 작은 버튼 — "+ 기록", r12
   small: css`
-    padding: 10px 14px;
+    height: 36px;
+    padding: 0 14px;
     border-radius: ${radius.button}px;
     background-color: ${colors.primary};
     color: ${colors.white};
@@ -35,7 +36,8 @@ const variants = {
   `,
   // 입력창 안 버튼 — "중복 확인", r8
   inline: css`
-    padding: 8px 12px;
+    height: 28px;
+    padding: 0 10px;
     border-radius: ${radius.small}px;
     background-color: ${colors.primary};
     color: ${colors.white};

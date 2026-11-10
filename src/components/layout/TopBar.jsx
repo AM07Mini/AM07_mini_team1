@@ -1,11 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { colors, PAGE_PADDING } from '../styled/theme';
-
-// 피그마 아이콘 파일 (public/icons)
-const icons = {
-  settings: { src: '/icons/setting.svg', label: '설정' },
-};
+import Icon from '../styled/Icon';
+import { colors } from '../styled/theme';
 
 const Wrapper = styled.header`
   position: sticky;
@@ -14,42 +10,32 @@ const Wrapper = styled.header`
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 64px;
-  padding: 0 ${PAGE_PADDING}px;
+  height: 56px;
+  padding: 0 16px;
   background-color: ${colors.white};
 `;
 
 const Title = styled.h1`
   margin: 0;
-  font-size: 24px;
+  font-size: 18px;
   font-weight: 700;
-  line-height: 1.35;
   color: ${colors.dark};
 `;
 
-// 아이콘 버튼 — 24×24 자리 가운데에 피그마 아이콘을 원래 크기로 놓음
 const IconButton = styled.button`
   position: absolute;
-  ${(props) => props.$side}: ${PAGE_PADDING}px;
+  ${(props) => props.$side}: 16px;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
+  padding: 4px;
   border: none;
   background: none;
+  color: ${colors.dark};
   cursor: pointer;
-`;
-
-// 피그마 화살표 파일은 아래 방향이라 90도 돌려서 왼쪽을 가리키게 함 (피그마도 동일)
-const BackImage = styled.img`
-  transform: rotate(90deg);
 `;
 
 // 상단바 — 가운데 제목, 왼쪽 뒤로가기(선택), 오른쪽 아이콘 버튼(선택)
 // 사용: <TopBar title="요리 추천" showBack />
-//       <TopBar title="마이 페이지" rightIcon="settings" rightClickHandler={...} />
+//       <TopBar title="홈" rightIcon="settings" rightClickHandler={...} />
 const TopBar = ({ title, showBack, rightIcon, rightClickHandler }) => {
   const moveUrl = useNavigate();
 
@@ -57,13 +43,13 @@ const TopBar = ({ title, showBack, rightIcon, rightClickHandler }) => {
     <Wrapper>
       {showBack && (
         <IconButton $side="left" aria-label="뒤로가기" onClick={() => moveUrl(-1)}>
-          <BackImage src="/icons/arrow-left.svg" alt="" />
+          <Icon name="back" />
         </IconButton>
       )}
       <Title>{title}</Title>
       {rightIcon && (
-        <IconButton $side="right" aria-label={icons[rightIcon].label} onClick={rightClickHandler}>
-          <img src={icons[rightIcon].src} alt="" />
+        <IconButton $side="right" aria-label={rightIcon} onClick={rightClickHandler}>
+          <Icon name={rightIcon} />
         </IconButton>
       )}
     </Wrapper>

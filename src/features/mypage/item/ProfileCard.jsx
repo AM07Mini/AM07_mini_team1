@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import Button from '../../../components/styled/Button';
 import { colors, radius } from '../../../components/styled/theme';
+import { SURFACE } from '../ui/style';
 
 const Wrapper = styled.section`
   display: flex;
@@ -50,7 +51,7 @@ const Stats = styled.div`
   display: flex;
   padding: 12px 0;
   border-radius: 12px;
-  background-color: ${colors.surface};
+  background-color: ${SURFACE};
 `;
 
 const Stat = styled.div`

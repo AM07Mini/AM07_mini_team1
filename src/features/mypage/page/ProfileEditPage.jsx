@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import TextInput from '../../../components/styled/TextInput';
-import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import { colors, PAGE_PADDING, radius } from '../../../components/styled/theme';
 import { interestOptions, mockProfile } from '../mockData';
+import { DANGER, SURFACE } from '../ui/style';
+import MyPageTopBar from '../ui/MyPageTopBar';
 
 const INTRO_MAX = 40;
 
@@ -67,6 +68,47 @@ const HiddenFileInput = styled.input`
   display: none;
 `;
 
+// 입력창 + 아래 안내 문구 묶음
+const Field = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const Message = styled.p`
+  margin: 0;
+  font-size: 12px;
+  color: ${(props) => props.$color};
+`;
+
+// 입력창 오른쪽 글자 수 (예: 18/40)
+const Counter = styled.span`
+  flex-shrink: 0;
+  padding-right: 6px;
+  font-size: 12px;
+  color: ${colors.grey2};
+`;
+
+const Label = styled.span`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${colors.dark};
+`;
+
+// 수정할 수 없는 값 (이메일) — 옅은 회색 + 테두리
+const ReadOnlyBox = styled.div`
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid ${colors.grey4};
+  border-radius: ${radius.button}px;
+  background-color: ${SURFACE};
+  font-size: 14px;
+  font-weight: 500;
+  color: ${colors.grey2};
+`;
+
 const Section = styled.div`
   display: flex;
   flex-direction: column;
@@ -77,12 +119,6 @@ const SectionTitle = styled.div`
   display: flex;
   align-items: center;
   gap: 6px;
-`;
-
-const Label = styled.span`
-  font-size: 14px;
-  font-weight: 700;
-  color: ${colors.dark};
 `;
 
 const Hint = styled.span`
@@ -100,7 +136,7 @@ const Menu = styled.div`
   display: flex;
   flex-direction: column;
   border-radius: 12px;
-  background-color: ${colors.surface};
+  background-color: ${SURFACE};
 `;
 
 const MenuItem = styled.button`
@@ -112,7 +148,7 @@ const MenuItem = styled.button`
   background: none;
   font-size: 14px;
   font-weight: 500;
-  color: ${(props) => (props.$danger ? colors.danger : colors.dark)};
+  color: ${(props) => (props.$danger ? DANGER : colors.dark)};
   cursor: pointer;
 `;
 
@@ -125,7 +161,6 @@ const ProfileEditPage = () => {
   const [form, setForm] = useState({
     nickname: mockProfile.nickname,
     intro: mockProfile.intro,
-    email: mockProfile.email,
   });
   const [interests, setInterests] = useState(mockProfile.interests);
   const [photoUrl, setPhotoUrl] = useState(mockProfile.profileImage);
@@ -136,7 +171,7 @@ const ProfileEditPage = () => {
   const nicknameChecked = form.nickname === checkedNickname;
   const canSave = form.nickname.trim() !== '' && (!nicknameChanged || nicknameChecked);
 
-  // 새로 고른 사진의 미리보기 주소는 화면을 떠날 때 정리
+  // 새로 고른 사진의 미리보기 주소는 바뀌거나 화면을 떠날 때 정리
   useEffect(() => {
     return () => {
       if (photoUrl.startsWith('blob:')) URL.revokeObjectURL(photoUrl);
@@ -145,6 +180,8 @@ const ProfileEditPage = () => {
 
   const changeHandler = (e) => {
     const { name, value } = e.target;
+    // 한 줄 소개는 최대 40자
+    if (name === 'intro' && value.length > INTRO_MAX) return;
     setForm({ ...form, [name]: value });
   };
 
@@ -182,11 +219,9 @@ const ProfileEditPage = () => {
     moveUrl('/signin');
   };
 
-  const nicknameMessage = nicknameChanged && nicknameChecked ? '✓ 사용할 수 있는 닉네임이에요' : '';
-
   return (
     <>
-      <TopBar title="프로필 편집" showBack />
+      <MyPageTopBar title="프로필 편집" showBack />
       <Form onSubmit={submitHandler}>
         <PhotoBox>
           <Photo>
@@ -201,22 +236,25 @@ const ProfileEditPage = () => {
           <HiddenFileInput ref={fileInputRef} type="file" accept="image/*" onChange={photoChangeHandler} />
         </PhotoBox>
 
-        <TextInput
-          label="닉네임"
-          name="nickname"
-          value={form.nickname}
-          changeHandler={changeHandler}
-          placeholder="닉네임을 입력해주세요"
-          message={nicknameMessage}
-          messageColor={colors.secondary}
-        >
-          <Button
-            title="중복 확인"
-            variant="inline"
-            onClick={nicknameCheckHandler}
-            disabled={form.nickname.trim() === ''}
-          />
-        </TextInput>
+        <Field>
+          <TextInput
+            label="닉네임"
+            name="nickname"
+            value={form.nickname}
+            changeHandler={changeHandler}
+            placeholder="닉네임을 입력해주세요"
+          >
+            <Button
+              title="중복 확인"
+              variant="inline"
+              onClick={nicknameCheckHandler}
+              disabled={form.nickname.trim() === ''}
+            />
+          </TextInput>
+          {nicknameChanged && nicknameChecked && (
+            <Message $color={colors.secondary}>✓ 사용할 수 있는 닉네임이에요</Message>
+          )}
+        </Field>
 
         <TextInput
           label="한 줄 소개"
@@ -224,11 +262,17 @@ const ProfileEditPage = () => {
           value={form.intro}
           changeHandler={changeHandler}
           placeholder="나를 소개해주세요"
-          maxLength={INTRO_MAX}
-          suffix={`${form.intro.length}/${INTRO_MAX}`}
-        />
+        >
+          <Counter>
+            {form.intro.length}/{INTRO_MAX}
+          </Counter>
+        </TextInput>
 
-        <TextInput label="이메일" name="email" value={form.email} disabled message="이메일은 변경할 수 없어요." />
+        <Field>
+          <Label>이메일</Label>
+          <ReadOnlyBox>{mockProfile.email}</ReadOnlyBox>
+          <Message $color={colors.grey2}>이메일은 변경할 수 없어요.</Message>
+        </Field>
 
         <Section>
           <SectionTitle>

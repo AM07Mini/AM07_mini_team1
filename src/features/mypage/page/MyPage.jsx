@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import SegmentTab from '../../../components/styled/SegmentTab';
 import { colors, PAGE_PADDING } from '../../../components/styled/theme';
 import ProfileCard from '../item/ProfileCard';
 import MyRecipeList from '../list/MyRecipeList';
+import MyPageTopBar from '../ui/MyPageTopBar';
 import { mockBookmarks, mockMyRecipes, mockProfile, recipeCategories } from '../mockData';
 
 const Wrapper = styled.div`
@@ -80,7 +80,7 @@ const MyPage = () => {
 
   return (
     <>
-      <TopBar title="마이 페이지" rightIcon="settings" rightClickHandler={() => moveUrl('/mypage/edit')} />
+      <MyPageTopBar title="마이 페이지" settingHandler={() => moveUrl('/mypage/edit')} />
       <Wrapper>
         <ProfileCard
           profile={profile}

@@ -1,5 +1,6 @@
 import styled from 'styled-components';
-import { colors, radius, shadows } from './theme';
+import { colors, radius } from '../../../components/styled/theme';
+import { RECIPE_CARD_SHADOW } from '../ui/style';
 
 const Wrapper = styled.button`
   display: flex;
@@ -10,7 +11,7 @@ const Wrapper = styled.button`
   border: none;
   border-radius: ${radius.card}px;
   background-color: ${colors.white};
-  box-shadow: ${shadows.recipeCard};
+  box-shadow: ${RECIPE_CARD_SHADOW};
   text-align: left;
   cursor: pointer;
 `;
@@ -51,8 +52,8 @@ const toStars = (level) => '★'.repeat(level) + '☆'.repeat(3 - level);
 
 // 레시피 카드 — 피그마 디자인 시스템 "레시피 카드 · 156 폭 · r16"
 // data: { title, thumbnail, level(1~3), time(분) }
-// 2열 그리드로 놓으려면 부모에 grid-template-columns: repeat(2, 1fr); gap: 16px 15px;
-const RecipeCard = ({ data, onClick }) => (
+// 다른 화면에서도 쓰는 카드라 나중에 공용 정리할 때 components로 옮기기
+const MyRecipeItem = ({ data, onClick }) => (
   <Wrapper type="button" onClick={onClick}>
     <Thumbnail src={data.thumbnail} alt="" />
     <Title>{data.title}</Title>
@@ -63,4 +64,4 @@ const RecipeCard = ({ data, onClick }) => (
   </Wrapper>
 );
 
-export default RecipeCard;
+export default MyRecipeItem;

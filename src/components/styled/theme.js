@@ -15,9 +15,6 @@ export const colors = {
   // Accent
   accent1: '#3DA0A7', // 포인트 강조
   accent2: '#C6E3E5', // 옅은 강조 배경
-  // 화면에서 쓰인 추가 색 (피그마 변수 외)
-  surface: '#F8F9FA', // 옅은 회색 박스 (활동 수치, 계정 메뉴, 수정 불가 입력창)
-  danger: '#DB4545', // 회원 탈퇴 같은 위험한 동작
 };
 
 // 글자 스타일 — 이름은 피그마 타이포그래피 표 그대로
@@ -44,7 +41,6 @@ export const radius = {
 // 그림자 — 피그마 Effect 값
 export const shadows = {
   card: '0 2px 16px rgba(6, 51, 54, 0.1)',
-  recipeCard: '0 4px 16px rgba(10, 38, 51, 0.08)',
   bottomBar: '0 -10px 40px rgba(149, 168, 195, 0.15)',
 };
 
