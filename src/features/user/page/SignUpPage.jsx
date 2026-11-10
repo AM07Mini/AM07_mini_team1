@@ -383,7 +383,7 @@ const SignUpPage = () => {
                 setErrors(prev => ({ ...prev, agree: '' }));
               }}
             />
-            {errors.agree && <Message $error>{errors.agree}</Message>}
+            {errors.agree && (<Message $error role="alert"> {errors.agree} </Message> )}
           </Field>
 
           {notice && <Message role="status">{notice}</Message>}
