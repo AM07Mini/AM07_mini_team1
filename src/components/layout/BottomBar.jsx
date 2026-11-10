@@ -78,6 +78,8 @@ const BottomBar = () => {
     <Tab
       key={tab.path}
       aria-label={tab.title}
+      // 화면 낭독기(스크린 리더)에 지금 있는 탭이라고 알려줌
+      aria-current={location.pathname === tab.path ? 'page' : undefined}
       $active={location.pathname === tab.path}
       onClick={() => moveUrl(tab.path)}
     >
