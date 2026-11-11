@@ -6,7 +6,7 @@ import Text from "../../../components/styled/Text";
 import Chip from "../../../components/styled/Chip";
 import RecipeList from "../list/RecipeList";
 import { colors } from "../../../components/styled/theme";
-import { getRecommendedRecipes } from "../../../api/recipeApi";
+import { getRecommendedRecipes } from "../../../api/recommendApi";
 import { useEffect, useState } from "react";
 
 const toCardData = ({ recipe }) => ({
