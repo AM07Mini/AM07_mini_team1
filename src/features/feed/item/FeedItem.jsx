@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import Card from '../../../components/styled/Card';
 import { colors, radius } from '../../../components/styled/theme';
-import { formatAgo, formatCount, formatDifficulty } from '../feedData';
-import { DEFAULT_AVATAR, DEFAULT_IMAGE } from '../feedMapper';
+import { formatAgo, formatCount, formatDifficulty } from '../feedUtils';
+import { DEFAULT_IMAGE } from '../feedMapper';
+import FeedAvatar from './FeedAvatar';
 
 // 좋아요 빨강 — theme.js에 아직 없어서 피드 안에서만 사용 (팀 합의 후 theme.js로 옮기기)
 const HEART = '#E8545C';
@@ -13,13 +14,6 @@ const Header = styled.div`
   align-items: center;
   gap: 10px;
   padding: 12px 14px 0;
-`;
-
-const Avatar = styled.img`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
 `;
 
 const Name = styled.p`
@@ -43,6 +37,11 @@ const FollowButton = styled.button`
   font-size: 12px;
   font-weight: ${(props) => (props.$following ? 400 : 700)};
   cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
 `;
 
 const Photo = styled.img`
@@ -111,34 +110,34 @@ const StyledLink = styled(Link)`
   text-decoration: none;
 `;
 
-// 서버 이미지 주소가 깨졌을 때 기본 이미지로 (한 번만 바꿔서 무한 반복 방지)
 const fallbackTo = (src) => (event) => {
   if (!event.currentTarget.src.endsWith(src)) event.currentTarget.src = src;
 };
 
-// 피드 카드 — 작성자(프로필·팔로우), 큰 사진, 좋아요·후기 수, 북마크, 레시피 이름·난이도·해시태그
-// 응답에 없는 값(후기 수·난이도·태그)은 그 줄을 숨김
 const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
-  // 사진·제목을 누르면 레시피 상세로 이동
   const linkTo = data.recipeId ? `/recipe/read/${data.recipeId}` : null;
   const wrapLink = (children) => (linkTo ? <StyledLink to={linkTo}>{children}</StyledLink> : children);
 
   return (
     <Card $padding={0} as="article" style={{ overflow: 'hidden' }}>
       <Header>
-        <Avatar src={data.author.avatar} alt="" onError={fallbackTo(DEFAULT_AVATAR)} />
+        <FeedAvatar src={data.author.avatar} size={36} />
         <div>
           <Name>{data.author.name}</Name>
           <When>{formatAgo(data.minutesAgo)}</When>
         </div>
-        <FollowButton
-          type="button"
-          aria-pressed={data.following}
-          $following={data.following}
-          onClick={() => followHandler(data.id)}
-        >
-          {data.following ? '팔로잉' : '팔로우'}
-        </FollowButton>
+        {/* 내 글에는 팔로우 버튼 없음 */}
+        {!data.isMine && (
+          <FollowButton
+            type="button"
+            aria-pressed={data.following}
+            $following={data.following}
+            disabled={data.followDisabled}
+            onClick={() => followHandler(data.id)}
+          >
+            {data.following ? '팔로잉' : '팔로우'}
+          </FollowButton>
+        )}
       </Header>
 
       {wrapLink(<Photo src={data.image} alt={data.title} onError={fallbackTo(DEFAULT_IMAGE)} />)}
