@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../../../api/axios';
@@ -71,29 +71,29 @@ const MyPage = () => {
   const [tab, setTab] = useState('mine');
   const [categoryId, setCategoryId] = useState(null); // null이면 전체
   const [filteredRecipes, setFilteredRecipes] = useState(null); // 분류를 골랐을 때 서버에서 거른 목록
+  // 분류 요청 번호 — 칩을 빠르게 바꿀 때 마지막 요청의 응답만 반영하기 위함
+  const filterRequestRef = useRef(0);
 
   useEffect(() => {
     loadData();
+    loadCategories();
   }, []);
 
-  // 내 정보 · 내 레시피 · 북마크 · 카테고리 불러오기
+  // 내 정보 · 내 레시피 · 북마크 불러오기
   // 서버 응답은 { isSuccess, message, result } 모양이라 실제 데이터는 response.data.result
   const loadData = async () => {
     try {
       const config = { headers: authHeader(), params: { page: 0, size: RECIPE_PAGE_SIZE } };
-      // 네 요청을 동시에 보내고, 모두 성공하면 화면에 반영
-      const [profileResponse, myRecipesResponse, bookmarksResponse, categoriesResponse] = await Promise.all([
+      // 세 요청을 동시에 보내고, 모두 성공하면 화면에 반영
+      const [profileResponse, myRecipesResponse, bookmarksResponse] = await Promise.all([
         api.get('/users/me', { headers: authHeader() }),
         api.get(tabUrls.mine, config),
         api.get(tabUrls.bookmark, config),
-        api.get('/categories', { headers: authHeader() }),
       ]);
 
-      const { defaults = [], mine = [] } = categoriesResponse.data.result ?? {};
       setProfile(profileResponse.data.result);
       setMyRecipes(myRecipesResponse.data.result);
       setBookmarks(bookmarksResponse.data.result);
-      setCategories([...defaults, ...mine]);
     } catch (e) {
       console.error(e);
       if (isAuthError(e)) {
@@ -101,6 +101,17 @@ const MyPage = () => {
       } else {
         setError({ message: e.response?.data?.message ?? '정보를 불러오지 못했어요.' });
       }
+    }
+  };
+
+  // 분류 칩용 카테고리 — 따로 불러와서, 실패해도 페이지는 보이고 칩만 숨김
+  const loadCategories = async () => {
+    try {
+      const response = await api.get('/categories', { headers: authHeader() });
+      const { defaults = [], mine = [] } = response.data.result ?? {};
+      setCategories([...defaults, ...mine]);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -114,6 +125,7 @@ const MyPage = () => {
   ];
 
   const tabChangeHandler = (value) => {
+    filterRequestRef.current += 1; // 진행 중인 분류 요청의 응답은 버림
     setTab(value);
     setCategoryId(null);
     setFilteredRecipes(null);
@@ -121,6 +133,8 @@ const MyPage = () => {
 
   // 분류 칩 선택 — 지금 탭의 목록을 categoryId로 다시 불러오기
   const categorySelectHandler = async (id) => {
+    filterRequestRef.current += 1;
+    const requestNumber = filterRequestRef.current;
     setCategoryId(id);
     if (id === null) {
       setFilteredRecipes(null);
@@ -131,9 +145,15 @@ const MyPage = () => {
         headers: authHeader(),
         params: { categoryId: id, page: 0, size: RECIPE_PAGE_SIZE },
       });
+      // 그사이 다른 칩이나 탭을 눌렀으면 이 응답은 무시
+      if (requestNumber !== filterRequestRef.current) return;
       setFilteredRecipes(response.data.result.content);
     } catch (e) {
       console.error(e);
+      if (requestNumber !== filterRequestRef.current) return;
+      // 실패하면 '전체'로 되돌려 칩과 목록을 맞춤
+      setCategoryId(null);
+      setFilteredRecipes(null);
       window.alert(e.response?.data?.message ?? '목록을 불러오지 못했어요.');
     }
   };

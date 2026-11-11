@@ -160,13 +160,18 @@ const ProfileEditPage = () => {
   const [form, setForm] = useState({ nickname: '', intro: '' });
   const [interestOptions, setInterestOptions] = useState([]); // 고를 수 있는 관심 요리 [{ id, name }]
   const [interestIds, setInterestIds] = useState([]); // 내가 고른 관심 요리 id
+  const [originalInterestIds, setOriginalInterestIds] = useState([]); // 서버에 저장된 관심 요리 id
+  const [interestsLoaded, setInterestsLoaded] = useState(false); // 관심 요리를 모두 불러왔는지
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [nicknameCheck, setNicknameCheck] = useState({ nickname: '', available: false });
   const [saving, setSaving] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false); // 버튼 문구 · 비활성화용
+  const withdrawingRef = useRef(false); // 중복 요청 막기용
 
   useEffect(() => {
     loadProfile();
+    loadInterests();
   }, []);
 
   // 새로 고른 사진의 미리보기 주소는 바뀌거나 화면을 떠날 때 정리
@@ -176,21 +181,13 @@ const ProfileEditPage = () => {
     };
   }, [photoPreview]);
 
-  // 내 정보 · 관심 요리 목록 · 내 관심 요리 불러오기 — 실제 데이터는 response.data.result
+  // 내 정보 불러오기 — 실제 데이터는 response.data.result
   const loadProfile = async () => {
     try {
-      const [meResponse, optionsResponse, myInterestsResponse] = await Promise.all([
-        api.get('/users/me', { headers: authHeader() }),
-        api.get('/interests'),
-        api.get('/users/me/interests', { headers: authHeader() }),
-      ]);
-      const me = meResponse.data.result;
-      const myInterestIds = (myInterestsResponse.data.result ?? []).map((item) => item.id);
-
-      setOriginal({ ...me, intro: me.intro ?? '', interestIds: myInterestIds });
+      const response = await api.get('/users/me', { headers: authHeader() });
+      const me = response.data.result;
+      setOriginal({ ...me, intro: me.intro ?? '' });
       setForm({ nickname: me.nickname, intro: me.intro ?? '' });
-      setInterestOptions(optionsResponse.data.result ?? []);
-      setInterestIds(myInterestIds);
     } catch (e) {
       console.error(e);
       if (isAuthError(e)) {
@@ -201,6 +198,23 @@ const ProfileEditPage = () => {
     }
   };
 
+  // 관심 요리 목록 · 내 관심 요리 — 따로 불러와서, 실패하면 관심 요리 칸만 숨기고 저장도 안 함
+  const loadInterests = async () => {
+    try {
+      const [optionsResponse, myInterestsResponse] = await Promise.all([
+        api.get('/interests'),
+        api.get('/users/me/interests', { headers: authHeader() }),
+      ]);
+      const myInterestIds = (myInterestsResponse.data.result ?? []).map((item) => item.id);
+      setInterestOptions(optionsResponse.data.result ?? []);
+      setInterestIds(myInterestIds);
+      setOriginalInterestIds(myInterestIds);
+      setInterestsLoaded(true);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   // 닉네임은 2~20자, 바꿨다면 중복 확인에서 "사용 가능"을 받아야 저장 가능
   const nicknameLength = form.nickname.trim().length;
   const nicknameLengthOk = nicknameLength >= NICKNAME_MIN && nicknameLength <= NICKNAME_MAX;
@@ -208,8 +222,9 @@ const ProfileEditPage = () => {
   const nicknameChecked = nicknameCheck.nickname === form.nickname;
   const nicknameOk = !nicknameChanged || (nicknameChecked && nicknameCheck.available);
   const introChanged = original !== null && form.intro !== original.intro;
-  const interestsChanged = original !== null && !sameIds(interestIds, original.interestIds);
-  const canSave = nicknameLengthOk && nicknameOk && !saving;
+  const interestsChanged = interestsLoaded && !sameIds(interestIds, originalInterestIds);
+  // 닉네임 길이는 바꿨을 때만 검사 (원래 닉네임 그대로면 소개 · 관심 요리는 저장 가능)
+  const canSave = (!nicknameChanged || nicknameLengthOk) && nicknameOk && !saving;
 
   const changeHandler = (e) => {
     const { name, value } = e.target;
@@ -288,7 +303,12 @@ const ProfileEditPage = () => {
   };
 
   const withdrawHandler = async () => {
+    // 탈퇴 요청 중에는 다시 누르지 못하게
+    // state는 화면이 다시 그려져야 바뀌어서, 아주 빠른 두 번 클릭은 ref로 막음
+    if (withdrawingRef.current) return;
     if (!window.confirm('정말 탈퇴할까요? 기록한 레시피가 모두 사라져요.')) return;
+    withdrawingRef.current = true;
+    setWithdrawing(true);
     try {
       await api.delete('/users/me', { headers: authHeader() });
       clearTokens();
@@ -297,6 +317,9 @@ const ProfileEditPage = () => {
     } catch (e) {
       console.error(e);
       window.alert(e.response?.data?.message ?? '탈퇴하지 못했어요. 다시 시도해주세요.');
+    } finally {
+      withdrawingRef.current = false;
+      setWithdrawing(false);
     }
   };
 
@@ -376,22 +399,24 @@ const ProfileEditPage = () => {
           <Message $color={colors.grey2}>이메일은 변경할 수 없어요.</Message>
         </Field>
 
-        <Section>
-          <SectionTitle>
-            <Label>관심 요리</Label>
-            <Hint>피드 추천에 반영돼요</Hint>
-          </SectionTitle>
-          <ChipRow>
-            {interestOptions.map((item) => (
-              <Chip
-                key={item.id}
-                title={item.name}
-                selected={interestIds.includes(item.id)}
-                onClick={() => interestToggleHandler(item.id)}
-              />
-            ))}
-          </ChipRow>
-        </Section>
+        {interestsLoaded && (
+          <Section>
+            <SectionTitle>
+              <Label>관심 요리</Label>
+              <Hint>피드 추천에 반영돼요</Hint>
+            </SectionTitle>
+            <ChipRow>
+              {interestOptions.map((item) => (
+                <Chip
+                  key={item.id}
+                  title={item.name}
+                  selected={interestIds.includes(item.id)}
+                  onClick={() => interestToggleHandler(item.id)}
+                />
+              ))}
+            </ChipRow>
+          </Section>
+        )}
 
         <Menu>
           <MenuItem type="button" onClick={() => moveUrl('/mypage/password')}>
@@ -402,8 +427,8 @@ const ProfileEditPage = () => {
             로그아웃
             <img src="/icons/chevron-right.svg" alt="" />
           </MenuItem>
-          <MenuItem type="button" $danger onClick={withdrawHandler}>
-            회원 탈퇴
+          <MenuItem type="button" $danger onClick={withdrawHandler} disabled={withdrawing}>
+            {withdrawing ? '탈퇴하는 중…' : '회원 탈퇴'}
             <img src="/icons/chevron-right.svg" alt="" />
           </MenuItem>
         </Menu>
