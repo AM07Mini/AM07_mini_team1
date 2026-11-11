@@ -6,7 +6,8 @@ import { colors } from '../../../components/styled/theme';
 import SearchFilterList from '../list/SearchFilterList';
 import SearchResultList from '../list/SearchResultList';
 import { searchFilters } from '../mockData';
-import { fetchSearchRecipes } from '../api/searchApi';
+import { fetchSearchFilterCatalogs, fetchSearchRecipes } from '../api/searchApi';
+import { useAuth } from '../../../utils/context/AuthContext';
 
 const Page = styled.div`
   min-height: 100%;
@@ -42,18 +43,78 @@ const Lead = styled.p`
   line-height: 1.5;
 `;
 
-const FilterNotice = styled.p`
-  margin: -12px 0;
-  color: ${colors.grey1};
-  font-size: 12px;
-`;
-
 const SearchPage = () => {
+  const { isLoggedIn } = useAuth();
   const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState(searchFilters);
+  const [selected, setSelected] = useState({
+    flavorIds: [],
+    foodTypeId: [],
+    categoryIds: [],
+    difficulty: [],
+    maxCookingMinutes: [],
+  });
   const [recipes, setRecipes] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadFilters = async () => {
+      try {
+        const catalogFilters = await fetchSearchFilterCatalogs(
+          isLoggedIn,
+          controller.signal,
+        );
+        if (!controller.signal.aborted) {
+          setFilters([...catalogFilters, ...searchFilters]);
+        }
+      } catch (filterError) {
+        if (controller.signal.aborted) return;
+        setFilters([
+          {
+            key: 'flavorIds',
+            title: '맛',
+            items: [],
+            message: filterError.message || '맛 필터를 불러오지 못했습니다.',
+          },
+          {
+            key: 'foodTypeId',
+            title: '음식 종류',
+            items: [],
+            message: '음식 종류를 불러오지 못했습니다.',
+          },
+          {
+            key: 'categoryIds',
+            title: '카테고리',
+            items: [],
+            message: isLoggedIn
+              ? '카테고리를 불러오지 못했습니다.'
+              : '카테고리 필터는 로그인 후 사용할 수 있습니다.',
+          },
+          ...searchFilters,
+        ]);
+      }
+    };
+
+    loadFilters();
+    return () => controller.abort();
+  }, [isLoggedIn]);
+
+  const toggleFilter = (key, value, selectionMode) => {
+    setSelected((current) => {
+      const currentValues = current[key];
+      const nextValues = currentValues.includes(value)
+        ? currentValues.filter((item) => item !== value)
+        : selectionMode === 'single'
+          ? [value]
+          : [...currentValues, value];
+
+      return { ...current, [key]: nextValues };
+    });
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -62,7 +123,7 @@ const SearchPage = () => {
 
     const timeoutId = setTimeout(async () => {
       try {
-        const result = await fetchSearchRecipes(query, controller.signal);
+        const result = await fetchSearchRecipes(query, selected, controller.signal);
         setRecipes(result.recipes);
         setTotalElements(result.totalElements);
       } catch (requestError) {
@@ -83,7 +144,7 @@ const SearchPage = () => {
       clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [query]);
+  }, [query, selected]);
 
   return (
     <Page>
@@ -98,8 +159,7 @@ const SearchPage = () => {
           changeHandler={(event) => setQuery(event.target.value)}
           placeholder="레시피 이름, 해시태그로 검색 (예: #매콤)"
         />
-        <FilterNotice>필터 검색은 다음 단계에서 연결할 예정입니다.</FilterNotice>
-        <SearchFilterList filters={searchFilters} disabled />
+        <SearchFilterList filters={filters} selected={selected} onToggle={toggleFilter} />
         <SearchResultList
           recipes={recipes}
           totalElements={totalElements}

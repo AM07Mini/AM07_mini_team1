@@ -6,14 +6,99 @@ const difficultyLabels = {
   HARD: '어려움',
 };
 
-export const fetchSearchRecipes = async (keyword, signal) => {
+const getResult = async (path, signal) => {
+  const { data } = await api.get(path, { signal });
+  if (!data?.isSuccess) {
+    throw new Error(data?.message || '검색 필터를 불러오지 못했습니다.');
+  }
+  return data.result;
+};
+
+const makeFilter = (key, title, items, selectionMode = 'multiple', message = '') => ({
+  key,
+  title,
+  selectionMode,
+  items,
+  message,
+});
+
+export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
+  const [flavorsOutcome, foodTypesOutcome, categoriesOutcome] = await Promise.allSettled([
+    getResult('/flavors/catalog', signal),
+    getResult('/food-types', signal),
+    isLoggedIn ? getResult('/categories', signal) : Promise.resolve(null),
+  ]);
+
+  if (signal.aborted) return [];
+
+  const flavors =
+    flavorsOutcome.status === 'fulfilled'
+      ? flavorsOutcome.value?.defaults?.map(({ id, name }) => ({
+          value: id,
+          label: name === '고소맛' ? '고소한 맛' : name,
+        })) || []
+      : [];
+  const foodTypes =
+    foodTypesOutcome.status === 'fulfilled'
+      ? foodTypesOutcome.value?.map(({ id, name }) => ({ value: id, label: name })) || []
+      : [];
+  const categories =
+    categoriesOutcome.status === 'fulfilled'
+      ? [
+          ...(categoriesOutcome.value?.defaults || []),
+          ...(categoriesOutcome.value?.mine || []),
+        ].map(({ id, name }) => ({ value: id, label: name }))
+      : [];
+
+  return [
+    makeFilter(
+      'flavorIds',
+      '맛',
+      flavors,
+      'multiple',
+      flavorsOutcome.status === 'rejected' ? '맛 필터를 불러오지 못했습니다.' : '',
+    ),
+    makeFilter(
+      'foodTypeId',
+      '음식 종류',
+      foodTypes,
+      'single',
+      foodTypesOutcome.status === 'rejected' ? '음식 종류를 불러오지 못했습니다.' : '',
+    ),
+    makeFilter(
+      'categoryIds',
+      '카테고리',
+      categories,
+      'multiple',
+      !isLoggedIn
+        ? '카테고리 필터는 로그인 후 사용할 수 있습니다.'
+        : categoriesOutcome.status === 'rejected'
+          ? '카테고리를 불러오지 못했습니다.'
+          : '',
+    ),
+  ];
+};
+
+export const fetchSearchRecipes = async (keyword, filters, signal) => {
+  const params = {
+    scope: 'PUBLIC',
+    page: 0,
+    size: 20,
+  };
+  const normalizedKeyword = keyword.trim();
+
+  if (normalizedKeyword) params.keyword = normalizedKeyword;
+  if (filters.flavorIds.length) params.flavorIds = filters.flavorIds;
+  if (filters.foodTypeId.length) params.foodTypeId = filters.foodTypeId[0];
+  if (filters.categoryIds.length) params.categoryIds = filters.categoryIds;
+  if (filters.difficulty.length) params.difficulty = filters.difficulty[0];
+  if (filters.maxCookingMinutes.length) {
+    params.maxCookingMinutes = filters.maxCookingMinutes[0];
+  }
+
   const { data } = await api.get('/recipes/search', {
-    params: {
-      scope: 'PUBLIC',
-      page: 0,
-      size: 20,
-      ...(keyword.trim() ? { keyword: keyword.trim() } : {}),
-    },
+    params,
+    paramsSerializer: { indexes: null },
     signal,
   });
 
