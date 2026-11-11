@@ -18,6 +18,7 @@ import IngredientSelectPage from './features/ingredient/page/IngredientSelectPag
 import RecipeRecommendPage from './features/recipe/page/RecipeRecommendPage';
 import RecipeReadPage from './features/recipe/page/RecipeReadPage';
 import RecipeWritePage from './features/recipe/page/RecipeWritePage';
+import RecipeReviewPage from './features/recipe/page/RecipeReviewPage';
 
 // search
 import SearchPage from './features/search/page/SearchPage';
@@ -26,9 +27,11 @@ import SearchPage from './features/search/page/SearchPage';
 import MyPage from './features/mypage/page/MyPage';
 import ProfileEditPage from './features/mypage/page/ProfileEditPage';
 import PasswordChangePage from './features/mypage/page/PasswordChangePage';
+import FollowListPage from './features/mypage/page/FollowListPage';
 
 // feed
 import FeedPage from './features/feed/page/FeedPage';
+import TrendingPage from './features/feed/page/TrendingPage';
 
 // dev
 import DesignSystemPage from './features/dev/page/DesignSystemPage';
@@ -94,6 +97,7 @@ const App = () => (
             <Route path="/recipe/recommend" element={<RecipeRecommendPage />} />
             <Route path="/recipe/write" element={<RecipeWritePage />} />
             <Route path="/recipe/read/:id" element={<RecipeReadPage />} />
+            <Route path="/recipe/:id/reviews" element={<RecipeReviewPage />} />
 
             {/* search */}
             <Route path="/search" element={<SearchPage />} />
@@ -102,9 +106,11 @@ const App = () => (
             <Route path="/mypage" element={<MyPage />} />
             <Route path="/mypage/edit" element={<ProfileEditPage />} />
             <Route path="/mypage/password" element={<PasswordChangePage />} />
+            <Route path="/mypage/follow" element={<FollowListPage />} />
 
             {/* feed */}
             <Route path="/feed" element={<FeedPage />} />
+            <Route path="/feed/trending" element={<TrendingPage />} />
 
             {/* dev */}
             <Route path="/design-system" element={<DesignSystemPage />} />

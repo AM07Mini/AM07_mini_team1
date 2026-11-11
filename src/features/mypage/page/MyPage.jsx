@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../../../api/axios';
 import Button from '../../../components/styled/Button';
@@ -61,14 +61,17 @@ const emptyPage = { content: [], totalElements: 0 };
 const tabUrls = { mine: '/recipes/me', bookmark: '/recipes/bookmarks' };
 
 // 06 마이 페이지 — 프로필, 내 레시피 / 북마크 탭, 분류 필터, 레시피 2열 그리드
+// 주소로 처음 보여줄 탭을 정할 수 있음: /mypage?tab=bookmark → 북마크 탭 (없으면 내가 기록한)
 const MyPage = () => {
   const moveUrl = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [profile, setProfile] = useState(null);
   const [myRecipes, setMyRecipes] = useState(emptyPage);
   const [bookmarks, setBookmarks] = useState(emptyPage);
   const [categories, setCategories] = useState([]); // 기본 카테고리 + 내 카테고리 [{ id, name }]
   const [error, setError] = useState(null); // { message, needLogin }
-  const [tab, setTab] = useState('mine');
+  // 선택한 탭은 주소(?tab=)에서 읽음 — 하단바로 /mypage에 다시 오면 '내가 기록한'으로 돌아감
+  const tab = searchParams.get('tab') === 'bookmark' ? 'bookmark' : 'mine';
   const [categoryId, setCategoryId] = useState(null); // null이면 전체
   const [filteredRecipes, setFilteredRecipes] = useState(null); // 분류를 골랐을 때 서버에서 거른 목록
   // 분류 요청 번호 — 칩을 빠르게 바꿀 때 마지막 요청의 응답만 반영하기 위함
@@ -78,6 +81,13 @@ const MyPage = () => {
     loadData();
     loadCategories();
   }, []);
+
+  // 탭이 바뀌면 (탭 버튼이든 주소든) 분류 선택은 '전체'로
+  useEffect(() => {
+    filterRequestRef.current += 1; // 진행 중인 분류 요청의 응답은 버림
+    setCategoryId(null);
+    setFilteredRecipes(null);
+  }, [tab]);
 
   // 내 정보 · 내 레시피 · 북마크 불러오기
   // 서버 응답은 { isSuccess, message, result } 모양이라 실제 데이터는 response.data.result
@@ -124,11 +134,9 @@ const MyPage = () => {
     { value: 'bookmark', title: `북마크 ${bookmarks.totalElements}` },
   ];
 
+  // 탭을 누르면 주소만 바꿈 (replace: 뒤로 가기 기록이 탭마다 쌓이지 않게)
   const tabChangeHandler = (value) => {
-    filterRequestRef.current += 1; // 진행 중인 분류 요청의 응답은 버림
-    setTab(value);
-    setCategoryId(null);
-    setFilteredRecipes(null);
+    setSearchParams(value === 'bookmark' ? { tab: 'bookmark' } : {}, { replace: true });
   };
 
   // 분류 칩 선택 — 지금 탭의 목록을 categoryId로 다시 불러오기
@@ -163,7 +171,7 @@ const MyPage = () => {
 
     return (
       <Wrapper>
-        <ProfileCard profile={profile} editHandler={() => moveUrl('/mypage/edit')} />
+<ProfileCard profile={profile} editHandler={() => moveUrl('/mypage/edit')} />
 
         <Header>
           <TitleBox>

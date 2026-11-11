@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import SearchInput from "../../../components/styled/SearchInput";
 import TopBar from "../../../components/layout/TopBar";
-import IngredientItem from "../item/IngredientItem";
 import Button from "../../../components/styled/Button";
 import Text from "../../../components/styled/Text";
 import { colors, radius } from "../../../components/styled/theme";
@@ -12,21 +11,45 @@ import IngredientList from "../list/IngredientList";
 // 목데이터
 const DEFAULT_INGREDIENTS = [
   "달걀", "식빵", "아보카도", "토마토", "치즈", "양파",
-  "브로콜리", "감자", "당근", "우유", "닭고기", "쌀",
+  "브로콜리", "감자", "당근", "우유", "닭고기", "쌀"
 ];
-const DEFAULT_SELECTED = ["달걀", "식빵", "아보카도"];
 
 const Screen = styled.main`
   display: flex;
   flex-direction: column;
   gap: 20px;
   padding: 24px;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+`;
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100dvh;
+  min-height:0;
+  overflow: hidden;
+`;
+
+
+const ListArea = styled.div`
+  flex: 1;
+  min-heihgt: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+`;
+
+const ButtonArea = styled.div`
+  flex-shrink: 0;
+  margin-top: auto;
 `;
 
 const Intro = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 `;
 
 const Row = styled.div`
@@ -54,7 +77,7 @@ const AddButton = styled.button`
 
 const IngredientSelectPage = () => {
   const [ingredients, setIngredients] = useState(DEFAULT_INGREDIENTS);
-  const [selected, setSelected] = useState(DEFAULT_SELECTED);
+  const [selected, setSelected] = useState([]);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
 
@@ -83,7 +106,7 @@ const IngredientSelectPage = () => {
   };
 
   return (
-    <div>
+    <PageWrapper>
       <TopBar title="홈" />
       <Screen>
         <Intro>
@@ -111,7 +134,9 @@ const IngredientSelectPage = () => {
           <Text variant="label" color={colors.primary}>{selected.length}개 선택</Text>
         </Row>
 
-        <IngredientList ingredients={filtered} selected={selected} onToggle={toggle} />
+        <ListArea>
+          <IngredientList ingredients={filtered} selected={selected} onToggle={toggle} />
+        </ListArea>
 
         <SelectedBox>
           <Text variant="caption" color={colors.grey1}>선택한 재료</Text>
@@ -120,13 +145,15 @@ const IngredientSelectPage = () => {
           </Text>
         </SelectedBox>
 
-        <Button
-          title="이 재료로 요리 찾기"
-          onClick={goRecommend}
-          disabled={selected.length === 0}
-        />
+        <ButtonArea>
+          <Button
+            title="이 재료로 요리 찾기"
+            onClick={goRecommend}
+            disabled={selected.length === 0}
+          />
+        </ButtonArea>
       </Screen>
-    </div>
+    </PageWrapper>
   );
 };
 
