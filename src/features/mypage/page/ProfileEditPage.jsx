@@ -227,6 +227,8 @@ const ProfileEditPage = () => {
   const canSave = (!nicknameChanged || nicknameLengthOk) && nicknameOk && !saving;
 
   const changeHandler = (e) => {
+    // 저장 중에 바꾼 값은 저장되지 않으니 막기
+    if (saving) return;
     const { name, value } = e.target;
     // 한 줄 소개는 최대 40자
     if (name === 'intro' && value.length > INTRO_MAX) return;
@@ -251,6 +253,7 @@ const ProfileEditPage = () => {
   };
 
   const interestToggleHandler = (id) => {
+    if (saving) return;
     setInterestIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
@@ -266,6 +269,8 @@ const ProfileEditPage = () => {
         await api.post('/users/me/profile-image', formData, {
           headers: { ...authHeader(), 'Content-Type': 'multipart/form-data' },
         });
+        // 다음 단계에서 실패해 다시 저장할 때 같은 사진을 또 올리지 않도록
+        setPhotoFile(null);
       }
       // 2) 닉네임 · 한 줄 소개 중 바뀐 것만 보내기 (안 보낸 값은 서버에서 그대로 유지)
       if (nicknameChanged || introChanged) {
@@ -273,10 +278,13 @@ const ProfileEditPage = () => {
         if (nicknameChanged) body.nickname = form.nickname;
         if (introChanged) body.intro = form.intro;
         await api.patch('/users/me', body, { headers: authHeader() });
+        // 저장된 값을 새 기준으로 — 다음 단계가 실패해 다시 저장할 때 비교가 맞도록
+        setOriginal((prev) => ({ ...prev, ...body }));
       }
       // 3) 관심 요리가 바뀌었으면 통째로 교체
       if (interestsChanged) {
         await api.put('/users/me/interests', { interestIds }, { headers: authHeader() });
+        setOriginalInterestIds(interestIds);
       }
       moveUrl('/mypage');
     } catch (err) {

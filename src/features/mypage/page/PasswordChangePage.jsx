@@ -75,9 +75,9 @@ const PasswordChangePage = () => {
   // 새 비밀번호 안내 — 입력 전에는 규칙, 규칙에 안 맞으면 빨간색
   const renderNewPasswordMessage = () => {
     if (form.newPassword === '' || newPasswordOk) {
-      return <Message $color={colors.grey2}>영문과 숫자를 포함해 8~20자로 입력해주세요</Message>;
+      return <Message $color={colors.grey2}>영문·숫자 포함 8~20자 (특수문자는 !@#$%^&*만 가능)</Message>;
     }
-    return <Message $color={DANGER}>영문과 숫자를 포함해 8~20자로 입력해주세요</Message>;
+    return <Message $color={DANGER}>영문·숫자 포함 8~20자 (특수문자는 !@#$%^&*만 가능)</Message>;
   };
 
   return (
