@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import Button from '../../../components/styled/Button';
 import { colors, radius } from '../../../components/styled/theme';
+import Avatar from '../ui/Avatar';
 import { SURFACE } from '../ui/style';
 
 const Wrapper = styled.section`
@@ -17,14 +18,6 @@ const Info = styled.div`
   display: flex;
   align-items: center;
   gap: 14px;
-`;
-
-const Avatar = styled.img`
-  flex-shrink: 0;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  object-fit: cover;
 `;
 
 const NameBox = styled.div`
@@ -73,9 +66,9 @@ const StatName = styled.span`
 `;
 
 // 프로필 카드 — 사진·닉네임·소개, 레시피·팔로워·팔로잉 수, 프로필 편집 버튼
-const ProfileCard = ({ profile, recipeCount, editHandler }) => {
+const ProfileCard = ({ profile, editHandler }) => {
   const stats = [
-    { name: '레시피', value: recipeCount },
+    { name: '레시피', value: profile.recipeCount },
     { name: '팔로워', value: profile.followerCount },
     { name: '팔로잉', value: profile.followingCount },
   ];
@@ -83,10 +76,11 @@ const ProfileCard = ({ profile, recipeCount, editHandler }) => {
   return (
     <Wrapper>
       <Info>
-        <Avatar src={profile.profileImage} alt="" />
+        <Avatar src={profile.profileImageUrl} size={64} />
         <NameBox>
           <Nickname>{profile.nickname}</Nickname>
-          <Intro>{profile.intro}</Intro>
+          {/* 한 줄 소개는 아직 API에 없음 — 생기면 표시 */}
+          {profile.intro && <Intro>{profile.intro}</Intro>}
         </NameBox>
       </Info>
       <Stats>
