@@ -64,6 +64,8 @@ const TextInput = ({
   changeHandler,
   disabled,
   placeholder,
+  invalid,
+  describedBy,
   children,
 }) => (
   <Wrapper>
@@ -78,6 +80,8 @@ const TextInput = ({
           onChange={changeHandler}
           disabled={disabled}
           placeholder={placeholder}
+          aria-invalid={invalid}
+          aria-describedby={describedBy}
         />
       ) : (
         <StyledInput
@@ -88,6 +92,8 @@ const TextInput = ({
           onChange={changeHandler}
           disabled={disabled}
           placeholder={placeholder}
+          aria-invalid={invalid}
+          aria-describedby={describedBy}
         />
       )}
       {children}
