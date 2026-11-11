@@ -60,17 +60,33 @@ const FollowListPage = () => {
     loadData();
   }, []);
 
+  // 목록 하나를 끝까지 불러오기 — 닉네임 검색을 전체에서 하려고 페이지를 이어서 받음
+  const loadAllPages = async (url) => {
+    const content = [];
+    let page = 0;
+    let totalPages = 1;
+    let totalElements = 0;
+    while (page < totalPages) {
+      const response = await api.get(url, { params: { page, size: FOLLOW_PAGE_SIZE } });
+      const result = response.data.result;
+      content.push(...result.content);
+      totalPages = result.totalPages;
+      totalElements = result.totalElements;
+      page += 1;
+    }
+    return { content, totalElements };
+  };
+
   // 내 닉네임 · 팔로워 · 팔로잉 불러오기 — 실제 데이터는 response.data.result
   const loadData = async () => {
     try {
-      const config = { params: { page: 0, size: FOLLOW_PAGE_SIZE } };
-      const [meResponse, followersResponse, followingResponse] = await Promise.all([
+      const [meResponse, followers, following] = await Promise.all([
         api.get('/users/me'),
-        api.get(tabInfo.followers.url, config),
-        api.get(tabInfo.following.url, config),
+        loadAllPages(tabInfo.followers.url),
+        loadAllPages(tabInfo.following.url),
       ]);
       setNickname(meResponse.data.result.nickname);
-      setLists({ followers: followersResponse.data.result, following: followingResponse.data.result });
+      setLists({ followers, following });
       setLoaded(true);
     } catch (e) {
       console.error(e);
@@ -88,12 +104,19 @@ const FollowListPage = () => {
   };
 
   // 같은 사람이 두 목록에 다 있을 수 있어서 양쪽 다 바꿈
+  // 팔로잉 수도 ±1 (목록에서 사람은 그대로 두고 숫자만 바뀜)
   const setFollowed = (userId, followed) => {
     const update = (page) => ({
       ...page,
       content: page.content.map((user) => (user.id === userId ? { ...user, followedByMe: followed } : user)),
     });
-    setLists((prev) => ({ followers: update(prev.followers), following: update(prev.following) }));
+    setLists((prev) => {
+      const following = update(prev.following);
+      return {
+        followers: update(prev.followers),
+        following: { ...following, totalElements: following.totalElements + (followed ? 1 : -1) },
+      };
+    });
   };
 
   // 팔로잉 버튼 → 언팔로우 / 팔로우 버튼 → 팔로우
@@ -130,7 +153,13 @@ const FollowListPage = () => {
       <Wrapper>
         <Tabs>
           {Object.entries(tabInfo).map(([value, info]) => (
-            <Tab key={value} type="button" $selected={tab === value} onClick={() => tabChangeHandler(value)}>
+            <Tab
+              key={value}
+              type="button"
+              $selected={tab === value}
+              aria-pressed={tab === value}
+              onClick={() => tabChangeHandler(value)}
+            >
               {info.title} {lists[value].totalElements}
             </Tab>
           ))}
