@@ -8,9 +8,8 @@ import Text from "../../../components/styled/Text";
 import { colors, radius } from "../../../components/styled/theme";
 import IngredientList from "../list/IngredientList";
 
-// 목데이터
 const DEFAULT_INGREDIENTS = [
-  "달걀", "식빵", "아보카도", "토마토", "치즈", "양파",
+  "계란", "식빵", "아보카도", "토마토", "치즈", "양파",
   "브로콜리", "감자", "당근", "우유", "닭고기", "쌀"
 ];
 
