@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { UNSAFE_getTurboStreamSingleFetchDataStrategy, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
