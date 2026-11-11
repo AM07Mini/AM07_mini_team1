@@ -103,9 +103,17 @@ const SearchPage = () => {
     return () => controller.abort();
   }, [isLoggedIn]);
 
-  const toggleFilter = (key, value, selectionMode) => {
+  const toggleFilter = (key, value, selectionMode, maxSelections) => {
     setSelected((current) => {
       const currentValues = current[key];
+      if (
+        !currentValues.includes(value) &&
+        maxSelections &&
+        currentValues.length >= maxSelections
+      ) {
+        return current;
+      }
+
       const nextValues = currentValues.includes(value)
         ? currentValues.filter((item) => item !== value)
         : selectionMode === 'single'

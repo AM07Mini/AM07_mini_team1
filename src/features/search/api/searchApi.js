@@ -14,12 +14,20 @@ const getResult = async (path, signal) => {
   return data.result;
 };
 
-const makeFilter = (key, title, items, selectionMode = 'multiple', message = '') => ({
+const makeFilter = (
+  key,
+  title,
+  items,
+  selectionMode = 'multiple',
+  message = '',
+  maxSelections,
+) => ({
   key,
   title,
   selectionMode,
   items,
   message,
+  maxSelections,
 });
 
 export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
@@ -57,6 +65,7 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
       flavors,
       'multiple',
       flavorsOutcome.status === 'rejected' ? '맛 필터를 불러오지 못했습니다.' : '',
+      2,
     ),
     makeFilter(
       'foodTypeId',

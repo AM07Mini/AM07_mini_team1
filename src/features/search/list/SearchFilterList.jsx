@@ -23,12 +23,15 @@ const Chips = styled.div`
 
 const SearchFilterList = ({ filters, selected = {}, onToggle, disabled = false }) => (
   <>
-    {filters.map(({ key, title, items, selectionMode, message }) => (
+    {filters.map(({ key, title, items, selectionMode, message, maxSelections }) => (
       <FilterGroup key={key} aria-label={title}>
         <FilterTitle>{title}</FilterTitle>
+        {maxSelections && <FilterMessage>최대 {maxSelections}개까지 선택할 수 있어요.</FilterMessage>}
         <Chips role="group" aria-label={`${title} 필터`}>
           {items.map((item) => {
             const isSelected = selected[key]?.includes(item.value) ?? false;
+            const selectionLimitReached =
+              maxSelections && (selected[key]?.length ?? 0) >= maxSelections;
 
             return (
               <Chip
@@ -36,8 +39,16 @@ const SearchFilterList = ({ filters, selected = {}, onToggle, disabled = false }
                 title={item.label}
                 selected={isSelected}
                 aria-pressed={isSelected}
-                onClick={disabled ? undefined : () => onToggle?.(key, item.value, selectionMode)}
-                disabled={disabled || items.length === 0}
+                onClick={
+                  disabled
+                    ? undefined
+                    : () => onToggle?.(key, item.value, selectionMode, maxSelections)
+                }
+                disabled={
+                  disabled ||
+                  items.length === 0 ||
+                  (selectionLimitReached && !isSelected)
+                }
               />
             );
           })}
