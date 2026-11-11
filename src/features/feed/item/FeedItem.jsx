@@ -37,6 +37,11 @@ const FollowButton = styled.button`
   font-size: 12px;
   font-weight: ${(props) => (props.$following ? 400 : 700)};
   cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
 `;
 
 const Photo = styled.img`
@@ -127,6 +132,7 @@ const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
             type="button"
             aria-pressed={data.following}
             $following={data.following}
+            disabled={data.followDisabled}
             onClick={() => followHandler(data.id)}
           >
             {data.following ? '팔로잉' : '팔로우'}

@@ -44,9 +44,9 @@ const TrendingSection = ({ recipes, status }) => {
           <Text as="h3" variant="sectionTitle">
             지금 유행하는 레시피
           </Text>
-          {/* TODO(디자인/백엔드): "이번 주" 기간 필터 API 없음 — 지금은 전체 좋아요순 */}
+          {/* TODO(디자인/백엔드): "이번 주" 기간 필터 API 생기면 문구 변경 — 지금은 전체 좋아요순 */}
           <Text variant="caption" color={colors.grey1}>
-            이번 주 좋아요가 가장 많이 늘었어요
+            좋아요를 가장 많이 받았어요
           </Text>
         </div>
         <MoreLink to="/feed/trending">더보기</MoreLink>

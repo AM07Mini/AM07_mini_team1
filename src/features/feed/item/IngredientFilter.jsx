@@ -27,6 +27,10 @@ const FilterBox = styled.label`
 
 const Switch = styled.span`
   position: relative;
+  &:focus-within {
+    outline: 2px solid ${colors.primary};
+    outline-offset: 3px;
+  }
   flex-shrink: 0;
   width: 44px;
   height: 26px;

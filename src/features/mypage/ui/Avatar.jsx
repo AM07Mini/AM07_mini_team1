@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import styled from 'styled-components';
 import Icon from '../../../components/styled/Icon';
 import { colors } from '../../../components/styled/theme';
@@ -23,14 +24,17 @@ const Empty = styled.div`
   color: ${colors.grey2};
 `;
 
-// 프로필 사진 — src가 없으면 기본 모양
-const Avatar = ({ src, size }) =>
-  src ? (
-    <Image src={src} alt="프로필 사진" $size={size} />
+// 프로필 사진 — src가 없거나 이미지를 못 불러오면 기본 모양
+const Avatar = ({ src, size }) => {
+  // 실패한 주소를 기억 — src 가 바뀌면 다시 시도
+  const [failedSrc, setFailedSrc] = useState(null);
+  return src && src !== failedSrc ? (
+    <Image src={src} alt="프로필 사진" $size={size} onError={() => setFailedSrc(src)} />
   ) : (
     <Empty $size={size} aria-label="프로필 사진 없음">
       <Icon name="user" size={size / 2} />
     </Empty>
   );
+};
 
 export default Avatar;

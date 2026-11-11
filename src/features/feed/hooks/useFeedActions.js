@@ -5,7 +5,7 @@ import { useAuth } from '../../../utils/context/AuthContext';
 
 // 피드 카드의 좋아요 · 북마크 · 팔로우 버튼
 // 낙관적 업데이트: 화면 먼저 바꾸고 API 호출 → 실패하면 되돌림
-const useFeedActions = ({ feeds, setFeeds, setTrending, refreshTrendingSoon, isFollowing, setFollowOverride }) => {
+const useFeedActions = ({ feeds, setFeeds, setTrending, refreshTrendingSoon, follow }) => {
   const { isLoggedIn } = useAuth();
   const navigate = useNavigate();
 
@@ -82,10 +82,17 @@ const useFeedActions = ({ feeds, setFeeds, setTrending, refreshTrendingSoon, isF
     const item = findFeed(id);
     if (!item?.authorId) return;
     const { authorId } = item;
-    const next = !isFollowing(item);
+    // 팔로잉 목록을 아직 못 불러왔으면 누르지 않음 — 불러오기 실패 상태면 다시 불러옴
+    if (!follow.followReady) {
+      if (follow.followStatus === 'error') follow.retry();
+      return;
+    }
+    const next = !follow.isFollowing(item);
+    const previous = follow.getFollowOverride(authorId);
     runToggle(
       `follow-${authorId}`,
-      (forward) => setFollowOverride(authorId, forward ? next : !next),
+      (forward) =>
+        forward ? follow.setFollowOverride(authorId, next) : follow.restoreFollowOverride(authorId, previous),
       () => setFollow(authorId, next),
     );
   };

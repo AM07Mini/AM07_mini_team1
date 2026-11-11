@@ -46,14 +46,14 @@ const FeedPage = () => {
   const list = usePagedList(fetchPage, { enabled: !needLogin });
 
   const trending = useTrending();
-  const { isFollowing, setFollowOverride } = useFollow(isLoggedIn);
+  const follow = useFollow(isLoggedIn);
+  const { isFollowing } = follow;
   const actions = useFeedActions({
     feeds: list.items,
     setFeeds: list.setItems,
     setTrending: trending.setTrending,
     refreshTrendingSoon: trending.refreshTrendingSoon,
-    isFollowing,
-    setFollowOverride,
+    follow,
   });
 
   // 화면에 그릴 카드 — 팔로우 상태와 "내 글인지"를 붙임 (내 글이면 팔로우 버튼 숨김)
@@ -61,6 +61,7 @@ const FeedPage = () => {
   const viewFeeds = list.items.map((item) => ({
     ...item,
     following: isFollowing(item),
+    followDisabled: follow.followStatus === 'loading',
     isMine: myId != null && item.authorId === myId,
   }));
 

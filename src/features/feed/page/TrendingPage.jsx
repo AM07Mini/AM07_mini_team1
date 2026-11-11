@@ -37,7 +37,7 @@ const sortTabs = [
 
 // 기간api없음. 전체 기간 좋아요순
 const captionBySort = {
-  LIKES_DESC: '이번 주 좋아요가 가장 많이 늘어난 레시피예요.',
+  LIKES_DESC: '좋아요를 가장 많이 받은 레시피예요.',
   LATEST: '방금 올라온 레시피예요.',
 };
 
