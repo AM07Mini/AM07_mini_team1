@@ -28,11 +28,13 @@ const Track = styled.span`
     border-radius: 50%;
     background-color: ${colors.white};
     transition: left 0.2s;
+    pointer-events: none; // 손잡이가 클릭을 가로채지 않게
   }
 
   // 진짜 체크박스는 투명하게 덮어서 클릭 · 키보드는 그대로 동작
   input {
     position: absolute;
+    z-index: 1; // 손잡이보다 위에 — 트랙 어디를 눌러도 체크박스가 받음
     inset: 0;
     margin: 0;
     opacity: 0;

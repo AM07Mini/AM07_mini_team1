@@ -50,10 +50,11 @@ const RightText = styled.span`
 // 섹션 제목 줄 — 왼쪽 제목(18px) + 설명(선택), 오른쪽 링크나 보조 글자(선택)
 // 사용: <SectionHeader title="지금 유행하는 레시피" description="좋아요를..." right="더보기" to="/feed/trending" />
 //       <SectionHeader title="검색 결과" right={`${count}개`} rightRole="status" />  (rightRole: 바뀔 때 읽어줄 글자)
-const SectionHeader = ({ title, description, right, to, rightRole }) => (
+// titleAs: 제목 태그 — 기본 h3 (PageIntro h2 아래 섹션), 상단바(h1) 바로 아래 섹션이면 'h2'
+const SectionHeader = ({ title, description, right, to, rightRole, titleAs = 'h3' }) => (
   <Wrapper>
     <TitleBox>
-      <Title>{title}</Title>
+      <Title as={titleAs}>{title}</Title>
       {description && <Description>{description}</Description>}
     </TitleBox>
     {right !== undefined && (to ? <RightLink to={to}>{right}</RightLink> : <RightText role={rightRole}>{right}</RightText>)}

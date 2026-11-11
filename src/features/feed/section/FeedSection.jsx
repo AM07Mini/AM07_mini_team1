@@ -77,7 +77,7 @@ const FeedSection = ({ tab, needLogin, list, feeds, likeHandler, bookmarkHandler
 
   return (
     <>
-      <SectionHeader title={listTitle[tab]} right="북마크한 레시피" to="/mypage?tab=bookmark" />
+      <SectionHeader titleAs="h2" title={listTitle[tab]} right="북마크한 레시피" to="/mypage?tab=bookmark" />
       {renderBody()}
     </>
   );

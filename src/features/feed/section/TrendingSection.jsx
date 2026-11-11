@@ -40,6 +40,7 @@ const TrendingSection = ({ recipes, status }) => {
     <Section>
       {/* TODO(디자인/백엔드): "이번 주" 기간 필터 API 생기면 문구 변경 — 지금은 전체 좋아요순 */}
       <SectionHeader
+        titleAs="h2"
         title="지금 유행하는 레시피"
         description="좋아요를 가장 많이 받았어요"
         right="더보기"
