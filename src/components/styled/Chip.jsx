@@ -11,13 +11,27 @@ const StyledChip = styled.button`
   color: ${(props) => (props.$selected ? colors.primary : colors.grey1)};
   font-size: 12px;
   font-weight: ${(props) => (props.$selected ? 700 : 500)};
-  cursor: pointer;
+  cursor: ${(props) => (props.$disabled ? 'not-allowed' : 'pointer')};
+  opacity: ${(props) => (props.$disabled ? 0.55 : 1)};
 `;
 
 // 공용 칩 — 높이 24, r16 (해시태그·필터)
 // 칩 여러 개를 놓을 땐 부모에 display: flex; gap: 8px;
-const Chip = ({ title, selected, onClick }) => (
-  <StyledChip type="button" $selected={selected} onClick={onClick}>
+const Chip = ({
+  title,
+  selected,
+  onClick,
+  disabled = false,
+  'aria-pressed': ariaPressed = selected,
+}) => (
+  <StyledChip
+    type="button"
+    $selected={selected}
+    $disabled={disabled}
+    onClick={onClick}
+    disabled={disabled}
+    aria-pressed={ariaPressed}
+  >
     {title}
   </StyledChip>
 );
