@@ -1,12 +1,23 @@
 import IngredientItem from '../item/IngredientItem';
+import styled from 'styled-components';
 
-// 식재료 목록 — 선택 가능한 재료 칩들
-const IngredientList = ({ ingredients }) => (
-  <div>
-    {ingredients.map((item) => (
-      <IngredientItem key={item.id} data={item} />
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+`;
+
+const IngredientList = ({ ingredients, selected, onToggle }) => (
+  <Grid>
+    {ingredients.map((name) => (
+      <IngredientItem
+        key={name}
+        name={name}
+        checked={selected.includes(name)}
+        onToggle={onToggle}
+      />
     ))}
-  </div>
+  </Grid>
 );
 
 export default IngredientList;
