@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import styled from 'styled-components';
 import BottomBar from './components/layout/BottomBar';
+import ScrollToTop from './components/layout/ScrollToTop';
 import { colors } from './components/styled/theme';
 import { AuthProvider } from './utils/context/AuthContext';
 
@@ -54,6 +55,7 @@ const Content = styled.main`
 const App = () => (
   <AuthProvider>
     <BrowserRouter>
+      <ScrollToTop />
       <MobileFrame>
         <Content>
           <Routes>
