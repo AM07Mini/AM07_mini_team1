@@ -10,6 +10,7 @@ import { toFeedCard, toTrendingCard } from '../feedMapper';
 import FeedTab from '../item/FeedTab';
 import FeedList from '../list/FeedList';
 import TrendingList from '../list/TrendingList';
+import { useAuth } from '../../../utils/context/AuthContext';
 
 const Wrapper = styled.div`
   display: flex;
@@ -90,16 +91,6 @@ const fetcherByTab = {
   latest: getLatestFeed,
 };
 
-// TODO(01 로그인 담당과 합의): 토큰 저장 위치·키 이름
-const ACCESS_TOKEN_KEY = 'accessToken';
-const hasToken = () => {
-  try {
-    return Boolean(localStorage.getItem(ACCESS_TOKEN_KEY));
-  } catch {
-    return false;
-  }
-};
-
 const errorMessage = (err) => {
   if (err.response?.status === 401) return '로그인이 필요해요.';
   return err.response?.data?.message ?? '피드를 불러오지 못했어요.';
@@ -120,7 +111,8 @@ const FeedPage = () => {
   const [trending, setTrending] = useState([]);
   const [trendingStatus, setTrendingStatus] = useState('loading');
 
-  const isLoggedIn = hasToken();
+  // 로그인 상태는 AuthContext 에서 (토큰은 axios 인터셉터가 요청에 자동으로 붙임)
+  const { isLoggedIn } = useAuth();
   const needLogin = tab === 'following' && !isLoggedIn;
 
   // 탭을 빠르게 바꿨을 때 이전 탭 응답이 덮어쓰지 않게 — 요청마다 번호를 매기고 최신 번호만 반영
