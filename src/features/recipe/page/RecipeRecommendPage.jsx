@@ -8,8 +8,8 @@ import RecipeList from "../list/RecipeList";
 import { colors } from "../../../components/styled/theme";
 
 const RECIPES = [
-  { title: "아보카도\n에그 토스트", time: "10분", image: "/figma/toast-a.png", to: "/recipe/avocado-toast" },
-  { title: "아보카도\n달걀구이", time: "15분", image: "/figma/toast-b.png" },
+  { title: "아보카도\n에그 토스트", time: "10분", image: "/figma/toast-a.png", to: "/recipe/read/1" },
+  { title: "아보카도\n달걀구이", time: "15분", image: "/figma/toast-b.png", to: "/recipe/read/2" },
 ];
 
 const Screen = styled.main`
