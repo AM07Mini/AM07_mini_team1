@@ -43,7 +43,7 @@ const SearchRecipeItem = ({ recipe }) => (
   <Card to={`/recipe/read/${recipe.id}`}>
     <Image src={recipe.image} alt="" />
     <Title>{recipe.title}</Title>
-    <Meta>★☆☆　{recipe.meta}</Meta>
+    <Meta>{recipe.meta}</Meta>
   </Card>
 );
 

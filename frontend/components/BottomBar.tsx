@@ -7,6 +7,7 @@ const icon = "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2";
 
 export default function BottomBar() {
   const path = usePathname();
+  const search = path === "/search";
   const home = path === "/";
   return (
     <div className="sticky bottom-0 z-[4] mt-auto h-[115px]">
@@ -18,8 +19,8 @@ export default function BottomBar() {
         <Link href="/" aria-label="홈">
           <img src={home ? "/figma/home-on.svg" : "/figma/home-off.svg"} alt="" />
         </Link>
-        <Link href="/search" aria-label="검색">
-          <img src="/figma/nav-search.svg" alt="" />
+        <Link href="/search" aria-label="검색" aria-current={search ? "page" : undefined}>
+          <img src={search ? "/figma/nav-search-on.svg" : "/figma/nav-search.svg"} alt="" />
         </Link>
         <Link href="/recipes/new" className="relative -mt-7 grid size-14 place-items-center" aria-label="레시피 기록">
           <img className={icon} src="/figma/chef-bg.svg" alt="" />

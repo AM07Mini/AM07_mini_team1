@@ -46,9 +46,9 @@ const SearchPage = () => {
   const [selected, setSelected] = useState({
     taste: [],
     kind: [],
-    category: ['#브런치'],
-    level: ['★ 쉬움'],
-    time: ['#15분 이내'],
+    category: [],
+    level: [],
+    time: [],
   });
 
   const toggleFilter = (key, item) => {
@@ -66,7 +66,7 @@ const SearchPage = () => {
       !normalizedQuery ||
       `${recipe.title} ${recipe.tags.join(' ')}`.toLowerCase().includes(normalizedQuery);
     const matchesTaste =
-      selected.taste.length === 0 || selected.taste.some((taste) => recipe.tags.includes(taste));
+      selected.taste.length === 0 || selected.taste.some((taste) => recipe.tastes.includes(taste));
     const matchesKind = selected.kind.length === 0 || selected.kind.includes(recipe.kind);
     const matchesCategory =
       selected.category.length === 0 || selected.category.includes(recipe.category);

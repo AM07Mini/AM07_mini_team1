@@ -50,10 +50,10 @@ const EmptyMessage = styled.p`
 `;
 
 const SearchResultList = ({ recipes, activeFilters }) => (
-  <Results aria-live="polite">
+  <Results>
     <ResultsHeading>
       <ResultsTitle>검색 결과</ResultsTitle>
-      <Count>{recipes.length}개</Count>
+      <Count role="status">{recipes.length}개</Count>
     </ResultsHeading>
     {activeFilters.length > 0 && <FilterSummary>{activeFilters.join(' · ')}</FilterSummary>}
     <RecipeGrid>
