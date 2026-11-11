@@ -47,12 +47,18 @@ const Stats = styled.div`
   background-color: ${SURFACE};
 `;
 
+// 숫자 칸 — 팔로워 · 팔로잉은 누르면 목록으로 (button), 레시피는 그냥 표시 (div)
 const Stat = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  cursor: ${(props) => (props.as === 'button' ? 'pointer' : 'default')};
 `;
 
 const StatValue = styled.b`
@@ -66,11 +72,12 @@ const StatName = styled.span`
 `;
 
 // 프로필 카드 — 사진·닉네임·소개, 레시피·팔로워·팔로잉 수, 프로필 편집 버튼
-const ProfileCard = ({ profile, editHandler }) => {
+// followHandler('followers' | 'following'): 팔로워 · 팔로잉 수를 눌렀을 때
+const ProfileCard = ({ profile, editHandler, followHandler }) => {
   const stats = [
     { name: '레시피', value: profile.recipeCount },
-    { name: '팔로워', value: profile.followerCount },
-    { name: '팔로잉', value: profile.followingCount },
+    { name: '팔로워', value: profile.followerCount, tab: 'followers' },
+    { name: '팔로잉', value: profile.followingCount, tab: 'following' },
   ];
 
   return (
@@ -85,7 +92,12 @@ const ProfileCard = ({ profile, editHandler }) => {
       </Info>
       <Stats>
         {stats.map((stat) => (
-          <Stat key={stat.name}>
+          <Stat
+            key={stat.name}
+            as={stat.tab ? 'button' : 'div'}
+            type={stat.tab ? 'button' : undefined}
+            onClick={stat.tab ? () => followHandler(stat.tab) : undefined}
+          >
             <StatValue>{stat.value}</StatValue>
             <StatName>{stat.name}</StatName>
           </Stat>

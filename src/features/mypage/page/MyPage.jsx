@@ -171,7 +171,11 @@ const MyPage = () => {
 
     return (
       <Wrapper>
-        <ProfileCard profile={profile} editHandler={() => moveUrl('/mypage/edit')} />
+        <ProfileCard
+          profile={profile}
+          editHandler={() => moveUrl('/mypage/edit')}
+          followHandler={(followTab) => moveUrl(`/mypage/follow?tab=${followTab}`)}
+        />
 
         <Header>
           <TitleBox>
