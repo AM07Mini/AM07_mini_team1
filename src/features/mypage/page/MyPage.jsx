@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../../../api/axios';
@@ -6,7 +6,7 @@ import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import SegmentTab from '../../../components/styled/SegmentTab';
 import { colors, PAGE_PADDING } from '../../../components/styled/theme';
-import { authHeader, isAuthError } from '../authToken';
+import { isAuthError } from '../authError';
 import { RECIPE_PAGE_SIZE } from '../constants';
 import ProfileCard from '../item/ProfileCard';
 import MyRecipeList from '../list/MyRecipeList';
@@ -57,30 +57,38 @@ const ChipRow = styled.div`
 
 const emptyPage = { content: [], totalElements: 0 };
 
+// 탭별 목록 주소
+const tabUrls = { mine: '/recipes/me', bookmark: '/recipes/bookmarks' };
+
 // 06 마이 페이지 — 프로필, 내 레시피 / 북마크 탭, 분류 필터, 레시피 2열 그리드
 const MyPage = () => {
   const moveUrl = useNavigate();
   const [profile, setProfile] = useState(null);
   const [myRecipes, setMyRecipes] = useState(emptyPage);
   const [bookmarks, setBookmarks] = useState(emptyPage);
+  const [categories, setCategories] = useState([]); // 기본 카테고리 + 내 카테고리 [{ id, name }]
   const [error, setError] = useState(null); // { message, needLogin }
   const [tab, setTab] = useState('mine');
-  const [category, setCategory] = useState('전체');
+  const [categoryId, setCategoryId] = useState(null); // null이면 전체
+  const [filteredRecipes, setFilteredRecipes] = useState(null); // 분류를 골랐을 때 서버에서 거른 목록
+  // 분류 요청 번호 — 칩을 빠르게 바꿀 때 마지막 요청의 응답만 반영하기 위함
+  const filterRequestRef = useRef(0);
 
   useEffect(() => {
     loadData();
+    loadCategories();
   }, []);
 
   // 내 정보 · 내 레시피 · 북마크 불러오기
   // 서버 응답은 { isSuccess, message, result } 모양이라 실제 데이터는 response.data.result
   const loadData = async () => {
     try {
-      const config = { headers: authHeader(), params: { page: 0, size: RECIPE_PAGE_SIZE } };
+      const config = { params: { page: 0, size: RECIPE_PAGE_SIZE } };
       // 세 요청을 동시에 보내고, 모두 성공하면 화면에 반영
       const [profileResponse, myRecipesResponse, bookmarksResponse] = await Promise.all([
-        api.get('/users/me', { headers: authHeader() }),
-        api.get('/recipes/me', config),
-        api.get('/recipes/bookmarks', config),
+        api.get('/users/me'),
+        api.get(tabUrls.mine, config),
+        api.get(tabUrls.bookmark, config),
       ]);
 
       setProfile(profileResponse.data.result);
@@ -96,20 +104,20 @@ const MyPage = () => {
     }
   };
 
-  // 선택한 탭의 레시피
-  const tabRecipes = tab === 'mine' ? myRecipes.content : bookmarks.content;
+  // 분류 칩용 카테고리 — 따로 불러와서, 실패해도 페이지는 보이고 칩만 숨김
+  const loadCategories = async () => {
+    try {
+      const response = await api.get('/categories');
+      const { defaults = [], mine = [] } = response.data.result ?? {};
+      setCategories([...defaults, ...mine]);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-  // 분류 칩 — 지금 탭의 레시피에 들어 있는 카테고리 이름으로 만들기
-  // TODO: 서버에 분류 필터가 생기면 서버에서 거르기 (지금은 불러온 목록 안에서만 거름)
-  // categories가 비어서 올 수도 있으니 없으면 빈 배열로
-  const categoryNames = [
-    '전체',
-    ...new Set(tabRecipes.flatMap((recipe) => (recipe.categories ?? []).map((item) => item.name))),
-  ];
-  const shownRecipes =
-    category === '전체'
-      ? tabRecipes
-      : tabRecipes.filter((recipe) => (recipe.categories ?? []).some((item) => item.name === category));
+  // 선택한 탭의 레시피 — 분류를 골랐으면 서버에서 거른 목록
+  const tabRecipes = tab === 'mine' ? myRecipes.content : bookmarks.content;
+  const shownRecipes = filteredRecipes ?? tabRecipes;
 
   const tabs = [
     { value: 'mine', title: `내가 기록한 ${myRecipes.totalElements}` },
@@ -117,8 +125,36 @@ const MyPage = () => {
   ];
 
   const tabChangeHandler = (value) => {
+    filterRequestRef.current += 1; // 진행 중인 분류 요청의 응답은 버림
     setTab(value);
-    setCategory('전체');
+    setCategoryId(null);
+    setFilteredRecipes(null);
+  };
+
+  // 분류 칩 선택 — 지금 탭의 목록을 categoryId로 다시 불러오기
+  const categorySelectHandler = async (id) => {
+    filterRequestRef.current += 1;
+    const requestNumber = filterRequestRef.current;
+    setCategoryId(id);
+    if (id === null) {
+      setFilteredRecipes(null);
+      return;
+    }
+    try {
+      const response = await api.get(tabUrls[tab], {
+        params: { categoryId: id, page: 0, size: RECIPE_PAGE_SIZE },
+      });
+      // 그사이 다른 칩이나 탭을 눌렀으면 이 응답은 무시
+      if (requestNumber !== filterRequestRef.current) return;
+      setFilteredRecipes(response.data.result.content);
+    } catch (e) {
+      console.error(e);
+      if (requestNumber !== filterRequestRef.current) return;
+      // 실패하면 '전체'로 되돌려 칩과 목록을 맞춤
+      setCategoryId(null);
+      setFilteredRecipes(null);
+      window.alert(e.response?.data?.message ?? '목록을 불러오지 못했어요.');
+    }
   };
 
   const renderContent = () => {
@@ -139,10 +175,16 @@ const MyPage = () => {
 
         <SegmentTab tabs={tabs} selected={tab} changeHandler={tabChangeHandler} />
 
-        {categoryNames.length > 1 && (
+        {categories.length > 0 && (
           <ChipRow>
-            {categoryNames.map((item) => (
-              <Chip key={item} title={item} selected={category === item} onClick={() => setCategory(item)} />
+            <Chip title="전체" selected={categoryId === null} onClick={() => categorySelectHandler(null)} />
+            {categories.map((item) => (
+              <Chip
+                key={item.id}
+                title={item.name}
+                selected={categoryId === item.id}
+                onClick={() => categorySelectHandler(item.id)}
+              />
             ))}
           </ChipRow>
         )}
