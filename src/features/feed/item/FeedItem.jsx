@@ -111,7 +111,6 @@ const StyledLink = styled(Link)`
   text-decoration: none;
 `;
 
-// 서버 이미지 주소가 깨졌을 때 기본 이미지로 (한 번만 바꿔서 무한 반복 방지)
 const fallbackTo = (src) => (event) => {
   if (!event.currentTarget.src.endsWith(src)) event.currentTarget.src = src;
 };
@@ -131,14 +130,17 @@ const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
           <Name>{data.author.name}</Name>
           <When>{formatAgo(data.minutesAgo)}</When>
         </div>
-        <FollowButton
-          type="button"
-          aria-pressed={data.following}
-          $following={data.following}
-          onClick={() => followHandler(data.id)}
-        >
-          {data.following ? '팔로잉' : '팔로우'}
-        </FollowButton>
+        {/* 내 글에는 팔로우 버튼 없음 */}
+        {!data.isMine && (
+          <FollowButton
+            type="button"
+            aria-pressed={data.following}
+            $following={data.following}
+            onClick={() => followHandler(data.id)}
+          >
+            {data.following ? '팔로잉' : '팔로우'}
+          </FollowButton>
+        )}
       </Header>
 
       {wrapLink(<Photo src={data.image} alt={data.title} onError={fallbackTo(DEFAULT_IMAGE)} />)}

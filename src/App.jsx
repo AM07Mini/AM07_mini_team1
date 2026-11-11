@@ -29,6 +29,7 @@ import PasswordChangePage from './features/mypage/page/PasswordChangePage';
 
 // feed
 import FeedPage from './features/feed/page/FeedPage';
+import TrendingPage from './features/feed/page/TrendingPage';
 
 // dev
 import DesignSystemPage from './features/dev/page/DesignSystemPage';
@@ -105,6 +106,7 @@ const App = () => (
 
             {/* feed */}
             <Route path="/feed" element={<FeedPage />} />
+            <Route path="/feed/trending" element={<TrendingPage />} />
 
             {/* dev */}
             <Route path="/design-system" element={<DesignSystemPage />} />

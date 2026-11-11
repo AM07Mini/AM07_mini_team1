@@ -15,7 +15,7 @@ const minutesSince = (iso) =>
 
 const withHash = (tag) => (tag.startsWith('#') ? tag : `#${tag}`);
 
-// following: 팔로잉 탭이면 true (그 외 탭의 팔로우 상태는 Phase 2에서 /follows/following 으로 계산)
+// following: 팔로잉 탭이면 true (그 외 탭은 FeedPage 에서 /follows/following 목록으로 계산)
 export const toFeedCard = (item, { following = false } = {}) => {
     const id = item.recipeId ?? item.id;
     return {
@@ -48,4 +48,18 @@ export const toTrendingCard = (item) => ({
     tag: item.hashtags?.[0] ? withHash(item.hashtags[0]) : '',
     likes: item.likeCount ?? 0,
     image: item.thumbnailUrl || DEFAULT_IMAGE,
+});
+
+// 유행 레시피 전체 보기 한 줄 — /recipes/search 의 RecipeResponse 를 받음
+// ingredientNames 는 "재료 N개 부족" 계산용
+export const toTrendingRow = (item) => ({
+  id: item.id,
+  recipeId: item.id,
+  title: item.title,
+  tag: item.hashtags?.[0] ? withHash(item.hashtags[0]) : '',
+  difficulty: difficultyLevel[item.difficulty] ?? null,
+  minutes: item.cookingMinutes ?? null,
+  likes: item.likeCount ?? 0,
+  image: item.thumbnailUrl || DEFAULT_IMAGE,
+  ingredientNames: (item.ingredients ?? []).map((ingredient) => ingredient.name).filter(Boolean),
 });
