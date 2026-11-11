@@ -59,11 +59,7 @@ const SearchRecipeItem = ({ recipe }) => (
       <ImagePlaceholder>사진 없음</ImagePlaceholder>
     )}
     <Title>{recipe.title}</Title>
-<<<<<<< HEAD
-    <Meta>{recipe.meta}</Meta>
-=======
     <Meta>{recipe.description}</Meta>
->>>>>>> 99c4829 (feat: 검색 API 연동 및 결과 처리 개선)
   </Card>
 );
 

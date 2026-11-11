@@ -43,19 +43,11 @@ const EmptyMessage = styled.p`
   text-align: center;
 `;
 
-<<<<<<< HEAD
-const SearchResultList = ({ recipes, activeFilters }) => (
-  <Results>
-    <ResultsHeading>
-      <ResultsTitle>검색 결과</ResultsTitle>
-      <Count role="status">{recipes.length}개</Count>
-=======
 const SearchResultList = ({ recipes, totalElements, loading, error }) => (
   <Results>
     <ResultsHeading>
       <ResultsTitle>검색 결과</ResultsTitle>
-      <Count>{loading ? '검색 중' : `${totalElements}개`}</Count>
->>>>>>> 99c4829 (feat: 검색 API 연동 및 결과 처리 개선)
+      <Count role="status">{loading ? '검색 중' : `${totalElements}개`}</Count>
     </ResultsHeading>
     <RecipeGrid>
       {error ? (

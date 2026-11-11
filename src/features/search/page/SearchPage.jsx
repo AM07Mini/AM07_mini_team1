@@ -50,42 +50,16 @@ const FilterNotice = styled.p`
 
 const SearchPage = () => {
   const [query, setQuery] = useState('');
-<<<<<<< HEAD
-  const [selected, setSelected] = useState({
-    taste: [],
-    kind: [],
-    category: [],
-    level: [],
-    time: [],
-  });
-=======
   const [recipes, setRecipes] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
->>>>>>> 99c4829 (feat: 검색 API 연동 및 결과 처리 개선)
 
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError('');
 
-<<<<<<< HEAD
-  const normalizedQuery = query.trim().toLowerCase();
-  const filteredRecipes = searchRecipes.filter((recipe) => {
-    const matchesQuery =
-      !normalizedQuery ||
-      `${recipe.title} ${recipe.tags.join(' ')}`.toLowerCase().includes(normalizedQuery);
-    const matchesTaste =
-      selected.taste.length === 0 || selected.taste.some((taste) => recipe.tastes.includes(taste));
-    const matchesKind = selected.kind.length === 0 || selected.kind.includes(recipe.kind);
-    const matchesCategory =
-      selected.category.length === 0 || selected.category.includes(recipe.category);
-    const matchesLevel = selected.level.length === 0 || selected.level.includes(recipe.level);
-    const matchesTime =
-      selected.time.length === 0 ||
-      selected.time.some((time) => recipe.minutes <= Number(time.match(/\d+/)?.[0]));
-=======
     const timeoutId = setTimeout(async () => {
       try {
         const result = await fetchSearchRecipes(query, controller.signal);
@@ -104,7 +78,6 @@ const SearchPage = () => {
         if (!controller.signal.aborted) setLoading(false);
       }
     }, 300);
->>>>>>> 99c4829 (feat: 검색 API 연동 및 결과 처리 개선)
 
     return () => {
       clearTimeout(timeoutId);
