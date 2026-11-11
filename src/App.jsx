@@ -18,6 +18,7 @@ import IngredientSelectPage from './features/ingredient/page/IngredientSelectPag
 import RecipeRecommendPage from './features/recipe/page/RecipeRecommendPage';
 import RecipeReadPage from './features/recipe/page/RecipeReadPage';
 import RecipeWritePage from './features/recipe/page/RecipeWritePage';
+import RecipeReviewPage from './features/recipe/page/RecipeReviewPage';
 
 // search
 import SearchPage from './features/search/page/SearchPage';
@@ -94,6 +95,7 @@ const App = () => (
             <Route path="/recipe/recommend" element={<RecipeRecommendPage />} />
             <Route path="/recipe/write" element={<RecipeWritePage />} />
             <Route path="/recipe/read/:id" element={<RecipeReadPage />} />
+            <Route path="/recipe/:id/reviews" element={<RecipeReviewPage />} />
 
             {/* search */}
             <Route path="/search" element={<SearchPage />} />
