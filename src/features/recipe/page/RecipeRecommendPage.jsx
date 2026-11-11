@@ -6,11 +6,17 @@ import Text from "../../../components/styled/Text";
 import Chip from "../../../components/styled/Chip";
 import RecipeList from "../list/RecipeList";
 import { colors } from "../../../components/styled/theme";
+import { getRecommendedRecipes } from "../../../api/recommendApi";
+import { useEffect, useState } from "react";
 
-const RECIPES = [
-  { title: "아보카도\n에그 토스트", time: "10분", image: "/figma/toast-a.png", to: "/recipe/read/1" },
-  { title: "아보카도\n달걀구이", time: "15분", image: "/figma/toast-b.png", to: "/recipe/read/2" },
-];
+const toCardData = ({ recipe }) => ({
+  id: recipe.id,
+  title: recipe.title,
+  time: `${recipe.cookingMinutes}분`,
+  image: recipe.thumbnailUrl,
+  to: `/recipe/${recipe.id}`,
+});
+
 
 const Screen = styled.main`
   display: flex;
@@ -45,6 +51,28 @@ const RecipeRecommendPage = () => {
   const { state } = useLocation();
   const ingredients = state?.ingredients ?? [];
   const joined = ingredients.join(" · ");
+  const [recipes, setRecipes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+  if (ingredients.length === 0) {
+    setLoading(false);
+    return;
+  }
+  const controller = new AbortController();
+  setLoading(true);
+  setError("");
+
+  getRecommendedRecipes({ ingredientNames: ingredients, size: 100 }, controller.signal)
+    .then((result) => setRecipes(result.content.map(toCardData)))
+    .catch((e) => {
+      if (e.name !== "CanceledError") setError(e.message);
+    })
+    .finally(() => setLoading(false));
+
+  return () => controller.abort();
+}, [joined]);
 
   return (
     <div>
@@ -69,7 +97,7 @@ const RecipeRecommendPage = () => {
 
         <Row>
           <Text variant="cardTitle">추천 요리</Text>
-          <Text variant="label">{RECIPES.length}가지</Text>
+          <Text variant="label">{recipes.length}가지</Text>
         </Row>
 
         <Row>
@@ -77,7 +105,7 @@ const RecipeRecommendPage = () => {
           <Text variant="sub" color={colors.grey1}>기본 양념은 제외해요</Text>
         </Row>
 
-        <RecipeList recipes={RECIPES} />
+        {!loading && !error && recipes.length > 0 && <RecipeList recipes={recipes} />}
 
         <Text variant="sub" color={colors.grey1}>
           재료를 바꾸면 새로운 요리를 찾을 수 있어요.
