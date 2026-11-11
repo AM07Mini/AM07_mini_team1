@@ -5,6 +5,7 @@ import SearchInput from '../../../components/styled/SearchInput';
 import { colors } from '../../../components/styled/theme';
 import SearchFilterList from '../list/SearchFilterList';
 import SearchResultList from '../list/SearchResultList';
+import SearchSelectionSummary from '../list/SearchSelectionSummary';
 import { searchFilters } from '../mockData';
 import { fetchSearchFilterCatalogs, fetchSearchRecipes } from '../api/searchApi';
 import { useAuth } from '../../../utils/context/AuthContext';
@@ -124,6 +125,16 @@ const SearchPage = () => {
     });
   };
 
+  const resetFilters = () => {
+    setSelected({
+      flavorIds: [],
+      foodTypeId: [],
+      categoryIds: [],
+      difficulty: [],
+      maxCookingMinutes: [],
+    });
+  };
+
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -166,6 +177,12 @@ const SearchPage = () => {
           value={query}
           changeHandler={(event) => setQuery(event.target.value)}
           placeholder="레시피 이름, 해시태그로 검색 (예: #매콤)"
+        />
+        <SearchSelectionSummary
+          filters={filters}
+          selected={selected}
+          onRemove={toggleFilter}
+          onReset={resetFilters}
         />
         <SearchFilterList filters={filters} selected={selected} onToggle={toggleFilter} />
         <SearchResultList
