@@ -16,6 +16,7 @@ import SearchPage from './features/search/page/SearchPage';
 // mypage
 import MyPage from './features/mypage/page/MyPage';
 import ProfileEditPage from './features/mypage/page/ProfileEditPage';
+import PasswordChangePage from './features/mypage/page/PasswordChangePage';
 // feed
 import FeedPage from './features/feed/page/FeedPage';
 // dev — 공용 컴포넌트 미리보기
@@ -56,6 +57,7 @@ const App = () => (
           {/* mypage */}
           <Route path="/mypage" element={<MyPage />} />
           <Route path="/mypage/edit" element={<ProfileEditPage />} />
+          <Route path="/mypage/password" element={<PasswordChangePage />} />
           {/* feed */}
           <Route path="/feed" element={<FeedPage />} />
           {/* dev */}
