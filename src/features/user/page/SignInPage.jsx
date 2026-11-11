@@ -6,7 +6,7 @@ import styled from 'styled-components';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
 import Icon from '../../../components/styled/Icon';
-import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 
 const Wrapper = styled.div`
   min-height: 100dvh;
@@ -23,14 +23,14 @@ const Intro = styled.header`
   h1 {
     margin: 18px 0 8px;
     color: ${colors.dark};
-    font-size: 25px;
+    ${font('pageTitle')}
     line-height: 1.4;
   }
 
   p {
     margin: 0;
     color: ${colors.grey1};
-    font-size: 13px;
+    ${font('sub')}
     line-height: 1.6;
   }
 `;
@@ -56,8 +56,8 @@ const LoginForm = styled.form`
 
 const Message = styled.p`
   margin: 0;
-  font-size: 12px;
-  color: ${({ $error }) => $error ? '#d64545' : colors.grey1};
+  ${font('caption')}
+  color: ${({ $error }) => $error ? colors.danger : colors.grey1};
 `;
 
 const LinkArea = styled.nav`
@@ -69,7 +69,7 @@ const LinkArea = styled.nav`
 
 const MenuLink = styled(Link)`
   color: ${colors.grey1};
-  font-size: 12px;
+  ${font('caption')}
   text-decoration: none;
 
   &:last-child {

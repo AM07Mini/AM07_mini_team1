@@ -5,14 +5,13 @@ import api from '../../../api/axios';
 import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import TextInput from '../../../components/styled/TextInput';
-import { colors, PAGE_PADDING, radius } from '../../../components/styled/theme';
+import { colors, PAGE_PADDING, radius, font } from '../../../components/styled/theme';
 import { useAuth } from '../../../utils/context/AuthContext';
 import { isAuthError } from '../authError';
 import { INTRO_MAX, NICKNAME_MAX, NICKNAME_MIN } from '../constants';
-import Avatar from '../ui/Avatar';
-import MyPageTopBar from '../ui/MyPageTopBar';
-import StatusMessage from '../ui/StatusMessage';
-import { DANGER, SURFACE } from '../ui/style';
+import Avatar from '../../../components/styled/Avatar';
+import TopBar from '../../../components/layout/TopBar';
+import StatusMessage from '../../../components/styled/StatusMessage';
 
 const Form = styled.form`
   display: flex;
@@ -54,7 +53,7 @@ const TextButton = styled.button`
   padding: 0;
   border: none;
   background: none;
-  font-size: 13px;
+  ${font('sub')}
   font-weight: 500;
   color: ${colors.secondary};
   cursor: pointer;
@@ -73,7 +72,7 @@ const Field = styled.div`
 
 const Message = styled.p`
   margin: 0;
-  font-size: 12px;
+  ${font('caption')}
   color: ${(props) => props.$color};
 `;
 
@@ -81,13 +80,12 @@ const Message = styled.p`
 const Counter = styled.span`
   flex-shrink: 0;
   padding-right: 6px;
-  font-size: 12px;
+  ${font('caption')}
   color: ${colors.grey2};
 `;
 
 const Label = styled.span`
-  font-size: 14px;
-  font-weight: 700;
+  ${font('label')}
   color: ${colors.dark};
 `;
 
@@ -99,9 +97,8 @@ const ReadOnlyBox = styled.div`
   padding: 0 16px;
   border: 1px solid ${colors.grey4};
   border-radius: ${radius.button}px;
-  background-color: ${SURFACE};
-  font-size: 14px;
-  font-weight: 500;
+  background-color: ${colors.surface};
+  ${font('option')}
   color: ${colors.grey2};
 `;
 
@@ -118,7 +115,7 @@ const SectionTitle = styled.div`
 `;
 
 const Hint = styled.span`
-  font-size: 12px;
+  ${font('caption')}
   color: ${colors.grey2};
 `;
 
@@ -132,7 +129,7 @@ const Menu = styled.div`
   display: flex;
   flex-direction: column;
   border-radius: 12px;
-  background-color: ${SURFACE};
+  background-color: ${colors.surface};
 `;
 
 const MenuItem = styled.button`
@@ -142,9 +139,8 @@ const MenuItem = styled.button`
   padding: 14px 12px 14px 16px;
   border: none;
   background: none;
-  font-size: 14px;
-  font-weight: 500;
-  color: ${(props) => (props.$danger ? DANGER : colors.dark)};
+  ${font('option')}
+  color: ${(props) => (props.$danger ? colors.danger : colors.dark)};
   cursor: pointer;
 `;
 
@@ -336,13 +332,13 @@ const ProfileEditPage = () => {
   const renderNicknameMessage = () => {
     if (!nicknameChanged) return null;
     if (!nicknameLengthOk) {
-      return <Message $color={DANGER}>닉네임은 {NICKNAME_MIN}~{NICKNAME_MAX}자로 입력해주세요</Message>;
+      return <Message $color={colors.danger}>닉네임은 {NICKNAME_MIN}~{NICKNAME_MAX}자로 입력해주세요</Message>;
     }
     if (!nicknameChecked) return null;
     return nicknameCheck.available ? (
       <Message $color={colors.secondary}>✓ 사용할 수 있는 닉네임이에요</Message>
     ) : (
-      <Message $color={DANGER}>이미 사용 중인 닉네임이에요</Message>
+      <Message $color={colors.danger}>이미 사용 중인 닉네임이에요</Message>
     );
   };
 
@@ -350,7 +346,7 @@ const ProfileEditPage = () => {
   if (error || !original) {
     return (
       <>
-        <MyPageTopBar title="프로필 편집" showBack />
+        <TopBar title="프로필 편집" showBack />
         <StatusMessage message={error?.message ?? '불러오는 중이에요…'} needLogin={error?.needLogin} />
       </>
     );
@@ -358,7 +354,7 @@ const ProfileEditPage = () => {
 
   return (
     <>
-      <MyPageTopBar title="프로필 편집" showBack />
+      <TopBar title="프로필 편집" showBack />
       <Form onSubmit={submitHandler}>
         <PhotoBox>
           <Photo>

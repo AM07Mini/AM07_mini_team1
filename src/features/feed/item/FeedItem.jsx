@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
+import Avatar from '../../../components/styled/Avatar';
 import Card from '../../../components/styled/Card';
-import { colors, radius } from '../../../components/styled/theme';
+import FollowButton from '../../../components/styled/FollowButton';
+import { colors, radius, font } from '../../../components/styled/theme';
 import { formatAgo, formatCount, formatDifficulty } from '../feedUtils';
 import { DEFAULT_IMAGE } from '../feedMapper';
-import FeedAvatar from './FeedAvatar';
 
-// 좋아요 빨강 — theme.js에 아직 없어서 피드 안에서만 사용 (팀 합의 후 theme.js로 옮기기)
-const HEART = '#E8545C';
+const Wrapper = styled(Card)`
+  overflow: hidden;
+`;
 
 const Header = styled.div`
   display: flex;
@@ -18,30 +20,17 @@ const Header = styled.div`
 
 const Name = styled.p`
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
+  ${font('label')}
 `;
 
 const When = styled.small`
-  font-size: 12px;
+  ${font('caption')}
   color: ${colors.grey2};
 `;
 
-const FollowButton = styled.button`
+// 팔로우 버튼을 오른쪽 끝으로
+const FollowBox = styled.div`
   margin-left: auto;
-  padding: 5px 12px;
-  border: none;
-  border-radius: 14px;
-  background-color: ${(props) => (props.$following ? colors.grey4 : colors.primary)};
-  color: ${(props) => (props.$following ? colors.grey1 : colors.white)};
-  font-size: 12px;
-  font-weight: ${(props) => (props.$following ? 400 : 700)};
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: default;
-  }
 `;
 
 const Photo = styled.img`
@@ -57,8 +46,7 @@ const Actions = styled.div`
   align-items: center;
   gap: 20px;
   padding: 12px 14px;
-  font-size: 14px;
-  font-weight: 500;
+  ${font('option')}
 `;
 
 const IconButton = styled.button`
@@ -67,9 +55,9 @@ const IconButton = styled.button`
   padding: 0;
   border: none;
   background: none;
+  margin-left: ${(props) => (props.$pushRight ? 'auto' : 0)};
   color: ${(props) => props.$color ?? colors.dark};
-  font-size: 14px;
-  font-weight: 500;
+  ${font('option')}
   cursor: pointer;
 `;
 
@@ -79,13 +67,12 @@ const Body = styled.div`
 
 const Title = styled.h3`
   margin: 0 0 6px;
-  font-size: 16px;
-  font-weight: 700;
+  ${font('cardTitle')}
 `;
 
 const Meta = styled.p`
   margin: 0;
-  font-size: 12px;
+  ${font('caption')}
   color: ${colors.grey1};
 `;
 
@@ -101,8 +88,7 @@ const Tag = styled.span`
   border-radius: ${radius.button}px;
   background-color: ${colors.accent2};
   color: ${colors.primary};
-  font-size: 12px;
-  font-weight: 500;
+  ${font('hashtag')}
 `;
 
 const StyledLink = styled(Link)`
@@ -119,24 +105,22 @@ const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
   const wrapLink = (children) => (linkTo ? <StyledLink to={linkTo}>{children}</StyledLink> : children);
 
   return (
-    <Card $padding={0} as="article" style={{ overflow: 'hidden' }}>
+    <Wrapper $padding={0} as="article">
       <Header>
-        <FeedAvatar src={data.author.avatar} size={36} />
+        <Avatar src={data.author.avatar} size={36} />
         <div>
           <Name>{data.author.name}</Name>
           <When>{formatAgo(data.minutesAgo)}</When>
         </div>
         {/* 내 글에는 팔로우 버튼 없음 */}
         {!data.isMine && (
-          <FollowButton
-            type="button"
-            aria-pressed={data.following}
-            $following={data.following}
-            disabled={data.followDisabled}
-            onClick={() => followHandler(data.id)}
-          >
-            {data.following ? '팔로잉' : '팔로우'}
-          </FollowButton>
+          <FollowBox>
+            <FollowButton
+              following={data.following}
+              disabled={data.followDisabled}
+              onClick={() => followHandler(data.id)}
+            />
+          </FollowBox>
         )}
       </Header>
 
@@ -147,7 +131,7 @@ const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
           type="button"
           aria-pressed={data.liked}
           aria-label={data.liked ? '좋아요 취소' : '좋아요'}
-          $color={HEART}
+          $color={colors.heart}
           onClick={() => likeHandler(data.id)}
         >
           {data.liked ? '♥' : '♡'} {formatCount(data.likes)}
@@ -157,7 +141,7 @@ const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
           type="button"
           aria-pressed={data.bookmarked}
           aria-label={data.bookmarked ? '북마크 해제' : '북마크'}
-          style={{ marginLeft: 'auto' }}
+          $pushRight
           onClick={() => bookmarkHandler(data.id)}
         >
           <svg width="16" height="20" viewBox="0 0 15.6 19.6" aria-hidden="true">
@@ -183,7 +167,7 @@ const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
           </Tags>
         )}
       </Body>
-    </Card>
+    </Wrapper>
   );
 };
 

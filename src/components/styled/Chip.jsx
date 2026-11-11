@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { colors, radius } from './theme';
+import { colors, radius, font } from './theme';
 
 const StyledChip = styled.button`
   flex-shrink: 0;
@@ -9,7 +9,7 @@ const StyledChip = styled.button`
   border-radius: ${radius.card}px;
   background-color: ${(props) => (props.$selected ? colors.secondary : colors.white)};
   color: ${(props) => (props.$selected ? colors.primary : colors.grey1)};
-  font-size: 12px;
+  ${font('caption')}
   font-weight: ${(props) => (props.$selected ? 700 : 500)};
   cursor: ${(props) => (props.$disabled ? 'not-allowed' : 'pointer')};
   opacity: ${(props) => (props.$disabled ? 0.55 : 1)};

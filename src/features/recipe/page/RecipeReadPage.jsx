@@ -1,13 +1,14 @@
 import { useState } from "react";
 import styled from "styled-components";
+import Avatar from "../../../components/styled/Avatar";
+import FollowButton from "../../../components/styled/FollowButton";
 import Button from "../../../components/styled/Button";
 import Chip from "../../../components/styled/Chip";
 import Text from "../../../components/styled/Text";
 import { RECIPE, INITIAL_REVIEWS } from "../data/recipeMock";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { colors, radius} from "../../../components/styled/theme";
+import { colors, radius, font } from "../../../components/styled/theme";
 
-const HEART = "#E5484D";
 
 const Hero = styled.div`
   position: relative;
@@ -79,12 +80,6 @@ const Author = styled.div`
   align-items: center;
   gap: 10px;
 
-  > img {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
   > div {
     flex: 1;
     display: flex;
@@ -94,18 +89,6 @@ const Author = styled.div`
     color: inherit;
     text-decoration: none;
   }
-`;
-
-const FollowButton = styled.button`
-  padding: 6px 14px;
-  border: 1px solid ${colors.primary};
-  border-radius: 14px;
-  background: ${({ $on }) => ($on ? colors.white : colors.accent2)};
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  color: ${colors.primary};
-  cursor: pointer;
 `;
 
 const Stats = styled.div`
@@ -143,12 +126,11 @@ const ActionBar = styled.div`
     border: none;
     background: none;
     font-family: inherit;
-    font-size: 14px;
-    font-weight: 500;
+    ${font('option')}
     cursor: pointer;
   }
   .like {
-    color: ${({ $liked }) => ($liked ? HEART : colors.grey2)};
+    color: ${({ $liked }) => ($liked ? colors.heart : colors.grey2)};
   }
   .save {
     margin-left: auto;
@@ -171,7 +153,7 @@ const OwnedBadge = styled.span`
   padding: 2px 8px;
   border-radius: ${radius.small}px;
   background: ${colors.accent2};
-  font-size: 11px;
+  ${font('hashtag')}
   font-weight: 700;
   color: ${colors.primary};
 `;
@@ -191,7 +173,7 @@ const StepNumber = styled.span`
   height: 28px;
   border-radius: 50%;
   background: ${colors.primary};
-  font-size: 13px;
+  ${font('sub')}
   font-weight: 700;
   color: ${colors.white};
 `;
@@ -250,16 +232,14 @@ const RecipeDetailPage = () => {
           <Text variant="pageTitle" as="h2">{RECIPE.title}</Text>
 
           <Author>
-            <img src={RECIPE.author.avatar} alt="" />
+            <Avatar src={RECIPE.author.avatar} size={32} />
             <div>
               <Text variant="label">
                 <Link to={RECIPE.author.to}>{RECIPE.author.name}</Link>
               </Text>
               <Text variant="caption" color={colors.grey1}>{RECIPE.author.meta}</Text>
             </div>
-            <FollowButton type="button" $on={following} onClick={() => setFollowing((v) => !v)}>
-              {following ? "팔로잉" : "팔로우"}
-            </FollowButton>
+            <FollowButton following={following} onClick={() => setFollowing((v) => !v)} />
           </Author>
 
           <Stats>

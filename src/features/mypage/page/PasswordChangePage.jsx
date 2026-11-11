@@ -4,11 +4,10 @@ import styled from 'styled-components';
 import api from '../../../api/axios';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
-import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 import { isAuthError } from '../authError';
 import { PASSWORD_PATTERN } from '../constants';
-import MyPageTopBar from '../ui/MyPageTopBar';
-import { DANGER } from '../ui/style';
+import TopBar from '../../../components/layout/TopBar';
 
 const Form = styled.form`
   display: flex;
@@ -26,7 +25,7 @@ const Field = styled.div`
 
 const Message = styled.p`
   margin: 0;
-  font-size: 12px;
+  ${font('caption')}
   color: ${(props) => props.$color};
 `;
 
@@ -76,12 +75,12 @@ const PasswordChangePage = () => {
     if (form.newPassword === '' || newPasswordOk) {
       return <Message $color={colors.grey2}>영문·숫자 포함 8~20자 (특수문자는 !@#$%^&*만 가능)</Message>;
     }
-    return <Message $color={DANGER}>영문·숫자 포함 8~20자 (특수문자는 !@#$%^&*만 가능)</Message>;
+    return <Message $color={colors.danger}>영문·숫자 포함 8~20자 (특수문자는 !@#$%^&*만 가능)</Message>;
   };
 
   return (
     <>
-      <MyPageTopBar title="비밀번호 변경" showBack />
+      <TopBar title="비밀번호 변경" showBack />
       <Form onSubmit={submitHandler}>
         <TextInput
           label="현재 비밀번호"
@@ -114,7 +113,7 @@ const PasswordChangePage = () => {
             placeholder="새 비밀번호를 한 번 더 입력해주세요"
           />
           {form.confirmPassword !== '' && !confirmOk && (
-            <Message $color={DANGER}>새 비밀번호가 서로 달라요</Message>
+            <Message $color={colors.danger}>새 비밀번호가 서로 달라요</Message>
           )}
         </Field>
 

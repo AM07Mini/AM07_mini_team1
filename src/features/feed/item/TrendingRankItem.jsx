@@ -1,11 +1,8 @@
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { colors, radius } from '../../../components/styled/theme';
+import { colors, radius, font } from '../../../components/styled/theme';
 import { formatCount, formatDifficulty } from '../feedUtils';
 import { DEFAULT_IMAGE } from '../feedMapper';
-
-// 좋아요 빨강 — theme.js에 아직 없어서 피드 안에서만 사용 (팀 합의 후 theme.js로 옮기기)
-const HEART = '#E8545C';
 
 const Row = styled(Link)`
   display: flex;
@@ -44,7 +41,8 @@ const Rank = styled.b`
   border-radius: 6px;
   background-color: ${colors.primary};
   color: ${colors.white};
-  font-size: 12px;
+  ${font('hashtag')}
+  font-weight: 700;
 `;
 
 const Info = styled.div`
@@ -57,8 +55,7 @@ const Info = styled.div`
 const Title = styled.h3`
   margin: 0;
   overflow: hidden;
-  font-size: 16px;
-  font-weight: 700;
+  ${font('cardTitle')}
   color: ${colors.dark};
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -66,7 +63,7 @@ const Title = styled.h3`
 
 const Meta = styled.p`
   margin: 0;
-  font-size: 12px;
+  ${font('caption')}
   color: ${colors.grey1};
 `;
 
@@ -74,7 +71,11 @@ const Bottom = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  ${font('sub')}
+`;
+
+const Likes = styled.span`
+  color: ${colors.heart};
 `;
 
 const Badge = styled.span`
@@ -82,8 +83,7 @@ const Badge = styled.span`
   border-radius: 6px;
   background-color: ${(props) => (props.$ok ? colors.accent2 : colors.grey4)};
   color: ${(props) => (props.$ok ? colors.primary : colors.grey1)};
-  font-size: 11px;
-  font-weight: 500;
+  ${font('hashtag')}
 `;
 
 const metaText = (data) =>
@@ -108,7 +108,7 @@ const TrendingRankItem = ({ data, rank, missing }) => (
       <Title>{data.title}</Title>
       {metaText(data) && <Meta>{metaText(data)}</Meta>}
       <Bottom>
-        <span style={{ color: HEART }}>♥ {formatCount(data.likes)}</span>
+        <Likes>♥ {formatCount(data.likes)}</Likes>
         {missing !== null &&
           (missing === 0 ? <Badge $ok>내 재료로 가능</Badge> : <Badge>재료 {missing}개 부족</Badge>)}
       </Bottom>

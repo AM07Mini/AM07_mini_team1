@@ -5,7 +5,7 @@ import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
 import Checkbox from '../../../components/styled/Checkbox';
-import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 import {checkLoginId, checkNickname, checkEmail, sendEmailCode, verifyEmailCode, signUp} from '../../../api/authApi';
 
 const checkApis = {
@@ -35,8 +35,8 @@ const Content = styled.div`
 const Intro = styled.header`
   margin-bottom: 28px;
 
-  h1 { margin: 0 0 8px; font-size: 25px; line-height: 1.4; }
-  p { margin: 0; font-size: 13px; color: ${colors.grey1}; }
+  h1 { margin: 0 0 8px; ${font('pageTitle')} line-height: 1.4; }
+  p { margin: 0; ${font('sub')} color: ${colors.grey1}; }
 `;
 
 const Form = styled.form`
@@ -53,20 +53,20 @@ const Field = styled.div`
 
 const Message = styled.p`
   margin: 0;
-  font-size: 12px;
+  ${font('caption')}
   line-height: 1.5;
-  color: ${({ $error }) => $error ? '#d64545' : colors.accent1};
+  color: ${({ $error }) => $error ? colors.danger : colors.accent1};
 `;
 
 // 인증번호 남은 시간 표시
 const Timer = styled.span`
   flex-shrink: 0;
   white-space: nowrap;
-  font-size: 12px;
-  font-weight: 600;
+  ${font('hashtag')}
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: ${({ $expired }) =>
-    $expired ? '#d64545' : colors.accent1};
+    $expired ? colors.danger : colors.accent1};
 `;
 
 // 초 단위를 MM:SS 형식으로 변환

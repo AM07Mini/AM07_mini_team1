@@ -5,7 +5,7 @@ import SearchInput from "../../../components/styled/SearchInput";
 import TopBar from "../../../components/layout/TopBar";
 import Button from "../../../components/styled/Button";
 import Text from "../../../components/styled/Text";
-import { colors, radius } from "../../../components/styled/theme";
+import { colors, radius, font } from "../../../components/styled/theme";
 import IngredientList from "../list/IngredientList";
 
 const DEFAULT_INGREDIENTS = [
@@ -69,8 +69,7 @@ const AddButton = styled.button`
   border-radius: ${radius.button}px;
   background: ${colors.white};
   color: ${colors.primary};
-  font-size: 14px;
-  font-weight: 700;
+  ${font('label')}
   cursor: pointer;
 `;
 

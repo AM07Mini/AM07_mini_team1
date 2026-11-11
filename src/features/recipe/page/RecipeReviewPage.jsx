@@ -6,9 +6,8 @@ import Button from "../../../components/styled/Button";
 import Text from "../../../components/styled/Text";
 import RecipeCommentItem from "../item/RecipeCommentItem";
 import { RECIPE, INITIAL_REVIEWS } from "../data/recipeMock";
-import { colors, radius, shadows, PAGE_PADDING } from "../../../components/styled/theme"; // 실제 경로에 맞게
+import { colors, radius, shadows, PAGE_PADDING, font } from "../../../components/styled/theme";
 
-const HEART = "#E5484D";
 
 const Screen = styled.main`
   display: flex;
@@ -75,13 +74,13 @@ const LikeBox = styled.div`
 
 const LikePill = styled.button`
   padding: 8px 14px;
-  border: 1px solid ${HEART};
+  border: 1px solid ${colors.heart};
   border-radius: 18px;
-  background: ${({ $liked }) => ($liked ? HEART : colors.white)};
+  background: ${({ $liked }) => ($liked ? colors.heart : colors.white)};
   font-family: inherit;
-  font-size: 13px;
+  ${font('sub')}
   font-weight: 700;
-  color: ${({ $liked }) => ($liked ? colors.white : HEART)};
+  color: ${({ $liked }) => ($liked ? colors.white : colors.heart)};
   cursor: pointer;
 `;
 
@@ -112,7 +111,7 @@ const CommentBar = styled.form`
     background: none;
     outline: none;
     font-family: inherit;
-    font-size: 14px;
+    ${font('body')}
     color: ${colors.dark};
   }
   input::placeholder {
@@ -124,7 +123,7 @@ const CommentBar = styled.form`
     border-radius: 18px;
     background: ${colors.primary};
     font-family: inherit;
-    font-size: 13px;
+    ${font('sub')}
     font-weight: 700;
     color: ${colors.white};
     cursor: pointer;

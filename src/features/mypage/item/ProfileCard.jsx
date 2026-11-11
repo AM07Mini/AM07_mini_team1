@@ -1,9 +1,8 @@
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import Button from '../../../components/styled/Button';
-import { colors, radius } from '../../../components/styled/theme';
-import Avatar from '../ui/Avatar';
-import { SURFACE } from '../ui/style';
+import { colors, radius, font } from '../../../components/styled/theme';
+import Avatar from '../../../components/styled/Avatar';
 
 const Wrapper = styled.section`
   display: flex;
@@ -30,14 +29,13 @@ const NameBox = styled.div`
 
 const Nickname = styled.p`
   margin: 0;
-  font-size: 18px;
-  font-weight: 700;
+  ${font('sectionTitle')}
   color: ${colors.dark};
 `;
 
 const Intro = styled.p`
   margin: 0;
-  font-size: 13px;
+  ${font('sub')}
   color: ${colors.grey1};
 `;
 
@@ -45,7 +43,7 @@ const Stats = styled.div`
   display: flex;
   padding: 12px 0;
   border-radius: 12px;
-  background-color: ${SURFACE};
+  background-color: ${colors.surface};
 `;
 
 // 숫자 칸 — 레시피는 그냥 표시
@@ -63,12 +61,12 @@ const StatLink = styled(Stat).attrs({ as: Link })`
 `;
 
 const StatValue = styled.b`
-  font-size: 18px;
+  ${font('sectionTitle')}
   color: ${colors.dark};
 `;
 
 const StatName = styled.span`
-  font-size: 12px;
+  ${font('caption')}
   color: ${colors.grey1};
 `;
 

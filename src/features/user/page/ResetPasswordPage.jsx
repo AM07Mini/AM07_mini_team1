@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
-import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 import { resetPassword } from '../../../api/authApi';
 
 const Wrapper = styled.div`
@@ -27,14 +27,14 @@ const Intro = styled.div`
 
   h1 {
     margin: 0 0 8px;
-    font-size: 24px;
+    ${font('pageTitle')}
     line-height: 1.4;
     color: ${colors.dark};
   }
 
   p {
     margin: 0;
-    font-size: 13px;
+    ${font('sub')}
     line-height: 1.6;
     color: ${colors.grey1};
   }
@@ -65,17 +65,17 @@ const Conditions = styled.div`
 `;
 
 const Hint = styled.span`
-  font-size: 12px;
+  ${font('caption')}
   color: ${({ $valid }) =>
     $valid ? colors.accent1 : colors.grey2};
 `;
 
 const Message = styled.p`
   margin: 0;
-  font-size: 12px;
+  ${font('caption')}
   line-height: 1.6;
   color: ${({ $error }) =>
-    $error ? '#d64545' : colors.accent1};
+    $error ? colors.danger : colors.accent1};
 `;
 
 const BottomArea = styled.div`

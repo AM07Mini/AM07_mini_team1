@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { colors } from '../../../components/styled/theme';
+import { colors, font } from '../../../components/styled/theme';
 
 const Summary = styled.section`
   display: flex;
@@ -7,7 +7,7 @@ const Summary = styled.section`
   gap: 12px;
   padding: 16px;
   border-radius: 16px;
-  background: #f7f8fa;
+  background: ${colors.surface};
 `;
 
 const SummaryHeader = styled.div`
@@ -19,8 +19,7 @@ const SummaryHeader = styled.div`
 const SummaryTitle = styled.h3`
   margin: 0;
   color: ${colors.dark};
-  font-size: 14px;
-  font-weight: 700;
+  ${font('label')}
 `;
 
 const ResetButton = styled.button`
@@ -32,7 +31,7 @@ const ResetButton = styled.button`
   background: transparent;
   color: ${colors.grey1};
   font: inherit;
-  font-size: 13px;
+  ${font('sub')}
   cursor: pointer;
 
   &:focus-visible {
@@ -58,7 +57,7 @@ const SelectedChip = styled.button`
   background: ${colors.accent2};
   color: ${colors.dark};
   font: inherit;
-  font-size: 12px;
+  ${font('caption')}
   cursor: pointer;
 
   &:focus-visible {

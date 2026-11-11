@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
-import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 import {sendEmailCode,verifyEmailCode,findLoginId, issueResetKey} from '../../../api/authApi';
 
 const Wrapper = styled.div`
@@ -27,14 +27,14 @@ const Intro = styled.div`
   h1 {
     margin: 0 0 8px;
     color: ${colors.dark};
-    font-size: 24px;
+    ${font('pageTitle')}
     line-height: 1.4;
   }
 
   p {
     margin: 0;
     color: ${colors.grey1};
-    font-size: 13px;
+    ${font('sub')}
     line-height: 1.7;
   }
 `;
@@ -67,18 +67,18 @@ const BottomActions = styled.div`
 
 const Message = styled.p`
   margin: 0;
-  font-size: 12px;
+  ${font('caption')}
   line-height: 1.6;
   color: ${({ $error }) =>
-    $error ? '#d64545' : colors.accent1};
+    $error ? colors.danger : colors.accent1};
 `;
 
 const Timer = styled.span`
   padding-right: 5px;
-  font-size: 12px;
-  font-weight: 600;
+  ${font('hashtag')}
+  font-weight: 700;
   color: ${({ $expired }) =>
-    $expired ? '#d64545' : colors.accent1};
+    $expired ? colors.danger : colors.accent1};
 `;
 
 const ResultBox = styled.div`
@@ -90,12 +90,12 @@ const ResultBox = styled.div`
 
   p {
     margin: 0 0 8px;
-    font-size: 12px;
+    ${font('caption')}
     color: ${colors.grey1};
   }
 
   strong {
-    font-size: 20px;
+    ${font('sectionTitle')}
     color: ${colors.dark};
   }
 `;

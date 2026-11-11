@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { colors, radius } from '../../../components/styled/theme';
+import { colors, radius, font } from '../../../components/styled/theme';
 
 const FilterBox = styled.label`
   display: flex;
@@ -8,19 +8,18 @@ const FilterBox = styled.label`
   gap: 12px;
   padding: 14px 16px;
   border-radius: ${radius.button}px;
-  background-color: #f6f8fb;
+  background-color: ${colors.surface};
   cursor: ${(props) => (props.$disabled ? 'default' : 'pointer')};
   opacity: ${(props) => (props.$disabled ? 0.6 : 1)};
 
   strong {
     display: block;
-    font-size: 14px;
-    font-weight: 700;
+    ${font('label')}
     color: ${colors.dark};
   }
 
   small {
-    font-size: 11px;
+    ${font('caption')}
     color: ${colors.grey2};
   }
 `;

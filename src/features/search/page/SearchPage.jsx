@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import SearchInput from '../../../components/styled/SearchInput';
-import { colors } from '../../../components/styled/theme';
+import { colors, font } from '../../../components/styled/theme';
 import SearchFilterList from '../list/SearchFilterList';
 import SearchResultList from '../list/SearchResultList';
 import SearchSelectionSummary from '../list/SearchSelectionSummary';
@@ -36,15 +36,14 @@ const Intro = styled.div`
 const Heading = styled.h2`
   margin: 0;
   color: ${colors.dark};
-  font-size: 20px;
+  ${font('sectionTitle')}
   line-height: 1.4;
-  font-weight: 700;
 `;
 
 const Lead = styled.p`
   margin: 0;
   color: ${colors.grey1};
-  font-size: 14px;
+  ${font('body')}
   line-height: 1.5;
 `;
 

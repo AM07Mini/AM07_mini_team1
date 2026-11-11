@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { colors } from '../../../components/styled/theme';
+import { colors, font } from '../../../components/styled/theme';
 import MyRecipeItem from '../item/MyRecipeItem';
 
 // 레시피 카드 2열 그리드 (156px + 간격 15px)
@@ -14,7 +14,7 @@ const Empty = styled.p`
   margin: 0;
   padding: 40px 0;
   text-align: center;
-  font-size: 13px;
+  ${font('sub')}
   color: ${colors.grey2};
 `;
 

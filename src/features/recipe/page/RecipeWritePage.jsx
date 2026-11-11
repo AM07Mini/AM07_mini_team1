@@ -3,6 +3,8 @@ import { createRecipeText, uploadThumbnail, searchIngredients, createIngredient 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import Button from '../../../components/styled/Button';
+import { colors, radius, font } from '../../../components/styled/theme';
 
 // --- 1. 데이터 배열 ---
 const foodTypes = ["한식", "중식", "일식", "양식", "분식", "기타"];
@@ -21,10 +23,28 @@ const Wrapper = styled.main`
   gap: 32px;
 `;
 
+const PageTitle = styled.h2`
+  margin: 0 0 8px 0;
+  ${font('pageTitle')}
+  color: ${colors.dark};
+`;
+
+const PageDesc = styled.p`
+  margin: 0;
+  ${font('body')}
+  color: ${colors.grey1};
+`;
+
 const Section = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+`;
+
+// 조리 시간 · 인분 수 칸 — 한 줄에 반씩
+const UnitSection = styled(Section)`
+  flex: 1;
+  min-width: 0;
 `;
 
 const LabelRow = styled.div`
@@ -34,14 +54,13 @@ const LabelRow = styled.div`
 `;
 
 const Label = styled.span`
-  font-size: 15px;
-  font-weight: bold;
-  color: #0A2533;
+  ${font('itemTitle')}
+  color: ${colors.dark};
 `;
 
 const Hint = styled.span`
-  font-size: 13px;
-  color: #97A2B0;
+  ${font('sub')}
+  color: ${colors.grey2};
 `;
 
 const PhotoBox = styled.label`
@@ -50,24 +69,41 @@ const PhotoBox = styled.label`
   align-items: center;
   justify-content: center;
   height: 190px;
-  background-color: #E6EBF2;
-  border-radius: 16px;
+  background-color: ${colors.grey4};
+  border-radius: ${radius.card}px;
   gap: 6px;
   cursor: pointer;
   overflow: hidden;
+`;
+
+const PreviewImage = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const PlusMark = styled.p`
+  margin: 0;
+  ${font('pageTitle')}
+  color: ${colors.primary};
+`;
+
+const PhotoTitle = styled.b`
+  ${font('label')}
+  color: ${colors.dark};
 `;
 
 const StepPhoto = styled.label`
   width: 64px;
   height: 64px;
   flex-shrink: 0;
-  background-color: #E6EBF2;
+  background-color: ${colors.grey4};
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  color: #97A2B0;
+  ${font('caption')}
+  color: ${colors.grey2};
   cursor: pointer;
   overflow: hidden;
 `;
@@ -79,14 +115,23 @@ const HiddenFileInput = styled.input`
 const Input = styled.input`
   width: 100%;
   padding: 16px;
-  border: 1px solid #CCD4DE;
-  border-radius: 12px;
-  font-size: 14px;
+  border: 1px solid ${colors.grey3};
+  border-radius: ${radius.button}px;
+  font-family: inherit;
+  ${font('body')}
   outline: none;
   box-sizing: border-box;
   &::placeholder {
-    color: #97A2B0;
+    color: ${colors.grey2};
   }
+`;
+
+// 맛 · 키워드 직접 입력칸 — 칩 크기
+const FlavorInput = styled(Input)`
+  display: inline-block;
+  width: 150px;
+  padding: 6px 12px;
+  border-radius: ${radius.card}px;
 `;
 
 const Row = styled.div`
@@ -100,23 +145,79 @@ const LevelCard = styled.div`
   flex-direction: column;
   align-items: center;
   padding: 10px 0;
-  border-radius: 12px;
+  border-radius: ${radius.button}px;
   cursor: pointer;
   transition: all 0.2s ease;
 
-  background-color: ${({ $isActive }) => ($isActive ? '#70B9BE' : '#fff')};
-  border: 1px solid ${({ $isActive }) => ($isActive ? '#70B9BE' : '#CCD4DE')};
+  background-color: ${({ $isActive }) => ($isActive ? colors.secondary : colors.white)};
+  border: 1px solid ${({ $isActive }) => ($isActive ? colors.secondary : colors.grey3)};
 
   small {
-    font-size: 12px;
-    color: ${({ $isActive }) => ($isActive ? '#042628' : '#3DA0A7')};
+    ${font('caption')}
+    color: ${({ $isActive }) => ($isActive ? colors.primary : colors.accent1)};
   }
 
   b {
-    font-size: 14px;
+    ${font('label')}
     margin-top: 4px;
-    color: ${({ $isActive }) => ($isActive ? '#042628' : '#0A2533')};
+    color: ${({ $isActive }) => ($isActive ? colors.primary : colors.dark)};
   }
+`;
+
+// 선택된 재료가 없을 때
+const EmptyIngredients = styled.div`
+  padding: 16px 0;
+  border: 1px dashed ${colors.grey4};
+  border-radius: ${radius.button}px;
+  background-color: ${colors.surface};
+  ${font('body')}
+  color: ${colors.grey2};
+  text-align: center;
+`;
+
+const IngredientList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const IngredientRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border: 1px solid ${colors.grey3};
+  border-radius: ${radius.button}px;
+  background-color: ${colors.white};
+`;
+
+const IngredientName = styled.span`
+  ${font('itemTitle')}
+  color: ${colors.dark};
+`;
+
+const IngredientRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const QuantityBadge = styled.span`
+  padding: 6px 12px;
+  border-radius: ${radius.small}px;
+  background-color: ${colors.grey4};
+  ${font('sub')}
+  font-weight: 500;
+  color: ${colors.primary};
+`;
+
+const RemoveButton = styled.button`
+  border: none;
+  background: none;
+  ${font('cardTitle')}
+  font-weight: 400;
+  color: ${colors.grey2};
+  cursor: pointer;
 `;
 
 const ChipGroup = styled.div`
@@ -127,16 +228,24 @@ const ChipGroup = styled.div`
 
 const Chip = styled.button`
   padding: 6px 12px;
-  border-radius: 16px;
-  font-size: 14px;
+  border-radius: ${radius.card}px;
+  font-family: inherit;
+  ${font('body')}
   cursor: pointer;
   transition: all 0.2s ease;
 
-  background-color: ${({ $isActive }) => ($isActive ? '#70B9BE' : '#fff')};
-  border: 1px solid ${({ $isActive }) => ($isActive ? '#70B9BE' : '#CCD4DE')};
+  background-color: ${({ $isActive }) => ($isActive ? colors.secondary : colors.white)};
+  border: 1px solid ${({ $isActive }) => ($isActive ? colors.secondary : colors.grey3)};
 
-  color: ${({ $isActive }) => ($isActive ? '#042628' : '#48525F')};
-  font-weight: ${({ $isActive }) => ($isActive ? 'bold' : 'normal')};
+  color: ${({ $isActive }) => ($isActive ? colors.primary : colors.grey1)};
+  font-weight: ${({ $isActive }) => ($isActive ? 700 : 400)};
+`;
+
+// 맛 · 키워드 "+ 추가" 칩 — 점선 테두리
+const AddChip = styled(Chip)`
+  border: 1px dashed ${colors.secondary};
+  background-color: ${colors.white};
+  color: ${colors.primary};
 `;
 
 const DashedButton = styled.button`
@@ -144,12 +253,13 @@ const DashedButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1.5px dashed #70B9BE;
-  background-color: #fff;
-  border-radius: 12px;
-  color: #042628;
-  font-weight: bold;
-  font-size: 14px;
+  margin-top: ${(props) => props.$marginTop ?? 0}px;
+  border: 1.5px dashed ${colors.secondary};
+  background-color: ${colors.white};
+  border-radius: ${radius.button}px;
+  color: ${colors.primary};
+  font-family: inherit;
+  ${font('label')}
   cursor: pointer;
 `;
 
@@ -157,18 +267,22 @@ const StepCard = styled.div`
   display: flex;
   gap: 12px;
   padding: 14px;
-  border: 1px solid #CCD4DE;
-  border-radius: 12px;
-  background-color: #fff;
+  border: 1px solid ${colors.grey3};
+  border-radius: ${radius.button}px;
+  background-color: ${colors.white};
+`;
+
+const StepBody = styled.div`
+  flex: 1;
 `;
 
 const StepBadge = styled.span`
-  background-color: #E6EBF2;
-  color: #042628;
-  font-size: 11px;
-  font-weight: bold;
+  background-color: ${colors.grey4};
+  color: ${colors.primary};
+  ${font('hashtag')}
+  font-weight: 700;
   padding: 2px 8px;
-  border-radius: 8px;
+  border-radius: ${radius.small}px;
 `;
 
 const StepInput = styled.textarea`
@@ -176,45 +290,58 @@ const StepInput = styled.textarea`
   margin-top: 8px;
   border: none;
   outline: none;
-  font-size: 14px;
+  ${font('body')}
   line-height: 1.5;
-  color: #0A2533;
+  color: ${colors.dark};
   background: transparent;
   resize: none;
   font-family: inherit;
-  
+
   &::placeholder {
-    color: #97A2B0;
+    color: ${colors.grey2};
   }
 `;
 
 const SubLabel = styled.p`
-  font-size: 13px;
+  ${font('sub')}
   font-weight: 500;
-  color: #97A2B0;
-  margin: 0;
+  color: ${colors.grey2};
+  margin: ${(props) => (props.$spaced ? '4px 0 0' : 0)};
 `;
 
 const ToggleBox = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
-  background-color: #E6EBF2;
-  border-radius: 16px;
+  background-color: ${colors.grey4};
+  border-radius: ${radius.card}px;
   padding: 14px 16px;
 `;
 
-const SubmitButton = styled.button`
-  width: 100%;
-  padding: 16px;
-  background-color: #042628; 
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: bold;
+const ToggleText = styled.div`
+  flex: 1;
+`;
+
+const ToggleTitle = styled.p`
+  margin: 0 0 4px 0;
+  ${font('itemTitle')}
+  color: ${colors.dark};
+`;
+
+const ToggleDesc = styled.p`
+  margin: 0;
+  ${font('caption')}
+  color: ${colors.grey2};
+`;
+
+const SubmitBox = styled.div`
   margin-top: 16px;
-  cursor: pointer;
+`;
+
+const RequiredNote = styled.p`
+  margin: 12px 0 0;
+  ${font('caption')}
+  color: ${colors.grey2};
   text-align: center;
 `;
 
@@ -238,7 +365,7 @@ const ToggleSwitch = styled.label`
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: #CCD4DE;
+    background-color: ${colors.grey3};
     transition: 0.3s;
     border-radius: 24px;
   }
@@ -250,13 +377,13 @@ const ToggleSwitch = styled.label`
     width: 20px;
     left: 2px;
     bottom: 2px;
-    background-color: white;
+    background-color: ${colors.white};
     transition: 0.3s;
     border-radius: 50%;
   }
 
   input:checked + span {
-    background-color: #042628;
+    background-color: ${colors.primary};
   }
 
   input:checked + span:before {
@@ -267,31 +394,32 @@ const ToggleSwitch = styled.label`
 const UnitBox = styled.div`
   display: flex;
   align-items: center;
-  border: 1px solid #CCD4DE;
-  border-radius: 12px;
+  border: 1px solid ${colors.grey3};
+  border-radius: ${radius.button}px;
   padding: 0 12px;
   height: 48px;
-  box-sizing: border-box; 
+  box-sizing: border-box;
   width: 100%;
 `;
 
 const UnitInput = styled.input`
   flex: 1;
-  min-width: 0; 
+  min-width: 0;
   width: 100%;
   border: none;
   outline: none;
-  font-size: 14px;
+  font-family: inherit;
+  ${font('body')}
   background: transparent;
 `;
 
 const UnitText = styled.em`
   font-style: normal;
-  font-size: 13px;
-  color: #97A2B0;
+  ${font('sub')}
+  color: ${colors.grey2};
   margin-left: 8px;
-  flex-shrink: 0; 
-  white-space: nowrap; 
+  flex-shrink: 0;
+  white-space: nowrap;
 `;
 
 const BackButton = styled.button`
@@ -300,15 +428,14 @@ const BackButton = styled.button`
   gap: 4px;
   background: none;
   border: none;
-  font-size: 16px;
-  font-weight: bold;
-  color: #0A2533;
+  ${font('cardTitle')}
+  color: ${colors.dark};
   cursor: pointer;
   padding: 0;
   margin-bottom: 8px; // 타이틀과의 간격
 
   &:hover {
-    color: #3DA0A7;
+    color: ${colors.accent1};
   }
 `;
 
@@ -320,7 +447,7 @@ const Unit = ({ label, unit, value, onChange, placeholder }) => {
   };
 
   return (
-    <Section style={{ flex: 1, minWidth: 0 }}>
+    <UnitSection>
       <Label>{label}</Label>
       <UnitBox>
         <UnitInput 
@@ -332,7 +459,7 @@ const Unit = ({ label, unit, value, onChange, placeholder }) => {
         />
         <UnitText>{unit}</UnitText>
       </UnitBox>
-    </Section>
+    </UnitSection>
   );
 };
 
@@ -587,8 +714,8 @@ export default function RecipeWritePage() {
         <BackButton type="button" onClick={() => navigate(-1)}>
           ←
         </BackButton>
-        <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 8px 0', color: '#0A2533' }}>오늘 만든 요리를 기록해요</h2>
-        <p style={{ fontSize: '14px', color: '#48525F', margin: 0 }}>사진, 재료, 조리 순서를 차례로 입력해 주세요.</p>
+        <PageTitle>오늘 만든 요리를 기록해요</PageTitle>
+        <PageDesc>사진, 재료, 조리 순서를 차례로 입력해 주세요.</PageDesc>
       </div>
 
       {/* 완성된 요리 사진 */}
@@ -597,11 +724,11 @@ export default function RecipeWritePage() {
         <PhotoBox>
           <HiddenFileInput type="file" accept="image/*" onChange={handleMainImageUpload} />
           {mainImage ? (
-            <img src={mainImage} alt="완성된 요리" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <PreviewImage src={mainImage} alt="완성된 요리" />
           ) : (
             <>
-              <p style={{ fontSize: '28px', fontWeight: 'bold', color: '#042628', margin: 0 }}>+</p>
-              <b style={{ color: '#0A2533' }}>완성된 요리 사진 추가</b>
+              <PlusMark>+</PlusMark>
+              <PhotoTitle>완성된 요리 사진 추가</PhotoTitle>
               <Hint>대표 사진은 목록과 피드 썸네일로 쓰여요</Hint>
             </>
           )}
@@ -611,10 +738,10 @@ export default function RecipeWritePage() {
       {/* 요리 제목 */}
       <Section>
         <Label>요리 제목</Label>
-        <Input 
-          value={title} 
-          onChange={(e) => setTitle(e.target.value)} 
-          placeholder="어떤 요리를 만들었나요?" 
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="어떤 요리를 만들었나요?"
         />
       </Section>
 
@@ -632,7 +759,7 @@ export default function RecipeWritePage() {
         </LabelRow>
         <Row>
           {levels.map(([stars, name]) => (
-            <LevelCard 
+            <LevelCard
               key={name}
               $isActive={difficulty === name}
               onClick={() => setDifficulty(name)}
@@ -653,53 +780,34 @@ export default function RecipeWritePage() {
 
         {/* 선택된 재료 리스트 카드들 */}
         {selectedIngredients.length === 0 ? (
-          <div style={{ padding: '16px 0', color: '#97A2B0', fontSize: '14px', textAlign: 'center', backgroundColor: '#F8FAFC', borderRadius: '12px', border: '1px dashed #E2E8F0' }}>
+          <EmptyIngredients>
             아직 추가한 재료가 없어요.
-          </div>
+          </EmptyIngredients>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <IngredientList>
             {selectedIngredients.map((item, index) => (
-              <div 
-                key={index} 
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '14px 16px',
-                  border: '1px solid #CCD4DE',
-                  borderRadius: '12px',
-                  backgroundColor: '#fff'
-                }}
-              >
-                <span style={{ fontSize: '15px', fontWeight: 'bold', color: '#0A2533' }}>
+              <IngredientRow key={index}>
+                <IngredientName>
                   {item.name}
-                </span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ 
-                    backgroundColor: '#E6EBF2', 
-                    padding: '6px 12px', 
-                    borderRadius: '8px', 
-                    fontSize: '13px', 
-                    color: '#042628',
-                    fontWeight: '500'
-                  }}>
+                </IngredientName>
+                <IngredientRight>
+                  <QuantityBadge>
                     {item.quantity}
-                  </span>
-                  <button 
+                  </QuantityBadge>
+                  <RemoveButton
                     type="button"
                     onClick={() => handleRemoveIngredient(index)}
-                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#97A2B0', fontSize: '16px' }}
                   >
                     ✕
-                  </button>
-                </div>
-              </div>
+                  </RemoveButton>
+                </IngredientRight>
+              </IngredientRow>
             ))}
-          </div>
+          </IngredientList>
         )}
 
         {/* + 식재료 추가하기 버튼 (누르면 모달 열림 상태로 변경) */}
-        <DashedButton type="button" onClick={() => setIsModalOpen(true)} style={{ marginTop: '12px' }}>
+        <DashedButton type="button" onClick={() => setIsModalOpen(true)} $marginTop={12}>
           + 식재료 추가하기
         </DashedButton>
       </Section>
@@ -713,9 +821,9 @@ export default function RecipeWritePage() {
         </LabelRow>
         {steps.map((item, index) => (
           <StepCard key={index}>
-            <div style={{ flex: 1 }}>
+            <StepBody>
               <StepBadge>{item.step}</StepBadge>
-              <StepInput 
+              <StepInput
                 value={item.text}
                 onFocus={() => {
                   if (item.text.startsWith("예:")) {
@@ -726,11 +834,11 @@ export default function RecipeWritePage() {
                 placeholder="조리 순서를 입력해 주세요."
                 rows={2}
               />
-            </div>
+            </StepBody>
             <StepPhoto>
               <HiddenFileInput type="file" accept="image/*" onChange={(e) => handleStepImageUpload(index, e)} />
               {item.image ? (
-                <img src={item.image} alt={`step ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <PreviewImage src={item.image} alt={`step ${index + 1}`} />
               ) : (
                 "+ 사진"
               )}
@@ -746,11 +854,11 @@ export default function RecipeWritePage() {
           <Label>해시태그</Label>
           <Hint>검색과 필터에 사용돼요</Hint>
         </LabelRow>
-        
+
         <SubLabel>요리 종류</SubLabel>
         <ChipGroup>
           {foodTypes.map((item) => (
-            <Chip 
+            <Chip
               key={item}
               type="button"
               $isActive={selectedFoodType === item}
@@ -761,10 +869,10 @@ export default function RecipeWritePage() {
           ))}
         </ChipGroup>
 
-        <SubLabel style={{ marginTop: '4px' }}>카테고리 (조리 형태)</SubLabel>
+        <SubLabel $spaced>카테고리 (조리 형태)</SubLabel>
         <ChipGroup>
           {categories.map((item) => (
-            <Chip 
+            <Chip
               key={item}
               type="button"
               $isActive={selectedCategory === item}
@@ -776,12 +884,12 @@ export default function RecipeWritePage() {
         </ChipGroup>
 
         {/* 🌟 새로 바뀐 맛 · 키워드 칩 UI 섹션 */}
-        <SubLabel style={{ marginTop: '4px' }}>맛 · 키워드</SubLabel>
+        <SubLabel $spaced>맛 · 키워드</SubLabel>
         <ChipGroup>
           {flavorTags.map((tag) => {
             const isSelected = selectedFlavors.includes(tag);
             return (
-              <Chip 
+              <Chip
                 key={tag}
                 type="button"
                 $isActive={isSelected}
@@ -794,52 +902,50 @@ export default function RecipeWritePage() {
 
           {/* '+ 추가' 버튼 또는 직접 입력창 */}
           {isAddingFlavor ? (
-            <Input 
+            <FlavorInput
               autoFocus
               value={customFlavorInput}
               onChange={(e) => setCustomFlavorInput(e.target.value)}
               onKeyDown={handleAddCustomFlavor}
-              placeholder="키워드 입력 후 엔터 (예: #매콤한)" 
-              style={{ width: '150px', padding: '6px 12px', fontSize: '14px', borderRadius: '16px', display: 'inline-block' }}
+              placeholder="키워드 입력 후 엔터 (예: #매콤한)"
             />
           ) : (
-            <Chip 
-              type="button" 
+            <AddChip
+              type="button"
               onClick={() => setIsAddingFlavor(true)}
-              style={{ backgroundColor: '#fff', border: '1px dashed #70B9BE', color: '#042628' }}
             >
               + 추가
-            </Chip>
+            </AddChip>
           )}
         </ChipGroup>
       </Section>
 
       {/* 피드 공개 토글 */}
       <ToggleBox>
-        <div style={{ flex: 1 }}>
-          <p style={{ fontSize: '15px', fontWeight: 'bold', margin: '0 0 4px 0', color: '#0A2533' }}>피드에 공개하기</p>
-          <p style={{ fontSize: '12px', color: '#97A2B0', margin: 0 }}>다른 유저가 내 레시피를 보고 후기를 남길 수 있어요</p>
-        </div>
+        <ToggleText>
+          <ToggleTitle>피드에 공개하기</ToggleTitle>
+          <ToggleDesc>다른 유저가 내 레시피를 보고 후기를 남길 수 있어요</ToggleDesc>
+        </ToggleText>
         <ToggleSwitch>
-          <input 
-            type="checkbox" 
-            checked={isPublic} 
-            onChange={(e) => setIsPublic(e.target.checked)} 
+          <input
+            type="checkbox"
+            checked={isPublic}
+            onChange={(e) => setIsPublic(e.target.checked)}
           />
           <span />
         </ToggleSwitch>
       </ToggleBox>
 
       {/* 저장 버튼 */}
-      <div>
-        <SubmitButton type="button" onClick={handleSubmitRecipe}>레시피 저장하기</SubmitButton>
-        <p style={{ textAlign: 'center', fontSize: '12px', color: '#97A2B0', marginTop: '12px' }}>
+      <SubmitBox>
+        <Button title="레시피 저장하기" onClick={handleSubmitRecipe} />
+        <RequiredNote>
           필수 항목: 사진 · 제목 · 재료 · 레시피 3단계
-        </p>
-      </div>
+        </RequiredNote>
+      </SubmitBox>
 
       {/* 식재료 추가 모달 컴포넌트 렌더링 */}
-      <IngredientSearchModal 
+      <IngredientSearchModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onAddIngredients={(newItems) => {
@@ -847,6 +953,6 @@ export default function RecipeWritePage() {
         }}
       />
     </Wrapper>
-    
+
   );
 }

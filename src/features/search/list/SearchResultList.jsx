@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { colors } from '../../../components/styled/theme';
+import { colors, font } from '../../../components/styled/theme';
 import SearchRecipeItem from '../item/SearchRecipeItem';
 import SearchEmptyState from './SearchEmptyState';
 
@@ -18,14 +18,12 @@ const ResultsHeading = styled.div`
 const ResultsTitle = styled.h3`
   margin: 0;
   color: ${colors.dark};
-  font-size: 18px;
-  font-weight: 700;
+  ${font('sectionTitle')}
 `;
 
 const Count = styled.span`
   color: ${colors.primary};
-  font-size: 14px;
-  font-weight: 700;
+  ${font('label')}
 `;
 
 const RecipeGrid = styled.div`
