@@ -32,9 +32,22 @@ export const signIn = (loginId, password) =>
 export const findLoginId = (email, code) =>
   api.post('/auth/find-login-id', { email, code });
 
+
+// 비밀번호 재설정 보안키 발급
+export const issueResetKey = (email, code) =>
+  api.post('/auth/password/reset-key', {
+    email,
+    code,
+  });
+
 // 비밀번호 재설정
-export const resetPassword = (email, code, newPassword) =>
-  api.post('/auth/password/reset', { email, code, newPassword });
+export const resetPassword = (email, resetKey, newPassword) =>
+  api.post('/auth/password/reset', {
+    email,
+    resetKey,
+    newPassword,
+  });
+
 
 // 토큰 재발급 및 로그아웃
 export const refreshToken = (token) =>

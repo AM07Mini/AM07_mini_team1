@@ -1,12 +1,11 @@
-
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { UNSAFE_getTurboStreamSingleFetchDataStrategy, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
 import { colors, PAGE_PADDING } from '../../../components/styled/theme';
-import {sendEmailCode,verifyEmailCode,findLoginId} from '../../../api/authApi';
+import {sendEmailCode,verifyEmailCode,findLoginId, issueResetKey} from '../../../api/authApi';
 
 const Wrapper = styled.div`
   min-height: 100dvh;
@@ -112,7 +111,7 @@ const RecoveryPage = ({ purpose }) => {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);
-  const [loginId, setLoginId] = useState('');
+  const [completed, setCompleted] = useState(false);
   const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -150,7 +149,7 @@ const RecoveryPage = ({ purpose }) => {
     setEmail(value);
     setCode('');
     setCodeSent(false);
-    setLoginId('');
+    setCompleted(false);
     setDeadline(null);
     setRemaining(null);
     setNotice('');
@@ -244,6 +243,7 @@ const RecoveryPage = ({ purpose }) => {
         throw new Error(data.message || '인증번호 확인 실패');
       }
 
+
       if (isFind) {
         const response = await findLoginId(address, enteredCode);
 
@@ -252,19 +252,30 @@ const RecoveryPage = ({ purpose }) => {
           latestCode.current.trim() !== enteredCode
         ) return;
 
-        if (!response.data.isSuccess ||
-            !response.data.result?.loginId) {
+        if (response.data?.isSuccess !== true) {
           throw new Error(
-            response.data.message || '아이디 조회에 실패했습니다.'
+            response.data?.message || '아이디 안내 메일 발송에 실패했습니다.'
           );
         }
-
-        setLoginId(response.data.result.loginId);
       } else {
-        navigate('/reset-password', {
-          state: { email: address, code: enteredCode },
-        });
+        const response = await issueResetKey(address, enteredCode);
+
+        if (
+          latestEmail.current.trim() !== address ||
+          latestCode.current.trim() !== enteredCode
+        ) return;
+
+        if (response.data?.isSuccess !== true) {
+          throw new Error(
+            response.data?.message || '비밀번호 재설정 메일 발송에 실패했습니다.'
+          );
+        }
       }
+
+      setCompleted(true);
+
+
+
     } catch (err) {
       if (
         latestEmail.current.trim() === address &&
@@ -287,12 +298,18 @@ const RecoveryPage = ({ purpose }) => {
 
       <Content>
         <Intro>
-          {loginId ? (
+
+          {completed ? (
             <>
-              <h1>아이디를 찾았어요!</h1>
-              <p>가입하신 계정 정보를 확인해주세요.</p>
+              <h1>
+                {isFind
+                  ? '아이디 안내 메일을 보냈어요!'
+                  : '비밀번호 재설정 메일을 보냈어요!'}
+              </h1>
+              <p>가입하신 이메일을 확인해주세요.</p>
             </>
           ) : (
+
             <>
               <h1>
                 {isFind
@@ -308,24 +325,40 @@ const RecoveryPage = ({ purpose }) => {
           )}
         </Intro>
 
-        {loginId ? (
+
+        {completed ? (
           <>
             <ResultBox>
-              <p>가입한 아이디</p>
-              <strong>{loginId}</strong>
+              <p>
+                {isFind
+                  ? '가입한 아이디를 이메일로 전송했어요.'
+                  : '비밀번호 재설정용 보안키를 이메일로 전송했어요.'}
+              </p>
+              <strong>메일함을 확인해주세요.</strong>
             </ResultBox>
 
             <BottomActions>
               <Button
-                title="비밀번호 찾기"
+                title={isFind ? '비밀번호 찾기' : '보안키 입력하기'}
                 variant="outline"
-                onClick={() => navigate('/forgot-password')}
+                onClick={() => {
+                  if (isFind) {
+                    navigate('/forgot-password');
+                  } else {
+                    navigate('/reset-password', {
+                      state: {
+                        email: email.trim(),
+                      },
+                    });
+                  }
+                }}
               />
               <Button
                 title="로그인하기"
                 onClick={() => navigate('/signin')}
               />
             </BottomActions>
+
           </>
         ) : (
           <Form onSubmit={handleSubmit} noValidate>

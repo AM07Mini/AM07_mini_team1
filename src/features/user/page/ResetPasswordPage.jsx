@@ -86,15 +86,16 @@ const BottomArea = styled.div`
 const passwordRegex =
   /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d!@#$%^&*]{8,20}$/;
 
+
 const ResetPasswordPage = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
 
-  const email = state?.email;
-  const code = state?.code;
-  const hasVerification = Boolean(email && code);
+  const [email, setEmail] = useState(state?.email ?? '');
+  const [resetKey, setResetKey] = useState('');
 
   const [password, setPassword] = useState('');
+
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -112,20 +113,29 @@ const ResetPasswordPage = () => {
     confirmPassword.length > 0 &&
     password === confirmPassword;
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
 
-    if (!hasVerification) {
-      setError('이메일 인증을 먼저 진행해주세요.');
+    const address = email.trim();
+    const key = resetKey.trim();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
+      setError('올바른 이메일 주소를 입력해주세요.');
+      return;
+    }
+
+    if (!key) {
+      setError('이메일로 받은 재설정 보안키를 입력해주세요.');
       return;
     }
 
     if (!passwordRegex.test(password)) {
-        setError(
-            '영문·숫자를 포함한 8~20자로 입력해주세요. 특수문자는 !@#$%^&*만 사용할 수 있습니다.'
-        );
-        return;
+      setError(
+        '영문·숫자를 포함한 8~20자로 입력해주세요. 특수문자는 !@#$%^&*만 사용할 수 있습니다.'
+      );
+      return;
     }
 
     if (password !== confirmPassword) {
@@ -136,22 +146,26 @@ const ResetPasswordPage = () => {
     setLoading(true);
     setError('');
 
+
     try {
       const { data } = await resetPassword(
-        email,
-        code,
+        address,
+        key,
         password
       );
+
 
       if (data.isSuccess !== true) {
         throw new Error(data.message || '비밀번호 변경 실패');
       }
 
+      setResetKey('');
+
       navigate('/password-reset/complete', {
         replace: true,
         state: {
           completed: true,
-          email,
+          email: address,
           changedAt: new Date().toISOString(),
         },
       });
@@ -177,11 +191,40 @@ const ResetPasswordPage = () => {
             <br />
             설정해주세요
           </h1>
-          <p>이전에 쓰던 비밀번호와 다르게 만들어주세요.</p>
+          <p>이메일로 받은 보안키를 입력하고 새 비밀번호를 설정해주세요.</p>
         </Intro>
 
         <Form onSubmit={handleSubmit} noValidate>
           <Fields>
+            <Field>
+              <TextInput
+                label="가입한 이메일"
+                name="resetEmail"
+                type="email"
+                placeholder="example@email.com"
+                value={email}
+                changeHandler={(e) => {
+                  setEmail(e.target.value);
+                  setError('');
+                }}
+              />
+            </Field>
+
+            <Field>
+              <TextInput
+                label="이메일 재설정 보안키"
+                name="resetKey"
+                type="password"
+                placeholder="이메일로 받은 보안키 입력"
+                value={resetKey}
+                changeHandler={(e) => {
+                  setResetKey(e.target.value);
+                  setError('');
+                }}
+              />
+            </Field>
+
+
             <Field>
               <TextInput
                 label="새 비밀번호"
@@ -226,11 +269,7 @@ const ResetPasswordPage = () => {
               )}
             </Field>
 
-            {!hasVerification && (
-              <Message $error>
-                이메일 인증을 완료하면 비밀번호를 변경할 수 있습니다.
-              </Message>
-            )}
+
 
             {error && (
               <Message $error role="alert">{error}</Message>
@@ -241,7 +280,7 @@ const ResetPasswordPage = () => {
             <Button
               title={loading ? '변경 중...' : '비밀번호 변경하기'}
               type="submit"
-              disabled={!hasVerification || loading}
+              disabled={loading}
             />
           </BottomArea>
         </Form>
