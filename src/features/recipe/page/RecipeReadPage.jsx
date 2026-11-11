@@ -168,6 +168,13 @@ const RecipeDetailPage = () => {
   const { id = RECIPE.id } = useParams();
   const goReviews = () => navigate(`/recipe/${id}/reviews`);
 
+  // 뒤로가기 — 들어온 화면으로 돌아감 (마이 페이지, 검색, 피드 등)
+  // 주소로 바로 들어와서 돌아갈 화면이 없으면 홈으로
+  const backHandler = () => {
+    if (window.history.state?.idx > 0) navigate(-1);
+    else navigate("/", { replace: true }); // 상세 기록을 홈으로 바꿔서 브라우저 뒤로가기로 다시 상세에 오지 않게
+  };
+
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [following, setFollowing] = useState(false);
@@ -199,7 +206,7 @@ const RecipeDetailPage = () => {
     <div>
       <Hero>
         <HeroActions>
-          <CircleIconButton to="/recipe/recommend" label="뒤로가기">
+          <CircleIconButton label="뒤로가기" onClick={backHandler}>
             <BackIcon />
           </CircleIconButton>
           <CircleIconButton label="저장" pressed={saved} onClick={() => setSaved((v) => !v)}>
