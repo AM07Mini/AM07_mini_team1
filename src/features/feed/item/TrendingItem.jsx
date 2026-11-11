@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { colors, radius } from '../../../components/styled/theme';
-import { formatCount } from '../feedData';
+import { formatCount } from '../feedUtils';
 import { DEFAULT_IMAGE } from '../feedMapper';
 
 // 좋아요 빨강 — theme.js에 아직 없어서 피드 안에서만 사용 (팀 합의 후 theme.js로 옮기기)

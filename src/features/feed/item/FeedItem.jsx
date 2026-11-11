@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import Card from '../../../components/styled/Card';
 import { colors, radius } from '../../../components/styled/theme';
-import { formatAgo, formatCount, formatDifficulty } from '../feedData';
-import { DEFAULT_AVATAR, DEFAULT_IMAGE } from '../feedMapper';
+import { formatAgo, formatCount, formatDifficulty } from '../feedUtils';
+import { DEFAULT_IMAGE } from '../feedMapper';
+import Avatar from '../../mypage/ui/Avatar';
 
 // 좋아요 빨강 — theme.js에 아직 없어서 피드 안에서만 사용 (팀 합의 후 theme.js로 옮기기)
 const HEART = '#E8545C';
@@ -13,13 +14,6 @@ const Header = styled.div`
   align-items: center;
   gap: 10px;
   padding: 12px 14px 0;
-`;
-
-const Avatar = styled.img`
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  object-fit: cover;
 `;
 
 const Name = styled.p`
@@ -115,17 +109,14 @@ const fallbackTo = (src) => (event) => {
   if (!event.currentTarget.src.endsWith(src)) event.currentTarget.src = src;
 };
 
-// 피드 카드 — 작성자(프로필·팔로우), 큰 사진, 좋아요·후기 수, 북마크, 레시피 이름·난이도·해시태그
-// 응답에 없는 값(후기 수·난이도·태그)은 그 줄을 숨김
 const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
-  // 사진·제목을 누르면 레시피 상세로 이동
   const linkTo = data.recipeId ? `/recipe/read/${data.recipeId}` : null;
   const wrapLink = (children) => (linkTo ? <StyledLink to={linkTo}>{children}</StyledLink> : children);
 
   return (
     <Card $padding={0} as="article" style={{ overflow: 'hidden' }}>
       <Header>
-        <Avatar src={data.author.avatar} alt="" onError={fallbackTo(DEFAULT_AVATAR)} />
+        <Avatar src={data.author.avatar} size={36} />
         <div>
           <Name>{data.author.name}</Name>
           <When>{formatAgo(data.minutesAgo)}</When>
