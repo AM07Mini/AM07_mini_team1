@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { searchIngredients, createIngredient } from '../../../api/recipeApi';
+import BackIcon from '../../../components/styled/BackIcon';
 import Button from '../../../components/styled/Button';
+import Chip from '../../../components/styled/Chip';
 import SearchInput from '../../../components/styled/SearchInput';
 import { colors, radius, font } from '../../../components/styled/theme';
 
@@ -38,12 +40,11 @@ const Header = styled.div`
 `;
 
 const BackButton = styled.button`
+  display: flex;
   margin-right: 16px;
+  padding: 0;
   border: none;
   background: none;
-  ${font('sectionTitle')}
-  font-weight: 400;
-  color: ${colors.dark};
   cursor: pointer;
 `;
 
@@ -113,17 +114,6 @@ const ChipRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-`;
-
-const FrequentChip = styled.button`
-  padding: 8px 16px;
-  border: 1px solid ${(props) => (props.$selected ? colors.primary : colors.grey3)};
-  border-radius: 20px;
-  background: ${(props) => (props.$selected ? colors.accent2 : colors.white)};
-  ${font('sub')}
-  font-weight: ${(props) => (props.$selected ? 700 : 400)};
-  color: ${colors.dark};
-  cursor: pointer;
 `;
 
 const CustomInput = styled.input`
@@ -300,7 +290,9 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
       <Sheet>
         {/* 상단 헤더 */}
         <Header>
-          <BackButton onClick={onClose}>←</BackButton>
+          <BackButton onClick={onClose} aria-label="뒤로가기">
+            <BackIcon />
+          </BackButton>
           <Title>식재료 추가</Title>
         </Header>
 
@@ -343,14 +335,13 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
               {frequentItems.map((name) => {
                 const isSelected = tempSelected.some((s) => s.name === name);
                 return (
-                  <FrequentChip
+                  <Chip
                     key={name}
-                    type="button"
-                    $selected={isSelected}
+                    size="medium"
+                    title={`+ ${name}`}
+                    selected={isSelected}
                     onClick={() => handleToggleSelectItem({ name })}
-                  >
-                    + {name}
-                  </FrequentChip>
+                  />
                 );
               })}
             </ChipRow>

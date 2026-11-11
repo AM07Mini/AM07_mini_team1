@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import Avatar from '../../../components/styled/Avatar';
 import Card from '../../../components/styled/Card';
 import FollowButton from '../../../components/styled/FollowButton';
+import Icon from '../../../components/styled/Icon';
 import { colors, radius, font } from '../../../components/styled/theme';
 import { formatAgo, formatCount, formatDifficulty } from '../feedUtils';
 import { DEFAULT_IMAGE } from '../feedMapper';
@@ -144,15 +145,7 @@ const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
           $pushRight
           onClick={() => bookmarkHandler(data.id)}
         >
-          <svg width="16" height="20" viewBox="0 0 15.6 19.6" aria-hidden="true">
-            <path
-              d="M0.8 0.8H14.8V18.8L7.8 13.8L0.8 18.8V0.8Z"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinejoin="round"
-              fill={data.bookmarked ? 'currentColor' : 'none'}
-            />
-          </svg>
+          <Icon name="bookmark" size={22} filled={data.bookmarked} />
         </IconButton>
       </Actions>
 

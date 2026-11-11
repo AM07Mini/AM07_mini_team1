@@ -1,10 +1,11 @@
 import IngredientSearchModal from './IngredientSearchModal';
 import { createRecipeText, uploadThumbnail, searchIngredients, createIngredient } from "../../../api/recipeApi";
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import PageIntro from '../../../components/styled/PageIntro';
+import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
+import Chip from '../../../components/styled/Chip';
 import Toggle from '../../../components/styled/Toggle';
 import { DIFFICULTIES } from '../../../utils/difficulty';
 import { colors, radius, font } from '../../../components/styled/theme';
@@ -213,28 +214,6 @@ const ChipGroup = styled.div`
   gap: 8px;
 `;
 
-const Chip = styled.button`
-  padding: 6px 12px;
-  border-radius: ${radius.card}px;
-  font-family: inherit;
-  ${font('body')}
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  background-color: ${({ $isActive }) => ($isActive ? colors.secondary : colors.white)};
-  border: 1px solid ${({ $isActive }) => ($isActive ? colors.secondary : colors.grey3)};
-
-  color: ${({ $isActive }) => ($isActive ? colors.primary : colors.grey1)};
-  font-weight: ${({ $isActive }) => ($isActive ? 700 : 400)};
-`;
-
-// 맛 · 키워드 "+ 추가" 칩 — 점선 테두리
-const AddChip = styled(Chip)`
-  border: 1px dashed ${colors.secondary};
-  background-color: ${colors.white};
-  color: ${colors.primary};
-`;
-
 const DashedButton = styled.button`
   height: 46px;
   display: flex;
@@ -363,23 +342,6 @@ const UnitText = styled.em`
   white-space: nowrap;
 `;
 
-const BackButton = styled.button`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: none;
-  border: none;
-  ${font('cardTitle')}
-  color: ${colors.dark};
-  cursor: pointer;
-  padding: 0;
-  margin-bottom: 8px; // 타이틀과의 간격
-
-  &:hover {
-    color: ${colors.accent1};
-  }
-`;
-
 // --- 3. 조리 시간 / 인분 수 컴포넌트 (숫자만 입력 제한 적용) ---
 const Unit = ({ label, unit, value, onChange, placeholder }) => {
   const handleNumberChange = (e) => {
@@ -406,7 +368,6 @@ const Unit = ({ label, unit, value, onChange, placeholder }) => {
 
 // --- 4. 메인 컴포넌트 ---
 export default function RecipeWritePage() {
-  const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [cookingTime, setCookingTime] = useState('');
   const [servings, setServings] = useState('');
@@ -649,14 +610,10 @@ export default function RecipeWritePage() {
 
 
   return (
+    <>
+    <TopBar title="레시피 기록" showBack />
     <Wrapper>
-      {/* 뒤로 가기 화살표 버튼*/}
-      <div>
-        <BackButton type="button" onClick={() => navigate(-1)}>
-          ←
-        </BackButton>
-        <PageIntro title="오늘 만든 요리를 기록해요" description="사진, 재료, 조리 순서를 차례로 입력해 주세요." />
-      </div>
+      <PageIntro title="오늘 만든 요리를 기록해요" description="사진, 재료, 조리 순서를 차례로 입력해 주세요." />
 
       {/* 완성된 요리 사진 */}
       <Section>
@@ -800,12 +757,11 @@ export default function RecipeWritePage() {
           {foodTypes.map((item) => (
             <Chip
               key={item}
-              type="button"
-              $isActive={selectedFoodType === item}
+              size="medium"
+              title={item}
+              selected={selectedFoodType === item}
               onClick={() => setSelectedFoodType(item)}
-            >
-              {item}
-            </Chip>
+            />
           ))}
         </ChipGroup>
 
@@ -814,12 +770,11 @@ export default function RecipeWritePage() {
           {categories.map((item) => (
             <Chip
               key={item}
-              type="button"
-              $isActive={selectedCategory === item}
+              size="medium"
+              title={item}
+              selected={selectedCategory === item}
               onClick={() => setSelectedCategory(item)}
-            >
-              {item}
-            </Chip>
+            />
           ))}
         </ChipGroup>
 
@@ -831,12 +786,11 @@ export default function RecipeWritePage() {
             return (
               <Chip
                 key={tag}
-                type="button"
-                $isActive={isSelected}
+                size="medium"
+                title={tag}
+                selected={isSelected}
                 onClick={() => handleFlavorClick(tag)}
-              >
-                {tag}
-              </Chip>
+              />
             );
           })}
 
@@ -850,12 +804,7 @@ export default function RecipeWritePage() {
               placeholder="키워드 입력 후 엔터 (예: #매콤한)"
             />
           ) : (
-            <AddChip
-              type="button"
-              onClick={() => setIsAddingFlavor(true)}
-            >
-              + 추가
-            </AddChip>
+            <Chip size="medium" dashed title="+ 추가" onClick={() => setIsAddingFlavor(true)} />
           )}
         </ChipGroup>
       </Section>
@@ -886,6 +835,6 @@ export default function RecipeWritePage() {
         }}
       />
     </Wrapper>
-
+    </>
   );
 }

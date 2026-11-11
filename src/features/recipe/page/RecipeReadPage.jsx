@@ -2,6 +2,9 @@ import { useState } from "react";
 import styled from "styled-components";
 import SectionHeader from '../../../components/styled/SectionHeader';
 import Avatar from "../../../components/styled/Avatar";
+import BackIcon from "../../../components/styled/BackIcon";
+import CircleIconButton from "../../../components/styled/CircleIconButton";
+import Icon from "../../../components/styled/Icon";
 import FollowButton from "../../../components/styled/FollowButton";
 import Button from "../../../components/styled/Button";
 import Chip from "../../../components/styled/Chip";
@@ -22,35 +25,20 @@ const Hero = styled.div`
   }
 `;
 
-const BackLink = styled(Link)`
+// 사진 위 버튼 자리 — 왼쪽 뒤로가기, 오른쪽 북마크
+const HeroActions = styled.div`
   position: absolute;
   top: 15px;
   left: 24px;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: ${colors.white};
-  color: ${colors.dark};
-  font-size: 18px;
-  text-decoration: none;
+  right: 24px;
+  display: flex;
+  justify-content: space-between;
 `;
 
-const BookmarkButton = styled.button`
-  position: absolute;
-  top: 15px;
-  right: 24px;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: 50%;
-  background: ${colors.white};
-  font-size: 18px;
+// 북마크 아이콘 색 — 저장하면 진한 색으로 채움
+const BookmarkColor = styled.span`
+  display: flex;
   color: ${({ $saved }) => ($saved ? colors.primary : colors.grey2)};
-  cursor: pointer;
 `;
 
 const Sheet = styled.article`
@@ -210,16 +198,16 @@ const RecipeDetailPage = () => {
   return (
     <div>
       <Hero>
-        <BackLink to="/recipe/recommend" aria-label="뒤로">←</BackLink>
-        <BookmarkButton
-          type="button"
-          $saved={saved}
-          aria-pressed={saved}
-          aria-label="저장"
-          onClick={() => setSaved((v) => !v)}
-        >
-          {saved ? "★" : "☆"}
-        </BookmarkButton>
+        <HeroActions>
+          <CircleIconButton to="/recipe/recommend" label="뒤로가기">
+            <BackIcon />
+          </CircleIconButton>
+          <CircleIconButton label="저장" pressed={saved} onClick={() => setSaved((v) => !v)}>
+            <BookmarkColor $saved={saved}>
+              <Icon name="bookmark" size={20} filled={saved} />
+            </BookmarkColor>
+          </CircleIconButton>
+        </HeroActions>
       </Hero>
 
       <Sheet>

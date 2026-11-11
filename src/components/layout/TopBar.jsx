@@ -1,6 +1,7 @@
 import { forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import BackIcon from '../styled/BackIcon';
 import Icon from '../styled/Icon';
 import { colors, PAGE_PADDING, font } from '../styled/theme';
 
@@ -40,11 +41,6 @@ const IconButton = styled.button`
   cursor: pointer;
 `;
 
-// 피그마 화살표 파일은 아래 방향이라 90도 돌려서 왼쪽을 가리키게 함 (피그마도 동일)
-const BackImage = styled.img`
-  transform: rotate(90deg);
-`;
-
 // 피그마에서 받은 아이콘 파일이 있으면 그걸 쓰고, 없으면 공용 Icon
 const figmaIcons = { settings: '/icons/setting.svg' };
 const iconLabels = { settings: '설정', search: '검색', bell: '알림' };
@@ -59,7 +55,7 @@ const TopBar = forwardRef(({ title, showBack, rightIcon, rightClickHandler }, re
     <Wrapper ref={ref}>
       {showBack && (
         <IconButton $side="left" aria-label="뒤로가기" onClick={() => moveUrl(-1)}>
-          <BackImage src="/icons/arrow-left.svg" alt="" />
+          <BackIcon />
         </IconButton>
       )}
       <Title>{title}</Title>
