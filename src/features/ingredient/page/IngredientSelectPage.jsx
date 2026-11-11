@@ -11,10 +11,8 @@ import IngredientList from "../list/IngredientList";
 // 목데이터
 const DEFAULT_INGREDIENTS = [
   "달걀", "식빵", "아보카도", "토마토", "치즈", "양파",
-  "브로콜리", "감자", "당근", "우유", "닭고기", "쌀","달걀", "식빵", "아보카도", "토마토", "치즈", "양파",
-  "브로콜리", "감자", "당근", "우유", "닭고기", "쌀",
+  "브로콜리", "감자", "당근", "우유", "닭고기", "쌀"
 ];
-const DEFAULT_SELECTED = ["달걀", "식빵", "아보카도"];
 
 const Screen = styled.main`
   display: flex;
@@ -79,7 +77,7 @@ const AddButton = styled.button`
 
 const IngredientSelectPage = () => {
   const [ingredients, setIngredients] = useState(DEFAULT_INGREDIENTS);
-  const [selected, setSelected] = useState(DEFAULT_SELECTED);
+  const [selected, setSelected] = useState([]);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
 
