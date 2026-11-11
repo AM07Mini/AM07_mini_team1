@@ -6,9 +6,11 @@ export const ACCESS_TOKEN_KEY = 'accessToken';
 export const REFRESH_TOKEN_KEY = 'refreshToken';
 
 // 요청 헤더에 넣을 값: { headers: authHeader() }
-export const authHeader = () => ({
-  Authorization: `Bearer ${localStorage.getItem(ACCESS_TOKEN_KEY)}`,
-});
+// 토큰이 없으면 헤더를 아예 안 붙임 ('Bearer null' 방지)
+export const authHeader = () => {
+  const token = localStorage.getItem(ACCESS_TOKEN_KEY);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
 
 export const clearTokens = () => {
   localStorage.removeItem(ACCESS_TOKEN_KEY);

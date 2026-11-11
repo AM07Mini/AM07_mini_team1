@@ -76,9 +76,12 @@ const MyPage = () => {
   const loadData = async () => {
     try {
       const config = { headers: authHeader(), params: { page: 0, size: RECIPE_PAGE_SIZE } };
-      const profileResponse = await api.get('/users/me', { headers: authHeader() });
-      const myRecipesResponse = await api.get('/recipes/me', config);
-      const bookmarksResponse = await api.get('/recipes/bookmarks', config);
+      // 세 요청을 동시에 보내고, 모두 성공하면 화면에 반영
+      const [profileResponse, myRecipesResponse, bookmarksResponse] = await Promise.all([
+        api.get('/users/me', { headers: authHeader() }),
+        api.get('/recipes/me', config),
+        api.get('/recipes/bookmarks', config),
+      ]);
 
       setProfile(profileResponse.data.result);
       setMyRecipes(myRecipesResponse.data.result);
@@ -98,14 +101,15 @@ const MyPage = () => {
 
   // 분류 칩 — 지금 탭의 레시피에 들어 있는 카테고리 이름으로 만들기
   // TODO: 서버에 분류 필터가 생기면 서버에서 거르기 (지금은 불러온 목록 안에서만 거름)
+  // categories가 비어서 올 수도 있으니 없으면 빈 배열로
   const categoryNames = [
     '전체',
-    ...new Set(tabRecipes.flatMap((recipe) => recipe.categories.map((item) => item.name))),
+    ...new Set(tabRecipes.flatMap((recipe) => (recipe.categories ?? []).map((item) => item.name))),
   ];
   const shownRecipes =
     category === '전체'
       ? tabRecipes
-      : tabRecipes.filter((recipe) => recipe.categories.some((item) => item.name === category));
+      : tabRecipes.filter((recipe) => (recipe.categories ?? []).some((item) => item.name === category));
 
   const tabs = [
     { value: 'mine', title: `내가 기록한 ${myRecipes.totalElements}` },
