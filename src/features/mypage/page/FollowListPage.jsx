@@ -57,17 +57,22 @@ const FollowListPage = () => {
   const [pendingIds, setPendingIds] = useState([]); // 팔로우 요청 중인 사람 id
 
   useEffect(() => {
-    loadData();
+    // 화면을 떠나면 진행 중인 요청을 취소하고 페이지 이어 받기도 멈춤
+    const controller = new AbortController();
+    loadData(controller.signal);
+    return () => controller.abort();
   }, []);
 
   // 목록 하나를 끝까지 불러오기 — 닉네임 검색을 전체에서 하려고 페이지를 이어서 받음
-  const loadAllPages = async (url) => {
+  // TODO: 서버에 닉네임 검색(keyword)이 생기면 서버 검색 + 페이지 넘기기로 바꾸기
+  const loadAllPages = async (url, signal) => {
     const content = [];
     let page = 0;
     let totalPages = 1;
     let totalElements = 0;
     while (page < totalPages) {
-      const response = await api.get(url, { params: { page, size: FOLLOW_PAGE_SIZE } });
+      // 취소되면 api.get이 에러를 내서 반복이 바로 멈춤
+      const response = await api.get(url, { params: { page, size: FOLLOW_PAGE_SIZE }, signal });
       const result = response.data.result;
       content.push(...result.content);
       totalPages = result.totalPages;
@@ -78,17 +83,19 @@ const FollowListPage = () => {
   };
 
   // 내 닉네임 · 팔로워 · 팔로잉 불러오기 — 실제 데이터는 response.data.result
-  const loadData = async () => {
+  const loadData = async (signal) => {
     try {
       const [meResponse, followers, following] = await Promise.all([
-        api.get('/users/me'),
-        loadAllPages(tabInfo.followers.url),
-        loadAllPages(tabInfo.following.url),
+        api.get('/users/me', { signal }),
+        loadAllPages(tabInfo.followers.url, signal),
+        loadAllPages(tabInfo.following.url, signal),
       ]);
       setNickname(meResponse.data.result.nickname);
       setLists({ followers, following });
       setLoaded(true);
     } catch (e) {
+      // 화면을 떠나서 취소된 요청은 오류가 아님
+      if (e.code === 'ERR_CANCELED') return;
       console.error(e);
       if (isAuthError(e)) {
         setError({ message: '로그인이 필요해요.', needLogin: true });
@@ -103,18 +110,23 @@ const FollowListPage = () => {
     setSearchParams({ tab: value }, { replace: true });
   };
 
-  // 같은 사람이 두 목록에 다 있을 수 있어서 양쪽 다 바꿈
-  // 팔로잉 수도 ±1 (목록에서 사람은 그대로 두고 숫자만 바뀜)
-  const setFollowed = (userId, followed) => {
+  // 같은 사람이 두 목록에 다 있을 수 있어서 양쪽 다 바꿈, 팔로잉 수도 ±1
+  // 팔로우: 팔로잉 목록에 없던 사람이면 맨 위에 추가
+  // 언팔로우: 목록에서 빼지 않고 버튼만 바꿈 (다시 눌러 되돌릴 수 있게)
+  const setFollowed = (target, followed) => {
     const update = (page) => ({
       ...page,
-      content: page.content.map((user) => (user.id === userId ? { ...user, followedByMe: followed } : user)),
+      content: page.content.map((user) => (user.id === target.id ? { ...user, followedByMe: followed } : user)),
     });
     setLists((prev) => {
       const following = update(prev.following);
+      const isNew = followed && !following.content.some((user) => user.id === target.id);
       return {
         followers: update(prev.followers),
-        following: { ...following, totalElements: following.totalElements + (followed ? 1 : -1) },
+        following: {
+          content: isNew ? [{ ...target, followedByMe: true }, ...following.content] : following.content,
+          totalElements: following.totalElements + (followed ? 1 : -1),
+        },
       };
     });
   };
@@ -127,10 +139,10 @@ const FollowListPage = () => {
     try {
       if (user.followedByMe) {
         await api.delete(`/follows/${user.id}`);
-        setFollowed(user.id, false);
+        setFollowed(user, false);
       } else {
         await api.post(`/follows/${user.id}`);
-        setFollowed(user.id, true);
+        setFollowed(user, true);
       }
     } catch (e) {
       console.error(e);
