@@ -113,7 +113,8 @@ const FeedPage = () => {
   const [hasNext, setHasNext] = useState(false);
   const [status, setStatus] = useState('loading'); // loading | error | done
   const [error, setError] = useState('');
-  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false); // 화면 표시용 ("더 불러오는 중…")
+  const [loadMoreFailed, setLoadMoreFailed] = useState(false); // 다음 페이지 실패 → 자동 로딩 멈춤
   const [reloadKey, setReloadKey] = useState(0); // "다시 시도" 누르면 +1
 
   const [trending, setTrending] = useState([]);
@@ -125,6 +126,8 @@ const FeedPage = () => {
   // 탭을 빠르게 바꿨을 때 이전 탭 응답이 덮어쓰지 않게 — 요청마다 번호를 매기고 최신 번호만 반영
   const requestIdRef = useRef(0);
   const sentinelRef = useRef(null);
+  // 다음 페이지 요청 중인지 — state 대신 ref 로 둬서 바뀌어도 loadMore·observer 가 다시 만들어지지 않게 함
+  const loadingMoreRef = useRef(false);
 
   // 유행 레시피: 처음 한 번만
   useEffect(() => {
@@ -150,7 +153,9 @@ const FeedPage = () => {
     setPage(0);
     setHasNext(false);
     setError('');
+    loadingMoreRef.current = false;
     setLoadingMore(false);
+    setLoadMoreFailed(false);
 
     // 비로그인인데 팔로잉 탭이면 호출하지 않음 (401이 나니까)
     if (needLogin) {
@@ -175,9 +180,10 @@ const FeedPage = () => {
 
   // 다음 페이지 (page 는 0부터)
   const loadMore = useCallback(() => {
-    if (!hasNext || loadingMore || status !== 'done') return;
+    if (!hasNext || loadingMoreRef.current || loadMoreFailed || status !== 'done') return;
     const requestId = requestIdRef.current;
     const next = page + 1;
+    loadingMoreRef.current = true;
     setLoadingMore(true);
     fetcherByTab[tab](next)
       .then((result) => {
@@ -192,12 +198,15 @@ const FeedPage = () => {
         setHasNext(next + 1 < result.totalPages);
       })
       .catch(() => {
-        // 다음 페이지 실패 시 지금 목록은 유지하고 더 불러오기만 멈춤 (스크롤하면 다시 시도)
+        // 다음 페이지 실패 시 지금 목록은 유지하고 자동 로딩을 멈춤 → "다시 시도" 버튼으로만 재요청
+        if (requestId === requestIdRef.current) setLoadMoreFailed(true);
       })
       .finally(() => {
-        if (requestId === requestIdRef.current) setLoadingMore(false);
+        if (requestId !== requestIdRef.current) return;
+        loadingMoreRef.current = false;
+        setLoadingMore(false);
       });
-  }, [tab, page, hasNext, loadingMore, status]);
+  }, [tab, page, hasNext, loadMoreFailed, status]);
 
   // 무한 스크롤 — 목록 끝의 Sentinel 이 보이면 loadMore
   useEffect(() => {
@@ -266,10 +275,19 @@ const FeedPage = () => {
           bookmarkHandler={bookmarkHandler}
           followHandler={followHandler}
         />
-        {hasNext && <Sentinel ref={sentinelRef} />}
+        {hasNext && !loadMoreFailed && <Sentinel ref={sentinelRef} />}
         {loadingMore && (
           <Notice $small role="status">
             <p>더 불러오는 중…</p>
+          </Notice>
+        )}
+        {loadMoreFailed && (
+          <Notice $small role="alert">
+            <p>레시피를 더 불러오지 못했어요.</p>
+            {/* 실패 상태를 풀면 Sentinel 이 다시 그려지고 observer 가 붙으면서 바로 다음 페이지를 요청함 */}
+            <NoticeAction type="button" onClick={() => setLoadMoreFailed(false)}>
+              다시 시도
+            </NoticeAction>
           </Notice>
         )}
       </>
