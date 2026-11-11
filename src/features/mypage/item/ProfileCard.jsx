@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import Button from '../../../components/styled/Button';
 import { colors, radius } from '../../../components/styled/theme';
@@ -47,12 +48,18 @@ const Stats = styled.div`
   background-color: ${SURFACE};
 `;
 
+// 숫자 칸 — 레시피는 그냥 표시
 const Stat = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
+`;
+
+// 팔로워 · 팔로잉 칸 — 누르면 목록으로 가는 링크 (새 탭에서 열기도 가능)
+const StatLink = styled(Stat).attrs({ as: Link })`
+  text-decoration: none;
 `;
 
 const StatValue = styled.b`
@@ -66,11 +73,12 @@ const StatName = styled.span`
 `;
 
 // 프로필 카드 — 사진·닉네임·소개, 레시피·팔로워·팔로잉 수, 프로필 편집 버튼
+// 팔로워 · 팔로잉 수를 누르면 /mypage/follow?tab=... 으로 이동
 const ProfileCard = ({ profile, editHandler }) => {
   const stats = [
     { name: '레시피', value: profile.recipeCount },
-    { name: '팔로워', value: profile.followerCount },
-    { name: '팔로잉', value: profile.followingCount },
+    { name: '팔로워', value: profile.followerCount, tab: 'followers' },
+    { name: '팔로잉', value: profile.followingCount, tab: 'following' },
   ];
 
   return (
@@ -84,12 +92,21 @@ const ProfileCard = ({ profile, editHandler }) => {
         </NameBox>
       </Info>
       <Stats>
-        {stats.map((stat) => (
-          <Stat key={stat.name}>
-            <StatValue>{stat.value}</StatValue>
-            <StatName>{stat.name}</StatName>
-          </Stat>
-        ))}
+        {stats.map((stat) => {
+          const content = (
+            <>
+              <StatValue>{stat.value}</StatValue>
+              <StatName>{stat.name}</StatName>
+            </>
+          );
+          return stat.tab ? (
+            <StatLink key={stat.name} to={`/mypage/follow?tab=${stat.tab}`}>
+              {content}
+            </StatLink>
+          ) : (
+            <Stat key={stat.name}>{content}</Stat>
+          );
+        })}
       </Stats>
       <Button title="프로필 편집" variant="outline" onClick={editHandler} />
     </Wrapper>
