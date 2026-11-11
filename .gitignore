@@ -22,3 +22,6 @@ Thumbs.db
 
 # vite cache
 .vite
+
+# 참고용 Next.js 자료 — 앱 코드 아님, 올리지 않기
+/frontend/
