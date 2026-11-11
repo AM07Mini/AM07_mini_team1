@@ -81,7 +81,7 @@ const FeedSection = ({ tab, needLogin, list, feeds, likeHandler, bookmarkHandler
         <Text as="h3" variant="sectionTitle">
           {listTitle[tab]}
         </Text>
-        <MoreLink to="/mypage">북마크한 레시피</MoreLink>
+        <MoreLink to="/mypage?tab=bookmark">북마크한 레시피</MoreLink>
       </Row>
       {renderBody()}
     </>
