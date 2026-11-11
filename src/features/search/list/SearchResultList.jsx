@@ -27,12 +27,6 @@ const Count = styled.span`
   font-weight: 700;
 `;
 
-const FilterSummary = styled.p`
-  margin: -4px 0 0;
-  color: ${colors.grey1};
-  font-size: 13px;
-`;
-
 const RecipeGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -49,18 +43,29 @@ const EmptyMessage = styled.p`
   text-align: center;
 `;
 
+<<<<<<< HEAD
 const SearchResultList = ({ recipes, activeFilters }) => (
   <Results>
     <ResultsHeading>
       <ResultsTitle>검색 결과</ResultsTitle>
       <Count role="status">{recipes.length}개</Count>
+=======
+const SearchResultList = ({ recipes, totalElements, loading, error }) => (
+  <Results>
+    <ResultsHeading>
+      <ResultsTitle>검색 결과</ResultsTitle>
+      <Count>{loading ? '검색 중' : `${totalElements}개`}</Count>
+>>>>>>> 99c4829 (feat: 검색 API 연동 및 결과 처리 개선)
     </ResultsHeading>
-    {activeFilters.length > 0 && <FilterSummary>{activeFilters.join(' · ')}</FilterSummary>}
     <RecipeGrid>
-      {recipes.length > 0 ? (
+      {error ? (
+        <EmptyMessage role="alert">{error}</EmptyMessage>
+      ) : loading ? (
+        <EmptyMessage role="status">레시피를 검색하고 있어요.</EmptyMessage>
+      ) : recipes.length > 0 ? (
         recipes.map((recipe) => <SearchRecipeItem key={recipe.id} recipe={recipe} />)
       ) : (
-        <EmptyMessage>조건에 맞는 레시피가 없어요. 필터를 바꿔보세요.</EmptyMessage>
+        <EmptyMessage>검색 결과가 없어요. 다른 검색어를 입력해 보세요.</EmptyMessage>
       )}
     </RecipeGrid>
   </Results>

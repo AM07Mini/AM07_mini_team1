@@ -9,6 +9,7 @@ export const searchFilters = [
   { key: 'level', title: '조리 난이도', items: ['★ 쉬움', '★★ 보통', '★★★ 어려움'] },
   { key: 'time', title: '조리 시간', items: ['#15분 이내', '#30분 이내', '#1시간 이내'] },
 ];
+<<<<<<< HEAD
 
 export const searchRecipes = [
   {
@@ -36,3 +37,5 @@ export const searchRecipes = [
     minutes: 10,
   },
 ];
+=======
+>>>>>>> 99c4829 (feat: 검색 API 연동 및 결과 처리 개선)

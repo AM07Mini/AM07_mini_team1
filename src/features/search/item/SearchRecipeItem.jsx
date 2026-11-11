@@ -25,6 +25,18 @@ const Image = styled.img`
   object-fit: cover;
 `;
 
+const ImagePlaceholder = styled.div`
+  display: flex;
+  width: 100%;
+  height: 104px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: ${colors.grey4};
+  color: ${colors.grey1};
+  font-size: 12px;
+`;
+
 const Title = styled.h4`
   margin: 10px 0 0;
   color: ${colors.dark};
@@ -41,9 +53,17 @@ const Meta = styled.p`
 
 const SearchRecipeItem = ({ recipe }) => (
   <Card to={`/recipe/read/${recipe.id}`}>
-    <Image src={recipe.image} alt="" />
+    {recipe.image ? (
+      <Image src={recipe.image} alt="" />
+    ) : (
+      <ImagePlaceholder>사진 없음</ImagePlaceholder>
+    )}
     <Title>{recipe.title}</Title>
+<<<<<<< HEAD
     <Meta>{recipe.meta}</Meta>
+=======
+    <Meta>{recipe.description}</Meta>
+>>>>>>> 99c4829 (feat: 검색 API 연동 및 결과 처리 개선)
   </Card>
 );
 

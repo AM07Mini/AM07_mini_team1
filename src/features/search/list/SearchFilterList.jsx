@@ -21,20 +21,26 @@ const Chips = styled.div`
   gap: 8px;
 `;
 
-const SearchFilterList = ({ filters, selected, onToggle }) => (
+const SearchFilterList = ({ filters, selected = {}, onToggle, disabled = false }) => (
   <>
     {filters.map(({ key, title, items }) => (
       <FilterGroup key={key} aria-label={title}>
         <FilterTitle>{title}</FilterTitle>
         <Chips role="group" aria-label={`${title} 필터`}>
-          {items.map((item) => (
-            <Chip
-              key={item}
-              title={item}
-              selected={selected[key].includes(item)}
-              onClick={() => onToggle(key, item)}
-            />
-          ))}
+          {items.map((item) => {
+            const isSelected = selected[key]?.includes(item) ?? false;
+
+            return (
+              <Chip
+                key={item}
+                title={item}
+                selected={isSelected}
+                aria-pressed={isSelected}
+                onClick={disabled ? undefined : () => onToggle?.(key, item)}
+                disabled={disabled}
+              />
+            );
+          })}
         </Chips>
       </FilterGroup>
     ))}
