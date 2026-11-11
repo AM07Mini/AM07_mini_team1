@@ -4,7 +4,7 @@ import Card from '../../../components/styled/Card';
 import { colors, radius } from '../../../components/styled/theme';
 import { formatAgo, formatCount, formatDifficulty } from '../feedUtils';
 import { DEFAULT_IMAGE } from '../feedMapper';
-import Avatar from '../../mypage/ui/Avatar';
+import FeedAvatar from './FeedAvatar';
 
 // 좋아요 빨강 — theme.js에 아직 없어서 피드 안에서만 사용 (팀 합의 후 theme.js로 옮기기)
 const HEART = '#E8545C';
@@ -121,7 +121,7 @@ const FeedItem = ({ data, likeHandler, bookmarkHandler, followHandler }) => {
   return (
     <Card $padding={0} as="article" style={{ overflow: 'hidden' }}>
       <Header>
-        <Avatar src={data.author.avatar} size={36} />
+        <FeedAvatar src={data.author.avatar} size={36} />
         <div>
           <Name>{data.author.name}</Name>
           <When>{formatAgo(data.minutesAgo)}</When>

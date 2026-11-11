@@ -171,7 +171,7 @@ const MyPage = () => {
 
     return (
       <Wrapper>
-        <ProfileCard profile={profile} editHandler={() => moveUrl('/mypage/edit')} />
+<ProfileCard profile={profile} editHandler={() => moveUrl('/mypage/edit')} />
 
         <Header>
           <TitleBox>

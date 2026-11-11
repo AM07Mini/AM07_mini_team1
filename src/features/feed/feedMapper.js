@@ -17,7 +17,7 @@ export const toFeedCard = (item, { following = false } = {}) => {
         authorId: item.authorId,
         author: {
             name: item.authorNickname ?? '알 수 없음',
-            // 없으면 null → Avatar 컴포넌트가 기본 모양(회색 원 + 사람 아이콘)으로 표시
+            // 없으면 null → FeedAvatar가 기본 모양(회색 원 + 사람 아이콘)으로 표시
             avatar: item.authorProfileImageUrl || null,
         },
         minutesAgo: minutesSince(item.createdAt),
