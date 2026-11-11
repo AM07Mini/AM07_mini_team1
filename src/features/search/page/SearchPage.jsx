@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import SearchInput from '../../../components/styled/SearchInput';
@@ -48,8 +48,36 @@ const Lead = styled.p`
   line-height: 1.5;
 `;
 
+const BackToTopButton = styled.button`
+  position: fixed;
+  z-index: 20;
+  right: max(16px, calc((100vw - 430px) / 2 + 16px));
+  bottom: 96px;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border: 1px solid ${colors.grey3};
+  border-radius: 50%;
+  background: ${colors.white};
+  color: ${colors.dark};
+  box-shadow: 0 2px 12px rgba(10, 37, 51, 0.12);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid ${colors.accent1};
+    outline-offset: 3px;
+  }
+`;
+
 const SearchPage = () => {
   const { isLoggedIn } = useAuth();
+  const topBarRef = useRef(null);
+  const filterListRef = useRef(null);
+  const resultsRef = useRef(null);
+  const mainRef = useRef(null);
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState(searchFilters);
   const [selected, setSelected] = useState({
@@ -66,6 +94,34 @@ const SearchPage = () => {
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const updateButtonVisibility = () => {
+      const topBarBottom = topBarRef.current?.getBoundingClientRect().bottom ?? 56;
+      const filterRect = filterListRef.current?.getBoundingClientRect();
+      const resultsTop = resultsRef.current?.getBoundingClientRect().top;
+
+      const filtersScrolledAboveTopBar =
+        filterRect && filterRect.top < window.innerHeight && filterRect.bottom <= topBarBottom;
+      const resultsAtTop = resultsTop !== undefined && resultsTop <= topBarBottom;
+
+      setShowBackToTop(Boolean(resultsAtTop && filtersScrolledAboveTopBar));
+    };
+
+    updateButtonVisibility();
+    window.addEventListener('scroll', updateButtonVisibility, { passive: true });
+    window.addEventListener('resize', updateButtonVisibility);
+
+    const resizeObserver = new ResizeObserver(updateButtonVisibility);
+    if (mainRef.current) resizeObserver.observe(mainRef.current);
+
+    return () => {
+      window.removeEventListener('scroll', updateButtonVisibility);
+      window.removeEventListener('resize', updateButtonVisibility);
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -207,8 +263,8 @@ const SearchPage = () => {
 
   return (
     <Page>
-      <TopBar title="검색" />
-      <Main>
+      <TopBar ref={topBarRef} title="검색" />
+      <Main ref={mainRef}>
         <Intro>
           <Heading>어떤 요리를 찾고 있나요?</Heading>
           <Lead>맛, 음식 종류, 난이도로 레시피를 골라보세요.</Lead>
@@ -224,26 +280,39 @@ const SearchPage = () => {
           onRemove={toggleFilter}
           onReset={resetFilters}
         />
-        <SearchFilterList filters={filters} selected={selected} onToggle={toggleFilter} />
-        <SearchResultList
-          recipes={recipes}
-          totalElements={totalElements}
-          loading={loading}
-          error={error}
-          suggestions={suggestions}
-          suggestionsLoading={suggestionsLoading}
-          suggestionsError={suggestionsError}
-          canRelaxFilters={Object.values(selected).some((values) => values.length > 0)}
-          onSuggestionSelect={({ key, value }) =>
-            toggleFilter(
-              key,
-              value,
-              filters.find((filter) => filter.key === key)?.selectionMode,
-            )
-          }
-          onReset={resetFilters}
-        />
+        <div ref={filterListRef}>
+          <SearchFilterList filters={filters} selected={selected} onToggle={toggleFilter} />
+        </div>
+        <div ref={resultsRef}>
+          <SearchResultList
+            recipes={recipes}
+            totalElements={totalElements}
+            loading={loading}
+            error={error}
+            suggestions={suggestions}
+            suggestionsLoading={suggestionsLoading}
+            suggestionsError={suggestionsError}
+            canRelaxFilters={Object.values(selected).some((values) => values.length > 0)}
+            onSuggestionSelect={({ key, value }) =>
+              toggleFilter(
+                key,
+                value,
+                filters.find((filter) => filter.key === key)?.selectionMode,
+              )
+            }
+            onReset={resetFilters}
+          />
+        </div>
       </Main>
+      {showBackToTop && (
+        <BackToTopButton
+          type="button"
+          aria-label="맨 위로"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          <span aria-hidden="true">↑</span>
+        </BackToTopButton>
+      )}
     </Page>
   );
 };

@@ -5,7 +5,13 @@ import { colors } from '../../../components/styled/theme';
 const FilterGroup = styled.section`
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+`;
+
+const FilterList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 `;
 
 const FilterTitle = styled.h3`
@@ -22,7 +28,7 @@ const Chips = styled.div`
 `;
 
 const SearchFilterList = ({ filters, selected = {}, onToggle, disabled = false }) => (
-  <>
+  <FilterList>
     {filters.map(({ key, title, items, selectionMode, message, maxSelections }) => (
       <FilterGroup key={key} aria-label={title}>
         <FilterTitle>{title}</FilterTitle>
@@ -56,7 +62,7 @@ const SearchFilterList = ({ filters, selected = {}, onToggle, disabled = false }
         {message && <FilterMessage>{message}</FilterMessage>}
       </FilterGroup>
     ))}
-  </>
+  </FilterList>
 );
 
 const FilterMessage = styled.p`

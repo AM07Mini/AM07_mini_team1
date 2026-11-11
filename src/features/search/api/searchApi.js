@@ -55,12 +55,18 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
     foodTypesOutcome.status === 'fulfilled'
       ? foodTypesOutcome.value?.map(({ id, name }) => ({ value: id, label: name })) || []
       : [];
-  const categories =
-    categoriesOutcome.status === 'fulfilled'
-      ? [
-          ...(categoriesOutcome.value?.defaults || []),
-          ...(categoriesOutcome.value?.mine || []),
-        ].map(({ id, name }) => ({ value: id, label: name }))
+  const categoryResult =
+    categoriesOutcome.status === 'fulfilled' ? categoriesOutcome.value : null;
+  const isCategoryList =
+    Array.isArray(categoryResult) ||
+    (Array.isArray(categoryResult?.defaults) && Array.isArray(categoryResult?.mine));
+  const categories = Array.isArray(categoryResult)
+    ? categoryResult.map(({ id, name }) => ({ value: id, label: name }))
+    : isCategoryList
+      ? [...categoryResult.defaults, ...categoryResult.mine].map(({ id, name }) => ({
+          value: id,
+          label: name,
+        }))
       : [];
 
   return [
@@ -88,7 +94,9 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
         ? '카테고리 필터는 로그인 후 사용할 수 있습니다.'
         : categoriesOutcome.status === 'rejected'
           ? '카테고리를 불러오지 못했습니다.'
-          : '',
+          : !isCategoryList
+            ? '카테고리 API 응답 형식이 올바르지 않습니다.'
+            : '',
     ),
   ];
 };

@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Icon from '../styled/Icon';
@@ -36,11 +37,11 @@ const IconButton = styled.button`
 // 상단바 — 가운데 제목, 왼쪽 뒤로가기(선택), 오른쪽 아이콘 버튼(선택)
 // 사용: <TopBar title="요리 추천" showBack />
 //       <TopBar title="홈" rightIcon="settings" rightClickHandler={...} />
-const TopBar = ({ title, showBack, rightIcon, rightClickHandler }) => {
+const TopBar = forwardRef(({ title, showBack, rightIcon, rightClickHandler }, ref) => {
   const moveUrl = useNavigate();
 
   return (
-    <Wrapper>
+    <Wrapper ref={ref}>
       {showBack && (
         <IconButton $side="left" aria-label="뒤로가기" onClick={() => moveUrl(-1)}>
           <Icon name="back" />
@@ -54,6 +55,6 @@ const TopBar = ({ title, showBack, rightIcon, rightClickHandler }) => {
       )}
     </Wrapper>
   );
-};
+});
 
 export default TopBar;
