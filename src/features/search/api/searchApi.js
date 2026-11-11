@@ -88,11 +88,11 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
   ];
 };
 
-export const fetchSearchRecipes = async (keyword, filters, signal) => {
+export const fetchSearchRecipes = async (keyword, filters, signal, size = 20) => {
   const params = {
     scope: 'PUBLIC',
     page: 0,
-    size: 20,
+    size,
   };
   const normalizedKeyword = keyword.trim();
 
@@ -139,5 +139,38 @@ export const fetchSearchRecipes = async (keyword, filters, signal) => {
         '레시피 설명이 없습니다.',
     })),
     totalElements: result.totalElements,
+  };
+};
+
+export const fetchRelaxedSearchSuggestions = async (keyword, selected, filters, signal) => {
+  const candidates = filters.flatMap((filter) =>
+    (selected[filter.key] || []).map((value) => ({
+      key: filter.key,
+      value,
+      label: filter.items.find((item) => item.value === value)?.label ?? String(value),
+    })),
+  );
+  const results = await Promise.allSettled(
+    candidates.map(async (candidate) => {
+      const relaxedFilters = {
+        ...selected,
+        [candidate.key]: selected[candidate.key].filter((value) => value !== candidate.value),
+      };
+      const result = await fetchSearchRecipes(keyword, relaxedFilters, signal, 1);
+      return { ...candidate, totalElements: result.totalElements };
+    }),
+  );
+
+  if (signal.aborted) return { suggestions: [], hasError: false };
+
+  const suggestions = results
+    .filter((result) => result.status === 'fulfilled' && result.value.totalElements > 0)
+    .map((result) => result.value)
+    .sort((left, right) => right.totalElements - left.totalElements)
+    .slice(0, 2);
+
+  return {
+    suggestions,
+    hasError: results.some((result) => result.status === 'rejected'),
   };
 };

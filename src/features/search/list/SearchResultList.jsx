@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { colors } from '../../../components/styled/theme';
 import SearchRecipeItem from '../item/SearchRecipeItem';
+import SearchEmptyState from './SearchEmptyState';
 
 const Results = styled.section`
   display: flex;
@@ -43,7 +44,18 @@ const EmptyMessage = styled.p`
   text-align: center;
 `;
 
-const SearchResultList = ({ recipes, totalElements, loading, error }) => (
+const SearchResultList = ({
+  recipes,
+  totalElements,
+  loading,
+  error,
+  suggestions = [],
+  suggestionsLoading = false,
+  suggestionsError = false,
+  canRelaxFilters = false,
+  onSuggestionSelect,
+  onReset,
+}) => (
   <Results>
     <ResultsHeading>
       <ResultsTitle>검색 결과</ResultsTitle>
@@ -57,7 +69,14 @@ const SearchResultList = ({ recipes, totalElements, loading, error }) => (
       ) : recipes.length > 0 ? (
         recipes.map((recipe) => <SearchRecipeItem key={recipe.id} recipe={recipe} />)
       ) : (
-        <EmptyMessage>검색 결과가 없어요. 다른 검색어를 입력해 보세요.</EmptyMessage>
+        <SearchEmptyState
+          suggestions={suggestions}
+          suggestionsLoading={suggestionsLoading}
+          suggestionsError={suggestionsError}
+          canRelaxFilters={canRelaxFilters}
+          onSuggestionSelect={onSuggestionSelect}
+          onReset={onReset}
+        />
       )}
     </RecipeGrid>
   </Results>

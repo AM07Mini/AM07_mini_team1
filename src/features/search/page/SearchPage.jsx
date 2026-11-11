@@ -7,7 +7,11 @@ import SearchFilterList from '../list/SearchFilterList';
 import SearchResultList from '../list/SearchResultList';
 import SearchSelectionSummary from '../list/SearchSelectionSummary';
 import { searchFilters } from '../mockData';
-import { fetchSearchFilterCatalogs, fetchSearchRecipes } from '../api/searchApi';
+import {
+  fetchRelaxedSearchSuggestions,
+  fetchSearchFilterCatalogs,
+  fetchSearchRecipes,
+} from '../api/searchApi';
 import { useAuth } from '../../../utils/context/AuthContext';
 
 const Page = styled.div`
@@ -59,6 +63,9 @@ const SearchPage = () => {
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [suggestions, setSuggestions] = useState([]);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [suggestionsError, setSuggestionsError] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -145,10 +152,38 @@ const SearchPage = () => {
         const result = await fetchSearchRecipes(query, selected, controller.signal);
         setRecipes(result.recipes);
         setTotalElements(result.totalElements);
+
+        const canRelaxFilters = Object.values(selected).some((values) => values.length > 0);
+        if (result.totalElements === 0 && canRelaxFilters) {
+          setSuggestions([]);
+          setSuggestionsError(false);
+          setSuggestionsLoading(true);
+          try {
+            const relaxedResults = await fetchRelaxedSearchSuggestions(
+              query,
+              selected,
+              filters,
+              controller.signal,
+            );
+            if (!controller.signal.aborted) {
+              setSuggestions(relaxedResults.suggestions);
+              setSuggestionsError(relaxedResults.hasError);
+            }
+          } catch {
+            if (!controller.signal.aborted) setSuggestionsError(true);
+          } finally {
+            if (!controller.signal.aborted) setSuggestionsLoading(false);
+          }
+        } else {
+          setSuggestions([]);
+          setSuggestionsError(false);
+        }
       } catch (requestError) {
         if (controller.signal.aborted) return;
         setRecipes([]);
         setTotalElements(0);
+        setSuggestions([]);
+        setSuggestionsError(false);
         setError(
           requestError?.response?.data?.message ||
             requestError?.message ||
@@ -163,7 +198,7 @@ const SearchPage = () => {
       clearTimeout(timeoutId);
       controller.abort();
     };
-  }, [query, selected]);
+  }, [filters, query, selected]);
 
   return (
     <Page>
@@ -190,6 +225,18 @@ const SearchPage = () => {
           totalElements={totalElements}
           loading={loading}
           error={error}
+          suggestions={suggestions}
+          suggestionsLoading={suggestionsLoading}
+          suggestionsError={suggestionsError}
+          canRelaxFilters={Object.values(selected).some((values) => values.length > 0)}
+          onSuggestionSelect={({ key, value }) =>
+            toggleFilter(
+              key,
+              value,
+              filters.find((filter) => filter.key === key)?.selectionMode,
+            )
+          }
+          onReset={resetFilters}
         />
       </Main>
     </Page>
