@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import api from '../../../api/axios';
 import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import TextInput from '../../../components/styled/TextInput';
 import { colors, PAGE_PADDING, radius } from '../../../components/styled/theme';
-import { interestOptions, mockProfile } from '../mockData';
-import { DANGER, SURFACE } from '../ui/style';
+import { authHeader, clearTokens, isAuthError, REFRESH_TOKEN_KEY } from '../authToken';
+import { interestOptions } from '../constants';
+import Avatar from '../ui/Avatar';
 import MyPageTopBar from '../ui/MyPageTopBar';
+import StatusMessage from '../ui/StatusMessage';
+import { DANGER, SURFACE } from '../ui/style';
 
 const INTRO_MAX = 40;
 
@@ -29,13 +33,6 @@ const Photo = styled.div`
   position: relative;
   width: 96px;
   height: 96px;
-`;
-
-const Avatar = styled.img`
-  width: 96px;
-  height: 96px;
-  border-radius: 50%;
-  object-fit: cover;
 `;
 
 // 카메라 버튼 — 피그마 원(32px) 위에 카메라 아이콘(16px)
@@ -157,26 +154,48 @@ const ProfileEditPage = () => {
   const moveUrl = useNavigate();
   const fileInputRef = useRef(null);
 
-  // TODO: API 연결 — 내 정보 불러오기
-  const [form, setForm] = useState({
-    nickname: mockProfile.nickname,
-    intro: mockProfile.intro,
-  });
-  const [interests, setInterests] = useState(mockProfile.interests);
-  const [photoUrl, setPhotoUrl] = useState(mockProfile.profileImage);
-  const [checkedNickname, setCheckedNickname] = useState('');
+  const [original, setOriginal] = useState(null); // 서버에서 받은 내 정보
+  const [error, setError] = useState(null); // { message, needLogin }
+  const [form, setForm] = useState({ nickname: '', intro: '' });
+  const [interests, setInterests] = useState([]);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState('');
+  const [nicknameCheck, setNicknameCheck] = useState({ nickname: '', available: false });
+  const [saving, setSaving] = useState(false);
 
-  // 닉네임을 바꿨다면 중복 확인을 해야 저장 가능
-  const nicknameChanged = form.nickname !== mockProfile.nickname;
-  const nicknameChecked = form.nickname === checkedNickname;
-  const canSave = form.nickname.trim() !== '' && (!nicknameChanged || nicknameChecked);
+  useEffect(() => {
+    loadProfile();
+  }, []);
 
   // 새로 고른 사진의 미리보기 주소는 바뀌거나 화면을 떠날 때 정리
   useEffect(() => {
     return () => {
-      if (photoUrl.startsWith('blob:')) URL.revokeObjectURL(photoUrl);
+      if (photoPreview) URL.revokeObjectURL(photoPreview);
     };
-  }, [photoUrl]);
+  }, [photoPreview]);
+
+  // 내 정보 불러오기 — 실제 데이터는 response.data.result
+  const loadProfile = async () => {
+    try {
+      const response = await api.get('/users/me', { headers: authHeader() });
+      const me = response.data.result;
+      setOriginal(me);
+      setForm((prev) => ({ ...prev, nickname: me.nickname }));
+    } catch (e) {
+      console.error(e);
+      if (isAuthError(e)) {
+        setError({ message: '로그인이 필요해요.', needLogin: true });
+      } else {
+        setError({ message: e.response?.data?.message ?? '정보를 불러오지 못했어요.' });
+      }
+    }
+  };
+
+  // 닉네임을 바꿨다면 중복 확인에서 "사용 가능"을 받아야 저장 가능
+  const nicknameChanged = original !== null && form.nickname !== original.nickname;
+  const nicknameChecked = nicknameCheck.nickname === form.nickname;
+  const nicknameOk = !nicknameChanged || (nicknameChecked && nicknameCheck.available);
+  const canSave = form.nickname.trim() !== '' && nicknameOk && !saving;
 
   const changeHandler = (e) => {
     const { name, value } = e.target;
@@ -188,36 +207,90 @@ const ProfileEditPage = () => {
   const photoChangeHandler = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    // TODO: API 연결 — 저장할 때 file을 multipart로 업로드
-    setPhotoUrl(URL.createObjectURL(file));
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
   };
 
-  const nicknameCheckHandler = () => {
-    // TODO: API 연결 — 닉네임 중복 확인 요청
-    setCheckedNickname(form.nickname);
+  const nicknameCheckHandler = async () => {
+    try {
+      const response = await api.get('/auth/nickname/check', { params: { nickname: form.nickname } });
+      setNicknameCheck({ nickname: form.nickname, available: response.data.result.available });
+    } catch (e) {
+      console.error(e);
+      window.alert(e.response?.data?.message ?? '닉네임을 확인하지 못했어요.');
+    }
   };
 
   const interestToggleHandler = (item) => {
     setInterests((prev) => (prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]));
   };
 
-  const submitHandler = (e) => {
+  const submitHandler = async (e) => {
     e.preventDefault();
     if (!canSave) return;
-    // TODO: API 연결 — 프로필 수정 요청 (form, interests, 사진)
-    moveUrl('/mypage');
+    setSaving(true);
+    try {
+      // 1) 사진을 새로 골랐으면 업로드 (multipart, 필드 이름 image)
+      if (photoFile) {
+        const formData = new FormData();
+        formData.append('image', photoFile);
+        await api.post('/users/me/profile-image', formData, {
+          headers: { ...authHeader(), 'Content-Type': 'multipart/form-data' },
+        });
+      }
+      // 2) 닉네임을 바꿨으면 수정
+      if (nicknameChanged) {
+        await api.patch('/users/me', { nickname: form.nickname }, { headers: authHeader() });
+      }
+      // TODO: 한 줄 소개 · 관심 요리는 API가 없어서 아직 저장 안 됨
+      moveUrl('/mypage');
+    } catch (err) {
+      console.error(err);
+      window.alert(err.response?.data?.message ?? '저장하지 못했어요. 다시 시도해주세요.');
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const logoutHandler = () => {
-    // TODO: AuthContext의 logout 연결
+  const logoutHandler = async () => {
+    try {
+      await api.post(
+        '/auth/logout',
+        { refreshToken: localStorage.getItem(REFRESH_TOKEN_KEY) },
+        { headers: authHeader() },
+      );
+    } catch (e) {
+      // 서버 로그아웃이 실패해도 이 기기에서는 로그아웃 처리
+      console.error(e);
+    }
+    clearTokens();
     moveUrl('/signin');
   };
 
   const withdrawHandler = () => {
     if (!window.confirm('정말 탈퇴할까요? 기록한 레시피가 모두 사라져요.')) return;
-    // TODO: API 연결 — 회원 탈퇴 요청
+    // TODO: 회원 탈퇴 API가 없음 — 생기면 연결
     moveUrl('/signin');
   };
+
+  const renderNicknameMessage = () => {
+    if (!nicknameChanged || !nicknameChecked) return null;
+    return nicknameCheck.available ? (
+      <Message $color={colors.secondary}>✓ 사용할 수 있는 닉네임이에요</Message>
+    ) : (
+      <Message $color={DANGER}>이미 사용 중인 닉네임이에요</Message>
+    );
+  };
+
+  // 불러오는 중이거나 오류일 때
+  if (error || !original) {
+    return (
+      <>
+        <MyPageTopBar title="프로필 편집" showBack />
+        <StatusMessage message={error?.message ?? '불러오는 중이에요…'} needLogin={error?.needLogin} />
+      </>
+    );
+  }
 
   return (
     <>
@@ -225,7 +298,7 @@ const ProfileEditPage = () => {
       <Form onSubmit={submitHandler}>
         <PhotoBox>
           <Photo>
-            <Avatar src={photoUrl} alt="프로필 사진" />
+            <Avatar src={photoPreview || original.profileImageUrl} size={96} />
             <CameraButton type="button" aria-label="사진 변경" onClick={() => fileInputRef.current.click()}>
               <img src="/icons/camera.svg" alt="" />
             </CameraButton>
@@ -248,12 +321,10 @@ const ProfileEditPage = () => {
               title="중복 확인"
               variant="inline"
               onClick={nicknameCheckHandler}
-              disabled={form.nickname.trim() === ''}
+              disabled={!nicknameChanged || form.nickname.trim() === ''}
             />
           </TextInput>
-          {nicknameChanged && nicknameChecked && (
-            <Message $color={colors.secondary}>✓ 사용할 수 있는 닉네임이에요</Message>
-          )}
+          {renderNicknameMessage()}
         </Field>
 
         <TextInput
@@ -270,7 +341,7 @@ const ProfileEditPage = () => {
 
         <Field>
           <Label>이메일</Label>
-          <ReadOnlyBox>{mockProfile.email}</ReadOnlyBox>
+          <ReadOnlyBox>{original.email}</ReadOnlyBox>
           <Message $color={colors.grey2}>이메일은 변경할 수 없어요.</Message>
         </Field>
 
@@ -307,7 +378,7 @@ const ProfileEditPage = () => {
           </MenuItem>
         </Menu>
 
-        <Button title="저장하기" type="submit" disabled={!canSave} />
+        <Button title={saving ? '저장 중…' : '저장하기'} type="submit" disabled={!canSave} />
       </Form>
     </>
   );

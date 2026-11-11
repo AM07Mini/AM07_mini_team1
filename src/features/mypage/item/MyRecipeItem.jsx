@@ -23,6 +23,14 @@ const Thumbnail = styled.img`
   object-fit: cover;
 `;
 
+// 사진이 없는 레시피
+const NoThumbnail = styled.div`
+  width: 100%;
+  height: 104px;
+  border-radius: 12px;
+  background-color: ${colors.grey4};
+`;
+
 const Title = styled.p`
   margin: 0;
   font-size: 15px;
@@ -46,22 +54,34 @@ const Stars = styled.span`
   color: ${colors.secondary};
 `;
 
-// 난이도 1~3 → 별과 글자로 바꿔서 보여주기
-const levelText = ['쉬움', '보통', '어려움'];
-const toStars = (level) => '★'.repeat(level) + '☆'.repeat(3 - level);
+// 서버 난이도 값(EASY / MEDIUM / HARD) → 별과 글자
+const difficultyInfo = {
+  EASY: { stars: '★☆☆', text: '쉬움' },
+  MEDIUM: { stars: '★★☆', text: '보통' },
+  HARD: { stars: '★★★', text: '어려움' },
+};
 
 // 레시피 카드 — 피그마 디자인 시스템 "레시피 카드 · 156 폭 · r16"
-// data: { title, thumbnail, level(1~3), time(분) }
+// data: 서버 레시피 응답 { title, thumbnailUrl, difficulty, cookingMinutes }
 // 다른 화면에서도 쓰는 카드라 나중에 공용 정리할 때 components로 옮기기
-const MyRecipeItem = ({ data, onClick }) => (
-  <Wrapper type="button" onClick={onClick}>
-    <Thumbnail src={data.thumbnail} alt="" />
-    <Title>{data.title}</Title>
-    <Meta>
-      <Stars aria-label={`난이도 ${levelText[data.level - 1]}`}>{toStars(data.level)}</Stars>
-      {levelText[data.level - 1]} · {data.time}분
-    </Meta>
-  </Wrapper>
-);
+const MyRecipeItem = ({ data, onClick }) => {
+  const difficulty = difficultyInfo[data.difficulty];
+
+  return (
+    <Wrapper type="button" onClick={onClick}>
+      {data.thumbnailUrl ? <Thumbnail src={data.thumbnailUrl} alt="" /> : <NoThumbnail />}
+      <Title>{data.title}</Title>
+      <Meta>
+        {difficulty && (
+          <>
+            <Stars aria-label={`난이도 ${difficulty.text}`}>{difficulty.stars}</Stars>
+            {difficulty.text} ·
+          </>
+        )}{' '}
+        {data.cookingMinutes}분
+      </Meta>
+    </Wrapper>
+  );
+};
 
 export default MyRecipeItem;
