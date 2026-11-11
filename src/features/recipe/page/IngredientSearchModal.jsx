@@ -1,5 +1,202 @@
 import React, { useState } from 'react';
+import styled from 'styled-components';
 import { searchIngredients, createIngredient } from '../../../api/recipeApi';
+import BackIcon from '../../../components/styled/BackIcon';
+import Button from '../../../components/styled/Button';
+import Chip from '../../../components/styled/Chip';
+import SearchInput from '../../../components/styled/SearchInput';
+import { colors, radius, font } from '../../../components/styled/theme';
+
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+`;
+
+const Sheet = styled.div`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(450px, calc(100vw - 32px));
+  height: 85vh;
+  overflow: hidden;
+  border-radius: ${radius.card}px;
+  background-color: ${colors.white};
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+`;
+
+const Header = styled.div`
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid ${colors.grey4};
+`;
+
+const BackButton = styled.button`
+  display: flex;
+  margin-right: 16px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+`;
+
+const Title = styled.h3`
+  margin: 0;
+  ${font('sectionTitle')}
+  color: ${colors.dark};
+`;
+
+const ScrollArea = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 20px 180px;
+`;
+
+const SearchBox = styled.div`
+  margin-bottom: 16px;
+`;
+
+const Section = styled.div`
+  margin-bottom: ${(props) => props.$gap ?? 0}px;
+`;
+
+const SectionLabel = styled.div`
+  margin-bottom: 8px;
+  ${font('sub')}
+  font-weight: ${(props) => (props.$bold ? 700 : 400)};
+  color: ${(props) => (props.$dark ? colors.dark : colors.grey1)};
+`;
+
+const EmptyText = styled.div`
+  padding: 8px 0;
+  ${font('sub')}
+  color: ${colors.grey2};
+`;
+
+const ResultRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid ${colors.grey4};
+`;
+
+const ResultName = styled.div`
+  ${font('label')}
+  color: ${colors.dark};
+`;
+
+const ResultSource = styled.div`
+  ${font('caption')}
+  color: ${colors.grey2};
+`;
+
+const AddButton = styled.button`
+  padding: 6px 14px;
+  border: none;
+  border-radius: ${radius.small}px;
+  background-color: ${(props) => (props.$selected ? colors.grey4 : colors.accent2)};
+  ${font('sub')}
+  font-weight: 700;
+  color: ${(props) => (props.$selected ? colors.grey1 : colors.primary)};
+  cursor: pointer;
+`;
+
+const ChipRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+`;
+
+const CustomInput = styled.input`
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px dashed ${colors.primary};
+  border-radius: ${radius.button}px;
+  outline: none;
+  box-sizing: border-box;
+  font-family: inherit;
+  ${font('body')}
+`;
+
+const CustomButton = styled.button`
+  width: 100%;
+  padding: 14px;
+  border: 1px dashed ${colors.secondary};
+  border-radius: ${radius.button}px;
+  background: ${colors.surface};
+  font-family: inherit;
+  ${font('label')}
+  color: ${colors.primary};
+  cursor: pointer;
+`;
+
+// 하단 고정 바 (선택한 재료 목록 및 수량 조절 입력창 포함)
+const Footer = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  border-top: 1px solid ${colors.grey4};
+  background-color: ${colors.white};
+`;
+
+const SelectedList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 120px;
+  overflow-y: auto;
+`;
+
+const SelectedRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid ${colors.grey4};
+  border-radius: ${radius.small}px;
+  background-color: ${colors.surface};
+`;
+
+const SelectedName = styled.span`
+  ${font('label')}
+  color: ${colors.dark};
+`;
+
+const QuantityBox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const QuantityInput = styled.input`
+  width: 70px;
+  padding: 4px 8px;
+  border: 1px solid ${colors.grey3};
+  border-radius: 6px;
+  font-family: inherit;
+  ${font('sub')}
+  text-align: center;
+`;
+
+const RemoveButton = styled.button`
+  border: none;
+  background: none;
+  ${font('body')}
+  color: ${colors.grey2};
+  cursor: pointer;
+`;
 
 export default function IngredientSearchModal({ isOpen, onClose, onAddIngredients }) {
   if (!isOpen) return null;
@@ -7,7 +204,7 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
   const [keyword, setKeyword] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [tempSelected, setTempSelected] = useState([]); // 하단에 모아둘 선택된 재료들 [{ id, name, quantity }]
-  
+
   const [isAddingCustom, setIsAddingCustom] = useState(false);
   const [customInput, setCustomInput] = useState('');
 
@@ -89,171 +286,119 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
   };
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-      backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
-    }}>
-      <div style={{
-        width: '450px', height: '85vh', backgroundColor: '#fff', borderRadius: '16px',
-        display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
-      }}>
+    <Overlay>
+      <Sheet>
         {/* 상단 헤더 */}
-        <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #E2E8F0' }}>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', marginRight: '16px' }}>←</button>
-          <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 'bold', color: '#0A2533' }}>식재료 추가</h3>
-        </div>
+        <Header>
+          <BackButton onClick={onClose} aria-label="뒤로가기">
+            <BackIcon />
+          </BackButton>
+          <Title>식재료 추가</Title>
+        </Header>
 
         {/* 스크롤 영역 */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', paddingBottom: '180px' }}>
+        <ScrollArea>
           {/* 검색바 */}
-          <input 
-            value={keyword}
-            onChange={handleSearchChange}
-            placeholder="🔍"
-            style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid #CCD4DE', fontSize: '14px', outline: 'none', marginBottom: '16px', boxSizing: 'border-box' }}
-          />
+          <SearchBox>
+            <SearchInput value={keyword} changeHandler={handleSearchChange} placeholder="식재료 이름으로 검색" />
+          </SearchBox>
 
           {/* 검색 결과 */}
           {keyword.trim() !== '' && (
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ fontSize: '13px', color: '#64748B', marginBottom: '8px', fontWeight: '600' }}>
-                검색 결과 {searchResults.length}
-              </div>
+            <Section $gap={20}>
+              <SectionLabel $bold>검색 결과 {searchResults.length}</SectionLabel>
               {searchResults.length === 0 ? (
-                <div style={{ fontSize: '13px', color: '#94A3B8', padding: '8px 0' }}>검색 결과가 없습니다. 아래에서 직접 입력해 보세요!</div>
+                <EmptyText>검색 결과가 없습니다. 아래에서 직접 입력해 보세요!</EmptyText>
               ) : (
                 searchResults.map((item) => {
                   const isSelected = tempSelected.some((s) => s.name === item.name);
                   return (
-                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid #F1F5F9' }}>
+                    <ResultRow key={item.id}>
                       <div>
-                        <div style={{ fontWeight: '600', color: '#0A2533', fontSize: '14px' }}>{item.name}</div>
-                        <div style={{ fontSize: '12px', color: '#94A3B8' }}>식재료 DB</div>
+                        <ResultName>{item.name}</ResultName>
+                        <ResultSource>식재료 DB</ResultSource>
                       </div>
-                      <button 
-                        type="button"
-                        onClick={() => handleToggleSelectItem(item)}
-                        style={{
-                          padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                          backgroundColor: isSelected ? '#E2E8F0' : '#E6F4F5', 
-                          color: isSelected ? '#64748B' : '#042628', 
-                          fontWeight: '600', fontSize: '13px'
-                        }}
-                      >
+                      <AddButton type="button" $selected={isSelected} onClick={() => handleToggleSelectItem(item)}>
                         {isSelected ? '✓ 추가됨' : '+ 추가'}
-                      </button>
-                    </div>
+                      </AddButton>
+                    </ResultRow>
                   );
                 })
               )}
-            </div>
+            </Section>
           )}
 
           {/* 자주 쓰는 재료 */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontSize: '13px', color: '#64748B', marginBottom: '10px', fontWeight: '600' }}>자주 쓰는 재료</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          <Section $gap={24}>
+            <SectionLabel $bold>자주 쓰는 재료</SectionLabel>
+            <ChipRow>
               {frequentItems.map((name) => {
                 const isSelected = tempSelected.some((s) => s.name === name);
                 return (
-                  <button
+                  <Chip
                     key={name}
-                    type="button"
+                    size="medium"
+                    title={`+ ${name}`}
+                    selected={isSelected}
                     onClick={() => handleToggleSelectItem({ name })}
-                    style={{
-                      padding: '8px 16px', borderRadius: '20px', 
-                      border: isSelected ? '1px solid #042628' : '1px solid #CCD4DE', 
-                      background: isSelected ? '#E6F4F5' : '#fff',
-                      color: '#0A2533', fontSize: '13px', cursor: 'pointer', fontWeight: isSelected ? 'bold' : 'normal'
-                    }}
-                  >
-                    + {name}
-                  </button>
+                  />
                 );
               })}
-            </div>
-          </div>
+            </ChipRow>
+          </Section>
 
           {/* 직접 입력 */}
           <div>
-            <div style={{ fontSize: '13px', color: '#64748B', marginBottom: '8px' }}>찾는 재료가 없나요?</div>
+            <SectionLabel>찾는 재료가 없나요?</SectionLabel>
             {isAddingCustom ? (
-              <input 
+              <CustomInput
                 autoFocus
                 value={customInput}
                 onChange={(e) => setCustomInput(e.target.value)}
                 onKeyDown={handleCreateCustom}
                 placeholder="식재료 이름 입력 후 엔터"
-                style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1px dashed #042628', outline: 'none', boxSizing: 'border-box', fontSize: '14px' }}
               />
             ) : (
-              <button 
-                type="button"
-                onClick={() => setIsAddingCustom(true)}
-                style={{ 
-                  width: '100%', padding: '14px', borderRadius: '12px', 
-                  border: '1px dashed #70B9BE', background: '#F8FAFC', 
-                  color: '#042628', fontWeight: '600', cursor: 'pointer', fontSize: '14px' 
-                }}
-              >
+              <CustomButton type="button" onClick={() => setIsAddingCustom(true)}>
                 + 목록에 없는 재료 직접 입력
-              </button>
+              </CustomButton>
             )}
           </div>
-        </div>
+        </ScrollArea>
 
         {/* 하단 고정 바 (선택한 재료 목록 및 수량 조절 입력창 포함) */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, width: '100%', backgroundColor: '#fff',
-          borderTop: '1px solid #E2E8F0', padding: '16px 20px', boxSizing: 'border-box'
-        }}>
+        <Footer>
           {tempSelected.length > 0 && (
-            <div style={{ marginBottom: '12px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', color: '#0A2533', marginBottom: '8px' }}>
+            <Section $gap={12}>
+              <SectionLabel $bold $dark>
                 선택한 재료 {tempSelected.length}개 (수량을 입력해주세요)
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '120px', overflowY: 'auto' }}>
+              </SectionLabel>
+              <SelectedList>
                 {tempSelected.map((item, idx) => (
-                  <div key={idx} style={{ 
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
-                    backgroundColor: '#F8FAFC', padding: '8px 12px', borderRadius: '8px', border: '1px solid #E2E8F0'
-                  }}>
-                    <span style={{ fontSize: '14px', fontWeight: '600', color: '#0A2533' }}>{item.name}</span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <input 
+                  <SelectedRow key={idx}>
+                    <SelectedName>{item.name}</SelectedName>
+                    <QuantityBox>
+                      <QuantityInput
                         value={item.quantity}
                         onChange={(e) => handleQuantityChange(idx, e.target.value)}
-                        style={{ width: '70px', padding: '4px 8px', textAlign: 'center', border: '1px solid #CCD4DE', borderRadius: '6px', fontSize: '13px' }}
                       />
-                      <button 
-                        type="button"
-                        onClick={() => handleRemoveTemp(item.name)} 
-                        style={{ background: 'none', border: 'none', color: '#94A3B8', cursor: 'pointer', fontSize: '14px' }}
-                      >
+                      <RemoveButton type="button" onClick={() => handleRemoveTemp(item.name)}>
                         ✕
-                      </button>
-                    </div>
-                  </div>
+                      </RemoveButton>
+                    </QuantityBox>
+                  </SelectedRow>
                 ))}
-              </div>
-            </div>
+              </SelectedList>
+            </Section>
           )}
 
-          <button 
-            type="button"
+          <Button
+            title={`${tempSelected.length}개 재료 추가하기`}
             disabled={tempSelected.length === 0}
             onClick={handleComplete}
-            style={{
-              width: '100%', padding: '14px', 
-              backgroundColor: tempSelected.length === 0 ? '#CBD5E1' : '#042628', 
-              color: '#fff', border: 'none', borderRadius: '12px', 
-              fontSize: '15px', fontWeight: 'bold', cursor: tempSelected.length === 0 ? 'not-allowed' : 'pointer'
-            }}
-          >
-            {tempSelected.length}개 재료 추가하기
-          </button>
-        </div>
-      </div>
-    </div>
+          />
+        </Footer>
+      </Sheet>
+    </Overlay>
   );
 }

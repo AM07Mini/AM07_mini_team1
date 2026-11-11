@@ -1,19 +1,5 @@
-import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { colors, radius } from '../../components/styled/theme';
-
-export const Row = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-export const MoreLink = styled(Link)`
-  font-size: 13px;
-  font-weight: 500;
-  color: ${colors.secondary};
-  text-decoration: none;
-`;
+import { colors, radius, font } from '../../components/styled/theme';
 
 export const Notice = styled.div`
   display: flex;
@@ -22,7 +8,7 @@ export const Notice = styled.div`
   gap: 12px;
   padding: ${(props) => (props.$small ? '16px 0' : '40px 0')};
   text-align: center;
-  font-size: 12px;
+  ${font('caption')}
   color: ${colors.grey1};
 
   p {
@@ -36,7 +22,7 @@ export const NoticeAction = styled.button`
   border-radius: ${radius.button}px;
   background-color: ${colors.primary};
   color: ${colors.white};
-  font-size: 13px;
+  ${font('sub')}
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;

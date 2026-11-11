@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { colors, radius } from './theme';
+import { colors, radius, font } from './theme';
 
 const Wrapper = styled.div`
   display: flex;
@@ -15,7 +15,7 @@ const Tab = styled.button`
   border-radius: ${radius.small}px;
   background-color: ${(props) => (props.$selected ? colors.primary : 'transparent')};
   color: ${(props) => (props.$selected ? colors.white : colors.grey1)};
-  font-size: 14px;
+  ${font('body')}
   font-weight: ${(props) => (props.$selected ? 700 : 500)};
   cursor: pointer;
 `;

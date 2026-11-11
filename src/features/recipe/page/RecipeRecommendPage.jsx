@@ -1,5 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import PageIntro from '../../../components/styled/PageIntro';
+import SectionHeader from '../../../components/styled/SectionHeader';
 import TopBar from "../../../components/layout/TopBar";
 import Button from "../../../components/styled/Button";
 import Text from "../../../components/styled/Text";
@@ -23,12 +25,6 @@ const Screen = styled.main`
   flex-direction: column;
   gap: 20px;
   padding: 24px;
-`;
-
-const Intro = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
 `;
 
 const SummaryBox = styled.div`
@@ -78,12 +74,10 @@ const RecipeRecommendPage = () => {
     <div>
       <TopBar title="요리 추천" />
       <Screen>
-        <Intro>
-          <Text variant="pageTitle" as="h2">지금 만들 수 있는 요리</Text>
-          <Text variant="sub" color={colors.grey1}>
-            {joined ? `${joined}로 골라봤어요.` : "선택한 재료가 없어요."}
-          </Text>
-        </Intro>
+        <PageIntro
+          title="지금 만들 수 있는 요리"
+          description={joined ? `${joined}로 골라봤어요.` : "선택한 재료가 없어요."}
+        />
 
         <SummaryBox>
           <Text variant="cardTitle" >
@@ -95,10 +89,7 @@ const RecipeRecommendPage = () => {
           </Text>
         </SummaryBox>
 
-        <Row>
-          <Text variant="cardTitle">추천 요리</Text>
-          <Text variant="label">{recipes.length}가지</Text>
-        </Row>
+        <SectionHeader title="추천 요리" right={`${recipes.length}가지`} />
 
         <Row>
           <Chip title="추가 재료 없이" selected />

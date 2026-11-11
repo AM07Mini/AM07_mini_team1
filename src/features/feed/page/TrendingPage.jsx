@@ -1,13 +1,13 @@
 import { useCallback, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
-import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 import { getTrendingPage } from '../../../api/feedApi';
 import { toTrendingRow } from '../feedMapper';
 import { Notice, NoticeAction } from '../feedStyles';
 import usePagedList from '../hooks/usePagedList';
 import { countMissing, getMyIngredientNames } from '../myIngredients';
-import FeedTab from '../item/FeedTab';
+import UnderlineTab from '../../../components/styled/UnderlineTab';
 import IngredientFilter from '../item/IngredientFilter';
 import LoadMoreFooter from '../item/LoadMoreFooter';
 import TrendingRankItem from '../item/TrendingRankItem';
@@ -21,7 +21,7 @@ const Wrapper = styled.div`
 
 const Caption = styled.p`
   margin: 0;
-  font-size: 13px;
+  ${font('sub')}
   color: ${colors.grey1};
 `;
 
@@ -114,7 +114,7 @@ const TrendingPage = () => {
     <>
       <TopBar title="유행하는 레시피" showBack />
       <Wrapper>
-        <FeedTab tabs={sortTabs} selected={sort} changeHandler={setSort} />
+        <UnderlineTab tabs={sortTabs} selected={sort} changeHandler={setSort} label="정렬" />
         <Caption>{captionBySort[sort]}</Caption>
         <IngredientFilter on={onlyMine} disabled={!hasMyIngredients} onChange={setOnlyMine} />
         {renderList()}

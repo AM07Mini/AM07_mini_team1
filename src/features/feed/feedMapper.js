@@ -1,6 +1,5 @@
 export const DEFAULT_IMAGE = '/images/feed/feed-toast.jpg';
 
-const difficultyLevel = { EASY: 1, MEDIUM: 2, HARD: 3 };
 
 // ISO 날짜 → 지금부터 몇 분 전인지 (formatAgo 에 넘김)
 const minutesSince = (iso) =>
@@ -17,7 +16,7 @@ export const toFeedCard = (item, { following = false } = {}) => {
         authorId: item.authorId,
         author: {
             name: item.authorNickname ?? '알 수 없음',
-            // 없으면 null → FeedAvatar가 기본 모양(회색 원 + 사람 아이콘)으로 표시
+            // 없으면 null → 공용 Avatar가 기본 모양(회색 원 + 사람 아이콘)으로 표시
             avatar: item.authorProfileImageUrl || null,
         },
         minutesAgo: minutesSince(item.createdAt),
@@ -29,7 +28,7 @@ export const toFeedCard = (item, { following = false } = {}) => {
         following,
         // 응답에 없는 값 → null 이면 화면에서 숨김
         comments: item.reviewCount ?? null, // TODO(백엔드): reviewCount 추가 요청
-        difficulty: difficultyLevel[item.difficulty] ?? null,
+        difficulty: item.difficulty ?? null, // 서버 값 그대로 (EASY 등) — 표기는 utils/difficulty.js
         minutes: item.cookingMinutes ?? null,
         tags: (item.hashtags ?? []).map(withHash),
     };
@@ -51,7 +50,7 @@ export const toTrendingRow = (item) => ({
     recipeId: item.id,
     title: item.title,
     tag: item.hashtags?.[0] ? withHash(item.hashtags[0]) : '',
-    difficulty: difficultyLevel[item.difficulty] ?? null,
+    difficulty: item.difficulty ?? null, // 서버 값 그대로 (EASY 등) — 표기는 utils/difficulty.js
     minutes: item.cookingMinutes ?? null,
     likes: item.likeCount ?? 0,
     image: item.thumbnailUrl || DEFAULT_IMAGE,

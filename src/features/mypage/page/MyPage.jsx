@@ -5,13 +5,13 @@ import api from '../../../api/axios';
 import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import SegmentTab from '../../../components/styled/SegmentTab';
-import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 import { isAuthError } from '../authError';
 import { RECIPE_PAGE_SIZE } from '../constants';
 import ProfileCard from '../item/ProfileCard';
 import MyRecipeList from '../list/MyRecipeList';
-import MyPageTopBar from '../ui/MyPageTopBar';
-import StatusMessage from '../ui/StatusMessage';
+import TopBar from '../../../components/layout/TopBar';
+import StatusMessage from '../../../components/styled/StatusMessage';
 
 const Wrapper = styled.div`
   display: flex;
@@ -36,14 +36,13 @@ const TitleBox = styled.div`
 
 const Title = styled.h2`
   margin: 0;
-  font-size: 24px;
-  font-weight: 700;
+  ${font('pageTitle')}
   color: ${colors.dark};
 `;
 
 const Description = styled.p`
   margin: 0;
-  font-size: 13px;
+  ${font('sub')}
   color: ${colors.grey1};
   white-space: nowrap;
   overflow: hidden;
@@ -204,7 +203,7 @@ const MyPage = () => {
 
   return (
     <>
-      <MyPageTopBar title="마이 페이지" settingHandler={() => moveUrl('/mypage/edit')} />
+      <TopBar title="마이 페이지" rightIcon="settings" rightClickHandler={() => moveUrl('/mypage/edit')} />
       {renderContent()}
     </>
   );

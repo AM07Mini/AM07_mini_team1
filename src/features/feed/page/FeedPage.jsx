@@ -10,7 +10,7 @@ import useFeedActions from '../hooks/useFeedActions';
 import useFollow from '../hooks/useFollow';
 import usePagedList from '../hooks/usePagedList';
 import useTrending from '../hooks/useTrending';
-import FeedTab from '../item/FeedTab';
+import UnderlineTab from '../../../components/styled/UnderlineTab';
 import FeedSection from '../section/FeedSection';
 import TrendingSection from '../section/TrendingSection';
 
@@ -69,7 +69,7 @@ const FeedPage = () => {
     <>
       <TopBar title="피드" />
       <Wrapper>
-        <FeedTab tabs={feedTabs} selected={tab} changeHandler={setTab} />
+        <UnderlineTab tabs={feedTabs} selected={tab} changeHandler={setTab} label="피드 종류" />
         <TrendingSection recipes={trending.trending} status={trending.status} />
         <FeedSection tab={tab} needLogin={needLogin} list={list} feeds={viewFeeds} {...actions} />
       </Wrapper>

@@ -1,11 +1,8 @@
 import { Link } from 'react-router-dom';
 import styled from 'styled-components';
-import { colors, radius } from '../../../components/styled/theme';
+import { colors, radius, font } from '../../../components/styled/theme';
 import { formatCount } from '../feedUtils';
 import { DEFAULT_IMAGE } from '../feedMapper';
-
-// 좋아요 빨강 — theme.js에 아직 없어서 피드 안에서만 사용 (팀 합의 후 theme.js로 옮기기)
-const HEART = '#E8545C';
 
 const Wrapper = styled.article`
   flex-shrink: 0;
@@ -37,20 +34,28 @@ const Rank = styled.b`
   border-radius: ${radius.small}px;
   background-color: ${colors.primary};
   color: ${colors.white};
-  font-size: 13px;
+  ${font('sub')}
+  font-weight: 700;
 `;
 
 const Title = styled.h3`
   margin: 8px 0 0;
-  font-size: 14px;
-  font-weight: 500;
+  ${font('option')}
   color: ${colors.dark};
 `;
 
 const Meta = styled.div`
   display: flex;
   gap: 6px;
-  font-size: 12px;
+  ${font('caption')}
+`;
+
+const TagText = styled.span`
+  color: ${colors.secondary};
+`;
+
+const Likes = styled.span`
+  color: ${colors.heart};
 `;
 
 const StyledLink = styled(Link)`
@@ -74,8 +79,8 @@ const TrendingItem = ({ data, rank }) => {
       </Thumb>
       <Title>{data.title}</Title>
       <Meta>
-        {data.tag && <span style={{ color: colors.secondary }}>{data.tag}</span>}
-        <span style={{ color: HEART }}>♥ {formatCount(data.likes)}</span>
+        {data.tag && <TagText>{data.tag}</TagText>}
+        <Likes>♥ {formatCount(data.likes)}</Likes>
       </Meta>
     </Wrapper>
   );

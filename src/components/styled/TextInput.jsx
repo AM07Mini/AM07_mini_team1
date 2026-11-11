@@ -1,5 +1,5 @@
 import styled, { css } from 'styled-components';
-import { colors, radius } from './theme';
+import { colors, radius, font } from './theme';
 
 const Wrapper = styled.div`
   display: flex;
@@ -8,8 +8,7 @@ const Wrapper = styled.div`
 `;
 
 const Label = styled.label`
-  font-size: 14px;
-  font-weight: 700;
+  ${font('label')}
   color: ${colors.dark};
 `;
 
@@ -30,7 +29,7 @@ const fieldStyle = css`
   background: none;
   outline: none;
   font-family: inherit;
-  font-size: 14px;
+  ${font('body')}
   color: ${colors.dark};
 
   &::placeholder {

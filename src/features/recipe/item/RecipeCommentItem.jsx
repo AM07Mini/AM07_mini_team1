@@ -1,30 +1,14 @@
 import { useState } from "react";
 import styled from "styled-components";
+import Avatar from "../../../components/styled/Avatar";
 import Text from "../../../components/styled/Text";
-import { colors } from "../../../components/styled/theme"; // 실제 경로에 맞게
-
-const HEART = "#E5484D";
+import { colors, font } from "../../../components/styled/theme";
 
 const Wrapper = styled.div`
   display: flex;
   gap: 12px;
   padding: 8px 0 12px;
   border-bottom: 1px solid ${colors.grey4};
-`;
-
-const Avatar = styled.div`
-  flex-shrink: 0;
-  width: ${({ $size }) => $size}px;
-  height: ${({ $size }) => $size}px;
-  border-radius: 50%;
-  background: ${colors.grey4};
-  overflow: hidden;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
 `;
 
 const Body = styled.div`
@@ -58,8 +42,7 @@ const ActionButton = styled.button`
   border: none;
   background: none;
   font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
+  ${font('hashtag')}
   color: ${({ $color }) => $color ?? colors.grey1};
   cursor: pointer;
 `;
@@ -94,7 +77,7 @@ const ReplyForm = styled.form`
     outline: none;
     background: none;
     font-family: inherit;
-    font-size: 13px;
+    ${font('sub')}
     color: ${colors.dark};
   }
   input::placeholder {
@@ -106,7 +89,7 @@ const ReplyForm = styled.form`
     border-radius: 14px;
     background: ${colors.primary};
     font-family: inherit;
-    font-size: 12px;
+    ${font('hashtag')}
     font-weight: 700;
     color: ${colors.white};
     cursor: pointer;
@@ -133,7 +116,7 @@ const RecipeCommentItem = ({ data, onLike, onReply }) => {
 
   return (
     <Wrapper>
-      <Avatar $size={36}>{data.avatar && <img src={data.avatar} alt="" />}</Avatar>
+      <Avatar src={data.avatar} size={36} />
       <Body>
         <Head>
           <Text variant="label" as="h4">{data.name}</Text>
@@ -145,7 +128,7 @@ const RecipeCommentItem = ({ data, onLike, onReply }) => {
         <Actions>
           <ActionButton
             type="button"
-            $color={data.liked ? HEART : colors.grey2}
+            $color={data.liked ? colors.heart : colors.grey2}
             onClick={() => onLike(data.id)}
           >
             ♥ {data.likes}
@@ -159,7 +142,7 @@ const RecipeCommentItem = ({ data, onLike, onReply }) => {
           <Replies>
             {replies.map((reply) => (
               <ReplyRow key={reply.id}>
-                <Avatar $size={24}>{reply.avatar && <img src={reply.avatar} alt="" />}</Avatar>
+                <Avatar src={reply.avatar} size={24} />
                 <Body>
                   <Head>
                     <Text variant="label" as="h5">{reply.name}</Text>

@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import styled from 'styled-components';
 import BottomBar from './components/layout/BottomBar';
+import { colors } from './components/styled/theme';
 import { AuthProvider } from './utils/context/AuthContext';
 
 // user
@@ -40,7 +41,7 @@ const MobileFrame = styled.div`
   max-width: 430px;
   min-height: 100vh;
   margin: 0 auto;
-  background-color: #ffffff;
+  background-color: ${colors.white};
   position: relative;
   display: flex;
   flex-direction: column;

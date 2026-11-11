@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import Chip from '../../../components/styled/Chip';
-import { colors } from '../../../components/styled/theme';
+import { colors, font } from '../../../components/styled/theme';
 
 const FilterGroup = styled.section`
   display: flex;
@@ -17,8 +17,7 @@ const FilterList = styled.div`
 const FilterTitle = styled.h3`
   margin: 0;
   color: ${colors.dark};
-  font-size: 16px;
-  font-weight: 700;
+  ${font('cardTitle')}
 `;
 
 const Chips = styled.div`
@@ -68,7 +67,7 @@ const SearchFilterList = ({ filters, selected = {}, onToggle, disabled = false }
 const FilterMessage = styled.p`
   margin: 0;
   color: ${colors.grey1};
-  font-size: 12px;
+  ${font('caption')}
 `;
 
 export default SearchFilterList;

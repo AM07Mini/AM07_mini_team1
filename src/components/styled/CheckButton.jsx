@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import Icon from './Icon';
-import { colors, radius } from './theme';
+import { colors, radius, font } from './theme';
 
 const StyledButton = styled.button`
   display: flex;
@@ -13,8 +13,7 @@ const StyledButton = styled.button`
   border-radius: ${radius.button}px;
   background-color: ${(props) => (props.$checked ? colors.secondary : colors.white)};
   color: ${colors.dark};
-  font-size: 14px;
-  font-weight: 500;
+  ${font('option')}
   cursor: pointer;
 `;
 
