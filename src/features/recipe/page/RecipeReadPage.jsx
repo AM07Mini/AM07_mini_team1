@@ -172,7 +172,7 @@ const RecipeDetailPage = () => {
   // 주소로 바로 들어와서 돌아갈 화면이 없으면 홈으로
   const backHandler = () => {
     if (window.history.state?.idx > 0) navigate(-1);
-    else navigate("/");
+    else navigate("/", { replace: true }); // 상세 기록을 홈으로 바꿔서 브라우저 뒤로가기로 다시 상세에 오지 않게
   };
 
   const [liked, setLiked] = useState(false);
