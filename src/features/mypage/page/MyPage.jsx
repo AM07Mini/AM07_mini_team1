@@ -6,7 +6,7 @@ import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import SegmentTab from '../../../components/styled/SegmentTab';
 import { colors, PAGE_PADDING } from '../../../components/styled/theme';
-import { authHeader, isAuthError } from '../authToken';
+import { isAuthError } from '../authError';
 import { RECIPE_PAGE_SIZE } from '../constants';
 import ProfileCard from '../item/ProfileCard';
 import MyRecipeList from '../list/MyRecipeList';
@@ -83,10 +83,10 @@ const MyPage = () => {
   // 서버 응답은 { isSuccess, message, result } 모양이라 실제 데이터는 response.data.result
   const loadData = async () => {
     try {
-      const config = { headers: authHeader(), params: { page: 0, size: RECIPE_PAGE_SIZE } };
+      const config = { params: { page: 0, size: RECIPE_PAGE_SIZE } };
       // 세 요청을 동시에 보내고, 모두 성공하면 화면에 반영
       const [profileResponse, myRecipesResponse, bookmarksResponse] = await Promise.all([
-        api.get('/users/me', { headers: authHeader() }),
+        api.get('/users/me'),
         api.get(tabUrls.mine, config),
         api.get(tabUrls.bookmark, config),
       ]);
@@ -107,7 +107,7 @@ const MyPage = () => {
   // 분류 칩용 카테고리 — 따로 불러와서, 실패해도 페이지는 보이고 칩만 숨김
   const loadCategories = async () => {
     try {
-      const response = await api.get('/categories', { headers: authHeader() });
+      const response = await api.get('/categories');
       const { defaults = [], mine = [] } = response.data.result ?? {};
       setCategories([...defaults, ...mine]);
     } catch (e) {
@@ -142,7 +142,6 @@ const MyPage = () => {
     }
     try {
       const response = await api.get(tabUrls[tab], {
-        headers: authHeader(),
         params: { categoryId: id, page: 0, size: RECIPE_PAGE_SIZE },
       });
       // 그사이 다른 칩이나 탭을 눌렀으면 이 응답은 무시

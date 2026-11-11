@@ -6,7 +6,8 @@ import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import TextInput from '../../../components/styled/TextInput';
 import { colors, PAGE_PADDING, radius } from '../../../components/styled/theme';
-import { authHeader, clearTokens, isAuthError, REFRESH_TOKEN_KEY } from '../authToken';
+import { useAuth } from '../../../utils/context/AuthContext';
+import { isAuthError } from '../authError';
 import { INTRO_MAX, NICKNAME_MAX, NICKNAME_MIN } from '../constants';
 import Avatar from '../ui/Avatar';
 import MyPageTopBar from '../ui/MyPageTopBar';
@@ -153,6 +154,7 @@ const sameIds = (a, b) => a.length === b.length && a.every((id) => b.includes(id
 // 프로필 편집 — 사진, 닉네임(중복 확인), 한 줄 소개, 이메일(수정 불가), 관심 요리, 계정 메뉴
 const ProfileEditPage = () => {
   const moveUrl = useNavigate();
+  const { logout } = useAuth();
   const fileInputRef = useRef(null);
 
   const [original, setOriginal] = useState(null); // 서버에서 받은 내 정보 + 관심 요리 id 목록
@@ -184,7 +186,7 @@ const ProfileEditPage = () => {
   // 내 정보 불러오기 — 실제 데이터는 response.data.result
   const loadProfile = async () => {
     try {
-      const response = await api.get('/users/me', { headers: authHeader() });
+      const response = await api.get('/users/me');
       const me = response.data.result;
       setOriginal({ ...me, intro: me.intro ?? '' });
       setForm({ nickname: me.nickname, intro: me.intro ?? '' });
@@ -203,7 +205,7 @@ const ProfileEditPage = () => {
     try {
       const [optionsResponse, myInterestsResponse] = await Promise.all([
         api.get('/interests'),
-        api.get('/users/me/interests', { headers: authHeader() }),
+        api.get('/users/me/interests'),
       ]);
       const myInterestIds = (myInterestsResponse.data.result ?? []).map((item) => item.id);
       setInterestOptions(optionsResponse.data.result ?? []);
@@ -267,7 +269,7 @@ const ProfileEditPage = () => {
         const formData = new FormData();
         formData.append('image', photoFile);
         await api.post('/users/me/profile-image', formData, {
-          headers: { ...authHeader(), 'Content-Type': 'multipart/form-data' },
+          headers: { 'Content-Type': 'multipart/form-data' },
         });
         // 다음 단계에서 실패해 다시 저장할 때 같은 사진을 또 올리지 않도록
         setPhotoFile(null);
@@ -277,13 +279,13 @@ const ProfileEditPage = () => {
         const body = {};
         if (nicknameChanged) body.nickname = form.nickname;
         if (introChanged) body.intro = form.intro;
-        await api.patch('/users/me', body, { headers: authHeader() });
+        await api.patch('/users/me', body);
         // 저장된 값을 새 기준으로 — 다음 단계가 실패해 다시 저장할 때 비교가 맞도록
         setOriginal((prev) => ({ ...prev, ...body }));
       }
       // 3) 관심 요리가 바뀌었으면 통째로 교체
       if (interestsChanged) {
-        await api.put('/users/me/interests', { interestIds }, { headers: authHeader() });
+        await api.put('/users/me/interests', { interestIds });
         setOriginalInterestIds(interestIds);
       }
       moveUrl('/mypage');
@@ -295,18 +297,18 @@ const ProfileEditPage = () => {
     }
   };
 
-  const logoutHandler = async () => {
+  // 로그인 정보 지우기 — 로그인 담당의 AuthContext logout 사용
+  // 서버 로그아웃이 실패해도 이 기기의 로그인 정보는 지워짐 (AuthContext의 finally)
+  const clearLogin = async () => {
     try {
-      await api.post(
-        '/auth/logout',
-        { refreshToken: localStorage.getItem(REFRESH_TOKEN_KEY) },
-        { headers: authHeader() },
-      );
+      await logout();
     } catch (e) {
-      // 서버 로그아웃이 실패해도 이 기기에서는 로그아웃 처리
       console.error(e);
     }
-    clearTokens();
+  };
+
+  const logoutHandler = async () => {
+    await clearLogin();
     moveUrl('/signin');
   };
 
@@ -318,8 +320,8 @@ const ProfileEditPage = () => {
     withdrawingRef.current = true;
     setWithdrawing(true);
     try {
-      await api.delete('/users/me', { headers: authHeader() });
-      clearTokens();
+      await api.delete('/users/me');
+      await clearLogin();
       window.alert('탈퇴했어요. 그동안 이용해주셔서 감사해요.');
       moveUrl('/signin');
     } catch (e) {

@@ -5,7 +5,7 @@ import api from '../../../api/axios';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
 import { colors, PAGE_PADDING } from '../../../components/styled/theme';
-import { authHeader, isAuthError } from '../authToken';
+import { isAuthError } from '../authError';
 import { PASSWORD_PATTERN } from '../constants';
 import MyPageTopBar from '../ui/MyPageTopBar';
 import { DANGER } from '../ui/style';
@@ -51,11 +51,10 @@ const PasswordChangePage = () => {
     if (!canSave) return;
     setSaving(true);
     try {
-      await api.post(
-        '/users/me/password',
-        { currentPassword: form.currentPassword, newPassword: form.newPassword },
-        { headers: authHeader() },
-      );
+      await api.post('/users/me/password', {
+        currentPassword: form.currentPassword,
+        newPassword: form.newPassword,
+      });
       // 다른 기기의 로그인은 서버에서 끊김 — 이 기기는 그대로 로그인 유지
       window.alert('비밀번호를 바꿨어요. 다른 기기에서는 다시 로그인해야 해요.');
       moveUrl('/mypage/edit');
