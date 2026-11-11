@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import PageIntro from '../../../components/styled/PageIntro';
 import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
+import FormMessage from '../../../components/styled/FormMessage';
 import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 import {sendEmailCode,verifyEmailCode,findLoginId, issueResetKey} from '../../../api/authApi';
 
@@ -23,20 +25,6 @@ const Content = styled.div`
 
 const Intro = styled.div`
   margin-bottom: 24px;
-
-  h1 {
-    margin: 0 0 8px;
-    color: ${colors.dark};
-    ${font('pageTitle')}
-    line-height: 1.4;
-  }
-
-  p {
-    margin: 0;
-    color: ${colors.grey1};
-    ${font('sub')}
-    line-height: 1.7;
-  }
 `;
 
 const Form = styled.form`
@@ -63,14 +51,6 @@ const BottomActions = styled.div`
     min-width: 0;
     height: 50px;
   }
-`;
-
-const Message = styled.p`
-  margin: 0;
-  ${font('caption')}
-  line-height: 1.6;
-  color: ${({ $error }) =>
-    $error ? colors.danger : colors.accent1};
 `;
 
 const Timer = styled.span`
@@ -307,28 +287,17 @@ const RecoveryPage = ({ purpose }) => {
         <Intro>
 
           {completed ? (
-            <>
-              <h1>
-                {isFind
-                  ? '아이디 안내 메일을 보냈어요!'
-                  : '비밀번호 재설정 메일을 보냈어요!'}
-              </h1>
-              <p>가입하신 이메일을 확인해주세요.</p>
-            </>
+            <PageIntro
+              titleAs="h1"
+              title={isFind ? '아이디 안내 메일을 보냈어요!' : '비밀번호 재설정 메일을 보냈어요!'}
+              description="가입하신 이메일을 확인해주세요."
+            />
           ) : (
-
-            <>
-              <h1>
-                {isFind
-                  ? <>가입한 이메일을<br />확인해주세요</>
-                  : <>비밀번호를<br />잊으셨나요?</>}
-              </h1>
-              <p>
-                가입한 이메일로 인증번호를 보내드릴게요.
-                <br />
-                이메일 인증 후 본인 확인을 진행해주세요.
-              </p>
-            </>
+            <PageIntro
+              titleAs="h1"
+              title={isFind ? <>가입한 이메일을<br />확인해주세요</> : <>비밀번호를<br />잊으셨나요?</>}
+              description={<>가입한 이메일로 인증번호를 보내드릴게요.<br />이메일 인증 후 본인 확인을 진행해주세요.</>}
+            />
           )}
         </Intro>
 
@@ -412,17 +381,17 @@ const RecoveryPage = ({ purpose }) => {
                     )}
                   </TextInput>
 
-                  <Message>
+                  <FormMessage $tone="success">
                     {expired
                       ? '인증번호가 만료되었습니다. 다시 발송해주세요.'
                       : '이메일로 받은 인증번호를 입력해주세요.'}
-                  </Message>
+                  </FormMessage>
                 </>
               )}
 
-              {notice && <Message role="status">{notice}</Message>}
+              {notice && <FormMessage role="status" $tone="success">{notice}</FormMessage>}
               {error && (
-                <Message $error role="alert">{error}</Message>
+                <FormMessage $tone="error" role="alert">{error}</FormMessage>
               )}
             </Fields>
 

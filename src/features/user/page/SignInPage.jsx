@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../utils/context/AuthContext';
 import styled from 'styled-components';
 
+import PageIntro from '../../../components/styled/PageIntro';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
 import Icon from '../../../components/styled/Icon';
+import FormMessage from '../../../components/styled/FormMessage';
 import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 
 const Wrapper = styled.div`
@@ -18,21 +20,7 @@ const Intro = styled.header`
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-
-  h1 {
-    margin: 18px 0 8px;
-    color: ${colors.dark};
-    ${font('pageTitle')}
-    line-height: 1.4;
-  }
-
-  p {
-    margin: 0;
-    color: ${colors.grey1};
-    ${font('sub')}
-    line-height: 1.6;
-  }
+  gap: 18px;
 `;
 
 const LogoCircle = styled.div`
@@ -52,12 +40,6 @@ const LoginForm = styled.form`
   flex-direction: column;
   gap: 16px;
   margin-top: 28px;
-`;
-
-const Message = styled.p`
-  margin: 0;
-  ${font('caption')}
-  color: ${({ $error }) => $error ? colors.danger : colors.grey1};
 `;
 
 const LinkArea = styled.nav`
@@ -136,17 +118,12 @@ const SignInPage = () => {
           <Icon name="chef" size={28} />
         </LogoCircle>
 
-        <h1>
-          냉장고 속 재료로
-          <br />
-          오늘의 요리를 찾아요
-        </h1>
-
-        <p>
-          가진 재료만 고르면 만들 수 있는
-          <br />
-          레시피를 추천해드려요.
-        </p>
+        <PageIntro
+          titleAs="h1"
+          center
+          title={<>냉장고 속 재료로<br />오늘의 요리를 찾아요</>}
+          description={<>가진 재료만 고르면 만들 수 있는<br />레시피를 추천해드려요.</>}
+        />
       </Intro>
 
       <LoginForm onSubmit={handleSubmit} noValidate>
@@ -160,9 +137,9 @@ const SignInPage = () => {
           describedBy={errors.loginId ? 'signin-login-id-error' : undefined}
         />
         {errors.loginId && (
-          <Message id="signin-login-id-error" $error role="alert">
+          <FormMessage id="signin-login-id-error" $tone="error" role="alert">
             {errors.loginId}
-          </Message>
+          </FormMessage>
         )}
 
         <TextInput
@@ -176,9 +153,9 @@ const SignInPage = () => {
           describedBy={errors.password ? 'signin-password-error' : undefined}
         />
         {errors.password && (
-          <Message id="signin-password-error" $error role="alert">
+          <FormMessage id="signin-password-error" $tone="error" role="alert">
             {errors.password}
-          </Message>
+          </FormMessage>
         )}
 
         <Button
@@ -187,7 +164,7 @@ const SignInPage = () => {
           disabled={loading}
         />
 
-        {status && <Message role="status">{status}</Message>}
+        {status && <FormMessage role="status" $tone="info">{status}</FormMessage>}
       </LoginForm>
 
       <LinkArea>

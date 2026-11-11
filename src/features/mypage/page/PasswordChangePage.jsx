@@ -4,7 +4,8 @@ import styled from 'styled-components';
 import api from '../../../api/axios';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
-import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
+import FormMessage from '../../../components/styled/FormMessage';
+import { PAGE_PADDING } from '../../../components/styled/theme';
 import { isAuthError } from '../authError';
 import { PASSWORD_PATTERN } from '../constants';
 import TopBar from '../../../components/layout/TopBar';
@@ -21,12 +22,6 @@ const Field = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-`;
-
-const Message = styled.p`
-  margin: 0;
-  ${font('caption')}
-  color: ${(props) => props.$color};
 `;
 
 // 비밀번호 변경 — 현재 비밀번호 확인 후 새 비밀번호로 바꾸기
@@ -73,9 +68,9 @@ const PasswordChangePage = () => {
   // 새 비밀번호 안내 — 입력 전에는 규칙, 규칙에 안 맞으면 빨간색
   const renderNewPasswordMessage = () => {
     if (form.newPassword === '' || newPasswordOk) {
-      return <Message $color={colors.grey2}>영문·숫자 포함 8~20자 (특수문자는 !@#$%^&*만 가능)</Message>;
+      return <FormMessage $tone="info">영문·숫자 포함 8~20자 (특수문자는 !@#$%^&*만 가능)</FormMessage>;
     }
-    return <Message $color={colors.danger}>영문·숫자 포함 8~20자 (특수문자는 !@#$%^&*만 가능)</Message>;
+    return <FormMessage $tone="error">영문·숫자 포함 8~20자 (특수문자는 !@#$%^&*만 가능)</FormMessage>;
   };
 
   return (
@@ -113,7 +108,7 @@ const PasswordChangePage = () => {
             placeholder="새 비밀번호를 한 번 더 입력해주세요"
           />
           {form.confirmPassword !== '' && !confirmOk && (
-            <Message $color={colors.danger}>새 비밀번호가 서로 달라요</Message>
+            <FormMessage $tone="error">새 비밀번호가 서로 달라요</FormMessage>
           )}
         </Field>
 

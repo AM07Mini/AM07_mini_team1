@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
+import PageIntro from '../../../components/styled/PageIntro';
+import SectionHeader from '../../../components/styled/SectionHeader';
 import SearchInput from "../../../components/styled/SearchInput";
 import TopBar from "../../../components/layout/TopBar";
 import Button from "../../../components/styled/Button";
@@ -43,18 +45,6 @@ const ListArea = styled.div`
 const ButtonArea = styled.div`
   flex-shrink: 0;
   margin-top: auto;
-`;
-
-const Intro = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-`;
-
-const Row = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 `;
 
 const SelectedBox = styled.div`
@@ -107,12 +97,7 @@ const IngredientSelectPage = () => {
     <PageWrapper>
       <TopBar title="홈" />
       <Screen>
-        <Intro>
-          <Text variant="pageTitle" as="h2">내 냉장고에 뭐가 있나요?</Text>
-          <Text variant="sub" color={colors.grey1}>
-            가진 재료를 체크하면 요리를 추천해드려요.
-          </Text>
-        </Intro>
+        <PageIntro title="내 냉장고에 뭐가 있나요?" description="가진 재료를 체크하면 요리를 추천해드려요." />
 
         <SearchInput
           value={query}
@@ -127,10 +112,7 @@ const IngredientSelectPage = () => {
           </AddButton>
         )}
 
-        <Row>
-          <Text variant="cardTitle" as="h3">내가 가진 식재료</Text>
-          <Text variant="label" color={colors.primary}>{selected.length}개 선택</Text>
-        </Row>
+        <SectionHeader title="내가 가진 식재료" right={`${selected.length}개 선택`} />
 
         <ListArea>
           <IngredientList ingredients={filtered} selected={selected} onToggle={toggle} />

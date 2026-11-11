@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
+import SectionHeader from '../../../components/styled/SectionHeader';
 import TopBar from "../../../components/layout/TopBar";
 import Button from "../../../components/styled/Button";
 import Text from "../../../components/styled/Text";
@@ -48,12 +49,6 @@ const Section = styled.section`
   display: flex;
   flex-direction: column;
   gap: 12px;
-`;
-
-const Row = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 `;
 
 const LikeBox = styled.div`
@@ -199,10 +194,7 @@ const RecipeReviewPage = () => {
                 </Summary>
 
                 <Section>
-                    <Row>
-                        <Text variant="sectionTitle" as="h3">레시피 후기 {RECIPE.reviewCount}</Text>
-                        <Text variant="caption" color={colors.accent1}>최신순</Text>
-                    </Row>
+                    <SectionHeader title={`레시피 후기 ${RECIPE.reviewCount}`} right="최신순" />
 
                     <LikeBox>
                         <div>

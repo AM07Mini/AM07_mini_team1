@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
+import PageIntro from '../../../components/styled/PageIntro';
 import TopBar from '../../../components/layout/TopBar';
+import BackToTopButton from '../../../components/styled/BackToTopButton';
 import SearchInput from '../../../components/styled/SearchInput';
-import { colors, font } from '../../../components/styled/theme';
 import SearchFilterList from '../list/SearchFilterList';
 import SearchResultList from '../list/SearchResultList';
 import SearchSelectionSummary from '../list/SearchSelectionSummary';
@@ -25,50 +26,6 @@ const Main = styled.main`
   flex-direction: column;
   gap: 24px;
   padding: 18px 24px 28px;
-`;
-
-const Intro = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-`;
-
-const Heading = styled.h2`
-  margin: 0;
-  color: ${colors.dark};
-  ${font('sectionTitle')}
-  line-height: 1.4;
-`;
-
-const Lead = styled.p`
-  margin: 0;
-  color: ${colors.grey1};
-  ${font('body')}
-  line-height: 1.5;
-`;
-
-const BackToTopButton = styled.button`
-  position: fixed;
-  z-index: 20;
-  right: max(16px, calc((100vw - 430px) / 2 + 16px));
-  bottom: 96px;
-  display: grid;
-  width: 52px;
-  height: 52px;
-  place-items: center;
-  border: 1px solid ${colors.grey3};
-  border-radius: 50%;
-  background: ${colors.white};
-  color: ${colors.dark};
-  box-shadow: 0 2px 12px rgba(10, 37, 51, 0.12);
-  font-size: 28px;
-  line-height: 1;
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid ${colors.accent1};
-    outline-offset: 3px;
-  }
 `;
 
 const SearchPage = () => {
@@ -264,10 +221,7 @@ const SearchPage = () => {
     <Page>
       <TopBar ref={topBarRef} title="검색" />
       <Main ref={mainRef}>
-        <Intro>
-          <Heading>어떤 요리를 찾고 있나요?</Heading>
-          <Lead>맛, 음식 종류, 난이도로 레시피를 골라보세요.</Lead>
-        </Intro>
+        <PageIntro title="어떤 요리를 찾고 있나요?" description="맛, 음식 종류, 난이도로 레시피를 골라보세요." />
         <SearchInput
           value={query}
           changeHandler={(event) => setQuery(event.target.value)}
@@ -303,15 +257,7 @@ const SearchPage = () => {
           />
         </div>
       </Main>
-      {showBackToTop && (
-        <BackToTopButton
-          type="button"
-          aria-label="맨 위로"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        >
-          <span aria-hidden="true">↑</span>
-        </BackToTopButton>
-      )}
+      {showBackToTop && <BackToTopButton />}
     </Page>
   );
 };

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import Text from '../../../components/styled/Text';
-import { MoreLink, Notice, NoticeAction, Row } from '../feedStyles';
+import SectionHeader from '../../../components/styled/SectionHeader';
+import { Notice, NoticeAction } from '../feedStyles';
 import LoadMoreFooter from '../item/LoadMoreFooter';
 import FeedList from '../list/FeedList';
 
@@ -77,12 +77,7 @@ const FeedSection = ({ tab, needLogin, list, feeds, likeHandler, bookmarkHandler
 
   return (
     <>
-      <Row>
-        <Text as="h3" variant="sectionTitle">
-          {listTitle[tab]}
-        </Text>
-        <MoreLink to="/mypage?tab=bookmark">북마크한 레시피</MoreLink>
-      </Row>
+      <SectionHeader title={listTitle[tab]} right="북마크한 레시피" to="/mypage?tab=bookmark" />
       {renderBody()}
     </>
   );

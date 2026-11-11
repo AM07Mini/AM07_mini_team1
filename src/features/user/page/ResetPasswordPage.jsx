@@ -2,9 +2,11 @@
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import PageIntro from '../../../components/styled/PageIntro';
 import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
+import FormMessage from '../../../components/styled/FormMessage';
 import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 import { resetPassword } from '../../../api/authApi';
 
@@ -23,21 +25,7 @@ const Content = styled.div`
 `;
 
 const Intro = styled.div`
-  margin-bottom: 26px;
-
-  h1 {
-    margin: 0 0 8px;
-    ${font('pageTitle')}
-    line-height: 1.4;
-    color: ${colors.dark};
-  }
-
-  p {
-    margin: 0;
-    ${font('sub')}
-    line-height: 1.6;
-    color: ${colors.grey1};
-  }
+  margin-bottom: 24px;
 `;
 
 const Form = styled.form`
@@ -68,14 +56,6 @@ const Hint = styled.span`
   ${font('caption')}
   color: ${({ $valid }) =>
     $valid ? colors.accent1 : colors.grey2};
-`;
-
-const Message = styled.p`
-  margin: 0;
-  ${font('caption')}
-  line-height: 1.6;
-  color: ${({ $error }) =>
-    $error ? colors.danger : colors.accent1};
 `;
 
 const BottomArea = styled.div`
@@ -186,12 +166,11 @@ const ResetPasswordPage = () => {
 
       <Content>
         <Intro>
-          <h1>
-            새 비밀번호를
-            <br />
-            설정해주세요
-          </h1>
-          <p>이메일로 받은 보안키를 입력하고 새 비밀번호를 설정해주세요.</p>
+          <PageIntro
+            titleAs="h1"
+            title={<>새 비밀번호를<br />설정해주세요</>}
+            description="이메일로 받은 보안키를 입력하고 새 비밀번호를 설정해주세요."
+          />
         </Intro>
 
         <Form onSubmit={handleSubmit} noValidate>
@@ -261,18 +240,18 @@ const ResetPasswordPage = () => {
               />
 
               {confirmPassword && (
-                <Message $error={!passwordMatched}>
+                <FormMessage $tone={!passwordMatched ? 'error' : 'success'}>
                   {passwordMatched
                     ? '✓ 비밀번호가 일치해요.'
                     : '비밀번호가 일치하지 않습니다.'}
-                </Message>
+                </FormMessage>
               )}
             </Field>
 
 
 
             {error && (
-              <Message $error role="alert">{error}</Message>
+              <FormMessage $tone="error" role="alert">{error}</FormMessage>
             )}
           </Fields>
 

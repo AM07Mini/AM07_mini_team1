@@ -1,12 +1,8 @@
 import api from '../../../api/axios';
+import { getDifficulty } from '../../../utils/difficulty';
 
 const CATALOG_REQUEST_TIMEOUT_MS = 10_000;
 
-const difficultyLabels = {
-  EASY: '쉬움',
-  MEDIUM: '보통',
-  HARD: '어려움',
-};
 
 const getResult = async (path, signal) => {
   const { data } = await api.get(path, {
@@ -144,7 +140,7 @@ export const fetchSearchRecipes = async (keyword, filters, signal, size = 20) =>
       description:
         recipe.description ||
         [
-          difficultyLabels[recipe.difficulty],
+          getDifficulty(recipe.difficulty)?.label,
           Number.isFinite(recipe.cookingMinutes) ? `${recipe.cookingMinutes}분` : null,
         ]
           .filter(Boolean)

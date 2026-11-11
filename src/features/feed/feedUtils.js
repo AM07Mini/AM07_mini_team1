@@ -4,12 +4,8 @@ export const feedTabs = [
   { value: 'latest', title: '최신' },
 ];
 
-const difficultyTitle = { 1: '쉬움', 2: '보통', 3: '어려움' };
-
-export const formatDifficulty = (level, minutes) => {
-  const stars = `${'★'.repeat(level)}${'☆'.repeat(3 - level)} ${difficultyTitle[level]}`;
-  return minutes == null ? stars : `${stars} · ${minutes}분`;
-};
+// 난이도 표기는 공용 utils/difficulty.js 사용
+export { formatDifficulty } from '../../utils/difficulty';
 
 // 2300 → "2.3천", 128 → "128"
 // 9950~9999는 천 단위로 반올림하면 "10천"이 되므로 만 단위("1만")로 표시

@@ -3,17 +3,16 @@ import { createRecipeText, uploadThumbnail, searchIngredients, createIngredient 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import PageIntro from '../../../components/styled/PageIntro';
 import Button from '../../../components/styled/Button';
+import Toggle from '../../../components/styled/Toggle';
+import { DIFFICULTIES } from '../../../utils/difficulty';
 import { colors, radius, font } from '../../../components/styled/theme';
 
 // --- 1. 데이터 배열 ---
 const foodTypes = ["한식", "중식", "일식", "양식", "분식", "기타"];
 const categories = ["메인", "밑반찬", "국 · 찌개", "볶음밥", "면 · 파스타", "브런치", "간식 · 디저트"];
-const levels = [
-  ["★☆☆", "쉬움"],
-  ["★★☆", "보통"],
-  ["★★★", "어려움"],
-];
+const levels = DIFFICULTIES.map(({ stars, label }) => [stars, label]); // 표기는 utils/difficulty.js
 
 // --- 2. Styled Components ---
 const Wrapper = styled.main`
@@ -21,18 +20,6 @@ const Wrapper = styled.main`
   display: flex;
   flex-direction: column;
   gap: 32px;
-`;
-
-const PageTitle = styled.h2`
-  margin: 0 0 8px 0;
-  ${font('pageTitle')}
-  color: ${colors.dark};
-`;
-
-const PageDesc = styled.p`
-  margin: 0;
-  ${font('body')}
-  color: ${colors.grey1};
 `;
 
 const Section = styled.div`
@@ -343,52 +330,6 @@ const RequiredNote = styled.p`
   ${font('caption')}
   color: ${colors.grey2};
   text-align: center;
-`;
-
-const ToggleSwitch = styled.label`
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 24px;
-  flex-shrink: 0;
-
-  input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  span {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: ${colors.grey3};
-    transition: 0.3s;
-    border-radius: 24px;
-  }
-
-  span:before {
-    position: absolute;
-    content: "";
-    height: 20px;
-    width: 20px;
-    left: 2px;
-    bottom: 2px;
-    background-color: ${colors.white};
-    transition: 0.3s;
-    border-radius: 50%;
-  }
-
-  input:checked + span {
-    background-color: ${colors.primary};
-  }
-
-  input:checked + span:before {
-    transform: translateX(20px);
-  }
 `;
 
 const UnitBox = styled.div`
@@ -714,8 +655,7 @@ export default function RecipeWritePage() {
         <BackButton type="button" onClick={() => navigate(-1)}>
           ←
         </BackButton>
-        <PageTitle>오늘 만든 요리를 기록해요</PageTitle>
-        <PageDesc>사진, 재료, 조리 순서를 차례로 입력해 주세요.</PageDesc>
+        <PageIntro title="오늘 만든 요리를 기록해요" description="사진, 재료, 조리 순서를 차례로 입력해 주세요." />
       </div>
 
       {/* 완성된 요리 사진 */}
@@ -926,14 +866,7 @@ export default function RecipeWritePage() {
           <ToggleTitle>피드에 공개하기</ToggleTitle>
           <ToggleDesc>다른 유저가 내 레시피를 보고 후기를 남길 수 있어요</ToggleDesc>
         </ToggleText>
-        <ToggleSwitch>
-          <input
-            type="checkbox"
-            checked={isPublic}
-            onChange={(e) => setIsPublic(e.target.checked)}
-          />
-          <span />
-        </ToggleSwitch>
+        <Toggle checked={isPublic} changeHandler={setIsPublic} label="피드에 공개하기" />
       </ToggleBox>
 
       {/* 저장 버튼 */}

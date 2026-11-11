@@ -5,6 +5,7 @@ import api from '../../../api/axios';
 import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import TextInput from '../../../components/styled/TextInput';
+import FormMessage from '../../../components/styled/FormMessage';
 import { colors, PAGE_PADDING, radius, font } from '../../../components/styled/theme';
 import { useAuth } from '../../../utils/context/AuthContext';
 import { isAuthError } from '../authError';
@@ -68,12 +69,6 @@ const Field = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-`;
-
-const Message = styled.p`
-  margin: 0;
-  ${font('caption')}
-  color: ${(props) => props.$color};
 `;
 
 // 입력창 오른쪽 글자 수 (예: 18/40)
@@ -332,13 +327,13 @@ const ProfileEditPage = () => {
   const renderNicknameMessage = () => {
     if (!nicknameChanged) return null;
     if (!nicknameLengthOk) {
-      return <Message $color={colors.danger}>닉네임은 {NICKNAME_MIN}~{NICKNAME_MAX}자로 입력해주세요</Message>;
+      return <FormMessage $tone="error">닉네임은 {NICKNAME_MIN}~{NICKNAME_MAX}자로 입력해주세요</FormMessage>;
     }
     if (!nicknameChecked) return null;
     return nicknameCheck.available ? (
-      <Message $color={colors.secondary}>✓ 사용할 수 있는 닉네임이에요</Message>
+      <FormMessage $tone="success">✓ 사용할 수 있는 닉네임이에요</FormMessage>
     ) : (
-      <Message $color={colors.danger}>이미 사용 중인 닉네임이에요</Message>
+      <FormMessage $tone="error">이미 사용 중인 닉네임이에요</FormMessage>
     );
   };
 
@@ -402,7 +397,7 @@ const ProfileEditPage = () => {
         <Field>
           <Label>이메일</Label>
           <ReadOnlyBox>{original.email}</ReadOnlyBox>
-          <Message $color={colors.grey2}>이메일은 변경할 수 없어요.</Message>
+          <FormMessage $tone="info">이메일은 변경할 수 없어요.</FormMessage>
         </Field>
 
         {interestsLoaded && (

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import styled from "styled-components";
+import SectionHeader from '../../../components/styled/SectionHeader';
 import Avatar from "../../../components/styled/Avatar";
 import FollowButton from "../../../components/styled/FollowButton";
 import Button from "../../../components/styled/Button";
@@ -67,12 +68,6 @@ const Section = styled.section`
   display: flex;
   flex-direction: column;
   gap: 12px;
-`;
-
-const Row = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 `;
 
 const Author = styled.div`
@@ -267,10 +262,7 @@ const RecipeDetailPage = () => {
         </Section>
 
         <Section>
-          <Row>
-            <Text variant="sectionTitle" as="h3">재료</Text>
-            <Text variant="caption" color={colors.accent1}>내 냉장고와 비교</Text>
-          </Row>
+          <SectionHeader title="재료" right="내 냉장고와 비교" />
           {RECIPE.ingredients.map((item) => (
             <IngredientRow key={item.name}>
               <Text variant="body">{item.name}</Text>
@@ -283,10 +275,7 @@ const RecipeDetailPage = () => {
         </Section>
 
         <Section>
-          <Row>
-            <Text variant="sectionTitle" as="h3">조리 순서</Text>
-            <Text variant="caption" color={colors.accent1}>{RECIPE.steps.length}단계</Text>
-          </Row>
+          <SectionHeader title="조리 순서" right={`${RECIPE.steps.length}단계`} />
           {RECIPE.steps.map((text, index) => (
             <StepRow key={text}>
               <StepNumber>{index + 1}</StepNumber>

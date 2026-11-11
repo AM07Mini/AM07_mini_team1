@@ -1,5 +1,6 @@
 import styled from 'styled-components';
-import { colors, font } from '../../../components/styled/theme';
+import SectionHeader from '../../../components/styled/SectionHeader';
+import { colors } from '../../../components/styled/theme';
 import SearchRecipeItem from '../item/SearchRecipeItem';
 import SearchEmptyState from './SearchEmptyState';
 
@@ -7,23 +8,6 @@ const Results = styled.section`
   display: flex;
   flex-direction: column;
   gap: 12px;
-`;
-
-const ResultsHeading = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const ResultsTitle = styled.h3`
-  margin: 0;
-  color: ${colors.dark};
-  ${font('sectionTitle')}
-`;
-
-const Count = styled.span`
-  color: ${colors.primary};
-  ${font('label')}
 `;
 
 const RecipeGrid = styled.div`
@@ -55,10 +39,7 @@ const SearchResultList = ({
   onReset,
 }) => (
   <Results>
-    <ResultsHeading>
-      <ResultsTitle>검색 결과</ResultsTitle>
-      <Count role="status">{loading ? '검색 중' : `${totalElements}개`}</Count>
-    </ResultsHeading>
+    <SectionHeader title="검색 결과" right={loading ? '검색 중' : `${totalElements}개`} rightRole="status" />
     <RecipeGrid>
       {error ? (
         <EmptyMessage role="alert">{error}</EmptyMessage>

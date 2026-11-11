@@ -1,10 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
+import PageIntro from '../../../components/styled/PageIntro';
 import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
 import Checkbox from '../../../components/styled/Checkbox';
+import FormMessage from '../../../components/styled/FormMessage';
 import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 import {checkLoginId, checkNickname, checkEmail, sendEmailCode, verifyEmailCode, signUp} from '../../../api/authApi';
 
@@ -34,9 +36,6 @@ const Content = styled.div`
 
 const Intro = styled.header`
   margin-bottom: 28px;
-
-  h1 { margin: 0 0 8px; ${font('pageTitle')} line-height: 1.4; }
-  p { margin: 0; ${font('sub')} color: ${colors.grey1}; }
 `;
 
 const Form = styled.form`
@@ -49,13 +48,6 @@ const Field = styled.div`
   display: flex;
   flex-direction: column;
   gap: 7px;
-`;
-
-const Message = styled.p`
-  margin: 0;
-  ${font('caption')}
-  line-height: 1.5;
-  color: ${({ $error }) => $error ? colors.danger : colors.accent1};
 `;
 
 // 인증번호 남은 시간 표시
@@ -393,8 +385,11 @@ const SignUpPage = () => {
       <TopBar title="회원가입" showBack />
       <Content>
         <Intro>
-          <h1>반가워요!<br />계정을 만들어 주세요</h1>
-          <p>나만의 레시피를 기록하고 다른 사람과 나눠보세요.</p>
+          <PageIntro
+            titleAs="h1"
+            title={<>반가워요!<br />계정을 만들어 주세요</>}
+            description="나만의 레시피를 기록하고 다른 사람과 나눠보세요."
+          />
         </Intro>
 
         <Form onSubmit={handleSubmit} noValidate>
@@ -449,24 +444,24 @@ const SignUpPage = () => {
               </TextInput>
 
               {name === 'code' && (
-                <Message $error={expired}>
+                <FormMessage $tone={expired ? 'error' : 'success'}>
                   {expired
                     ? '인증번호가 만료되었습니다. 다시 발송해주세요.'
                     : emailVerified
                       ? '이메일 인증이 완료되었습니다.'
                       : '이메일로 받은 인증번호를 입력해주세요.'}
-                </Message>
+                </FormMessage>
               )}
               {name === 'confirmPassword' &&
                 form.confirmPassword &&
                 form.password === form.confirmPassword && (
-                  <Message>비밀번호가 일치합니다.</Message>
+                  <FormMessage $tone="success">비밀번호가 일치합니다.</FormMessage>
                 )}
 
               {errors[name] && (
-                <Message id={`signup-${name}-error`} $error role="alert">
+                <FormMessage id={`signup-${name}-error`} $tone="error" role="alert">
                   {errors[name]}
-                </Message>
+                </FormMessage>
               )}
 
             </Field>
@@ -482,10 +477,10 @@ const SignUpPage = () => {
                 setErrors(prev => ({ ...prev, agree: '' }));
               }}
             />
-            {errors.agree && (<Message $error role="alert"> {errors.agree} </Message> )}
+            {errors.agree && (<FormMessage $tone="error" role="alert"> {errors.agree} </FormMessage> )}
           </Field>
 
-          {notice && <Message role="status">{notice}</Message>}
+          {notice && <FormMessage role="status" $tone="success">{notice}</FormMessage>}
           <Button title="가입하기" type="submit" disabled={loading} />
         </Form>
       </Content>
