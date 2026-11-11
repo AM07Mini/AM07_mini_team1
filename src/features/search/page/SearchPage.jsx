@@ -145,6 +145,7 @@ const SearchPage = () => {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
+    setSuggestionsLoading(false);
     setError('');
 
     const timeoutId = setTimeout(async () => {
@@ -152,28 +153,32 @@ const SearchPage = () => {
         const result = await fetchSearchRecipes(query, selected, controller.signal);
         setRecipes(result.recipes);
         setTotalElements(result.totalElements);
+        if (!controller.signal.aborted) setLoading(false);
 
         const canRelaxFilters = Object.values(selected).some((values) => values.length > 0);
         if (result.totalElements === 0 && canRelaxFilters) {
           setSuggestions([]);
           setSuggestionsError(false);
           setSuggestionsLoading(true);
-          try {
-            const relaxedResults = await fetchRelaxedSearchSuggestions(
-              query,
-              selected,
-              filters,
-              controller.signal,
-            );
-            if (!controller.signal.aborted) {
-              setSuggestions(relaxedResults.suggestions);
-              setSuggestionsError(relaxedResults.hasError);
+          const loadSuggestions = async () => {
+            try {
+              const relaxedResults = await fetchRelaxedSearchSuggestions(
+                query,
+                selected,
+                filters,
+                controller.signal,
+              );
+              if (!controller.signal.aborted) {
+                setSuggestions(relaxedResults.suggestions);
+                setSuggestionsError(relaxedResults.hasError);
+              }
+            } catch {
+              if (!controller.signal.aborted) setSuggestionsError(true);
+            } finally {
+              if (!controller.signal.aborted) setSuggestionsLoading(false);
             }
-          } catch {
-            if (!controller.signal.aborted) setSuggestionsError(true);
-          } finally {
-            if (!controller.signal.aborted) setSuggestionsLoading(false);
-          }
+          };
+          void loadSuggestions();
         } else {
           setSuggestions([]);
           setSuggestionsError(false);

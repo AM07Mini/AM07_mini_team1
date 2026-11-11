@@ -1,5 +1,7 @@
 import api from '../../../api/axios';
 
+const CATALOG_REQUEST_TIMEOUT_MS = 10_000;
+
 const difficultyLabels = {
   EASY: '쉬움',
   MEDIUM: '보통',
@@ -7,7 +9,10 @@ const difficultyLabels = {
 };
 
 const getResult = async (path, signal) => {
-  const { data } = await api.get(path, { signal });
+  const { data } = await api.get(path, {
+    signal,
+    timeout: CATALOG_REQUEST_TIMEOUT_MS,
+  });
   if (!data?.isSuccess) {
     throw new Error(data?.message || '검색 필터를 불러오지 못했습니다.');
   }

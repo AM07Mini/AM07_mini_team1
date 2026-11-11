@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { colors } from '../../../components/styled/theme';
 
@@ -80,7 +79,7 @@ const SuggestionNotice = styled.p`
 const Actions = styled.div`
   display: grid;
   width: 100%;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 8px;
   margin-top: 12px;
 `;
@@ -96,21 +95,6 @@ const ActionButton = styled.button`
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-`;
-
-const RecordLink = styled(Link)`
-  display: flex;
-  min-height: 48px;
-  align-items: center;
-  justify-content: center;
-  padding: 8px;
-  border: 1px solid ${colors.primary};
-  border-radius: 12px;
-  background: ${colors.primary};
-  color: ${colors.white};
-  font-size: 14px;
-  font-weight: 700;
-  text-decoration: none;
 `;
 
 const SearchEmptyState = ({
@@ -144,10 +128,6 @@ const SearchEmptyState = ({
         <SuggestionTitle>이렇게 바꿔보면 어때요?</SuggestionTitle>
         {suggestionsLoading ? (
           <SuggestionNotice role="status">조건을 바꾼 결과를 확인하고 있어요.</SuggestionNotice>
-        ) : suggestionsError ? (
-          <SuggestionNotice role="alert">
-            조건별 추천을 불러오지 못했습니다. 조건을 초기화하고 다시 검색해 보세요.
-          </SuggestionNotice>
         ) : suggestions.length > 0 ? (
           <Suggestions>
             {suggestions.map((suggestion) => (
@@ -160,16 +140,21 @@ const SearchEmptyState = ({
               </SuggestionButton>
             ))}
           </Suggestions>
+        ) : suggestionsError ? (
+          <SuggestionNotice role="alert">
+            조건별 추천을 불러오지 못했습니다. 조건을 초기화하고 다시 검색해 보세요.
+          </SuggestionNotice>
         ) : (
           <SuggestionNotice>선택한 조건을 바꿔서 다시 검색해 보세요.</SuggestionNotice>
         )}
       </SuggestionSection>
     )}
     <Actions>
-      <ActionButton type="button" onClick={onReset}>
-        조건 초기화
-      </ActionButton>
-      <RecordLink to="/recipe/write">직접 레시피 기록하기</RecordLink>
+      {canRelaxFilters && (
+        <ActionButton type="button" onClick={onReset}>
+          조건 초기화
+        </ActionButton>
+      )}
     </Actions>
   </EmptyState>
 );
