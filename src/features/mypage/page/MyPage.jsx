@@ -5,7 +5,7 @@ import api from '../../../api/axios';
 import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import SegmentTab from '../../../components/styled/SegmentTab';
-import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
+import { colors, PAGE_PADDING, TOP_BAR_HEIGHT, font } from '../../../components/styled/theme';
 import { isAuthError } from '../authError';
 import { RECIPE_PAGE_SIZE } from '../constants';
 import ProfileCard from '../item/ProfileCard';
@@ -18,6 +18,21 @@ const Wrapper = styled.div`
   flex-direction: column;
   gap: 20px;
   padding: 14px ${PAGE_PADDING}px 32px;
+`;
+
+// '내 레시피' 제목 + 탭 — 스크롤하다 상단바 바로 밑에 닿으면 멈춰 있고 아래 레시피만 움직임
+// 위아래 여백(12px)은 음수 margin으로 상쇄해서 멈추기 전 모습은 그대로,
+// 좌우는 화면 끝까지 넓혀 흰 바탕이 밑으로 지나가는 카드 그림자를 가림
+const StickyBox = styled.div`
+  position: sticky;
+  top: ${TOP_BAR_HEIGHT}px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: -12px -${PAGE_PADDING}px;
+  padding: 12px ${PAGE_PADDING}px;
+  background-color: ${colors.white};
 `;
 
 const Header = styled.div`
@@ -170,17 +185,19 @@ const MyPage = () => {
 
     return (
       <Wrapper>
-<ProfileCard profile={profile} editHandler={() => moveUrl('/mypage/edit')} />
+        <ProfileCard profile={profile} editHandler={() => moveUrl('/mypage/edit')} />
 
-        <Header>
-          <TitleBox>
-            <Title>내 레시피</Title>
-            <Description>기록한 레시피와 북마크한 레시피를 모아봤어요.</Description>
-          </TitleBox>
-          <Button title="+ 기록" variant="small" onClick={() => moveUrl('/recipe/write')} />
-        </Header>
+        <StickyBox>
+          <Header>
+            <TitleBox>
+              <Title>내 레시피</Title>
+              <Description>기록한 레시피와 북마크한 레시피를 모아봤어요.</Description>
+            </TitleBox>
+            <Button title="+ 기록" variant="small" onClick={() => moveUrl('/recipe/write')} />
+          </Header>
 
-        <SegmentTab tabs={tabs} selected={tab} changeHandler={tabChangeHandler} />
+          <SegmentTab tabs={tabs} selected={tab} changeHandler={tabChangeHandler} />
+        </StickyBox>
 
         {categories.length > 0 && (
           <ChipRow>

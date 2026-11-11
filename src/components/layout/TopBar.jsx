@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import BackIcon from '../styled/BackIcon';
 import Icon from '../styled/Icon';
-import { colors, PAGE_PADDING, font } from '../styled/theme';
+import { colors, PAGE_PADDING, TOP_BAR_HEIGHT, font } from '../styled/theme';
 
-// 피그마 상단바 — 높이 64, 제목 24px(페이지 제목), 좌우 여백 24
+// 피그마 상단바 — 높이 64(TOP_BAR_HEIGHT), 제목 24px(페이지 제목), 좌우 여백 24
 const Wrapper = styled.header`
   position: sticky;
   top: 0;
@@ -13,7 +13,7 @@ const Wrapper = styled.header`
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 64px;
+  height: ${TOP_BAR_HEIGHT}px;
   padding: 0 ${PAGE_PADDING}px;
   background-color: ${colors.white};
 `;

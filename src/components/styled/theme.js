@@ -56,5 +56,8 @@ export const shadows = {
   bottomBar: '0 -10px 40px rgba(149, 168, 195, 0.15)',
 };
 
+// 상단바 높이 — 상단바 아래에 붙는(sticky) 영역의 top 값으로도 씀
+export const TOP_BAR_HEIGHT = 64;
+
 // 화면 좌우 여백 (375 폭 기준 콘텐츠 폭 327px)
 export const PAGE_PADDING = 24;
