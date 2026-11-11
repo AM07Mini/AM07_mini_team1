@@ -56,6 +56,13 @@ const BottomActions = styled.div`
   padding-top: 32px;
   display: flex;
   gap: 10px;
+
+  > button {
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+    height: 50px;
+  }
 `;
 
 const Message = styled.p`

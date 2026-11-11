@@ -78,43 +78,6 @@ const MenuLink = styled(Link)`
   }
 `;
 
-const Divider = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 18px 0;
-  color: ${colors.grey2};
-  font-size: 12px;
-
-  &::before, &::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: ${colors.grey3};
-  }
-`;
-
-const SocialArea = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-`;
-
-const SocialButton = styled.button`
-  width: 100%;
-  height: 44px;
-  border: 1px solid ${colors.grey3};
-  border-radius: 12px;
-  background: ${colors.white};
-  color: ${colors.dark};
-  font-size: 14px;
-  font-weight: 600;
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.65;
-  }
-`;
 
 const SignInPage = () => {
   const [form, setForm] = useState({
@@ -232,17 +195,6 @@ const SignInPage = () => {
         <MenuLink to="/forgot-password">비밀번호 찾기</MenuLink>
         <MenuLink to="/signup">회원가입</MenuLink>
       </LinkArea>
-
-      <Divider>또는</Divider>
-
-      <SocialArea>
-        <SocialButton type="button" disabled>
-          카카오로 시작하기
-        </SocialButton>
-        <SocialButton type="button" disabled>
-          Google로 시작하기
-        </SocialButton>
-      </SocialArea>
     </Wrapper>
   );
 };
