@@ -32,22 +32,45 @@ const Wrapper = styled.div`
 
 const Content = styled.div`
   padding: 24px ${PAGE_PADDING}px 32px;
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
 `;
 
 const Intro = styled.header`
   margin-bottom: 28px;
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    margin-bottom: 18px;
+  }
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 18px;
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    gap: 14px;
+  }
 `;
 
 const Field = styled.div`
   display: flex;
   flex-direction: column;
   gap: 7px;
+`;
+
+const SubmitBar = styled.div`
+  @media (max-width: 480px) and (max-height: 700px) {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: ${colors.white};
+    padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+  }
 `;
 
 const CheckMark = styled.span`
@@ -216,7 +239,7 @@ const SignUpPage = () => {
       setDeadline(null);
       setRemaining(null);
     }
-    if (name === 'code') setEmailVerified(false);
+
   };
 
 
@@ -571,7 +594,7 @@ const SignUpPage = () => {
                     </CheckMark>
                   )}
 
-                  {/* 이 아래의 인증번호 코드는 그대로 유지 */}
+
                   {name === 'code' && (
                     <>
                       {remaining !== null && (
@@ -584,7 +607,7 @@ const SignUpPage = () => {
                         type="button"
                         variant="inline"
                         title="인증 확인"
-                        disabled={emailVerified || expired || loading}
+                        disabled={expired || loading}
                         onClick={handleVerifyCode}
                       />
                     </>
@@ -673,7 +696,13 @@ const SignUpPage = () => {
               {notice}
             </FormMessage>
           )}
-          <Button title="가입하기" type="submit" disabled={loading} />
+          <SubmitBar>
+            <Button
+              title="가입하기"
+              type="submit"
+              disabled={loading}
+            />
+          </SubmitBar>
         </Form>
       </Content>
     </Wrapper>
