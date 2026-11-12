@@ -134,6 +134,7 @@ const SignUpPage = () => {
   });
 
   const latestForm = useRef(form);
+  const emailEditVersionRef = useRef(0);
   const submittingRef = useRef(false);
   const [agree, setAgree] = useState(false);
   const [errors, setErrors] = useState({});
@@ -234,6 +235,8 @@ const SignUpPage = () => {
     }
 
     if (name === 'email') {
+      emailEditVersionRef.current += 1;
+
       setCodeSent(false);
       setEmailVerified(false);
       setDeadline(null);
@@ -244,7 +247,7 @@ const SignUpPage = () => {
 
 
   const handleChangeEmail = () => {
-    if (loading || !checked.email) return;
+    if (loading || !codeSent) return;
 
     // 인증번호 발송 이후에는 경고 표시
     if (codeSent) {
@@ -341,6 +344,7 @@ const SignUpPage = () => {
     ) return;
 
     const email = latestForm.current.email.trim();
+    const emailVersion = emailEditVersionRef.current;
 
     setLoading(true);
     setNotice('');
@@ -353,7 +357,9 @@ const SignUpPage = () => {
 
     try {
       const { data } = await sendEmailCode(email, 'SIGN_UP');
-      if (latestForm.current.email.trim() !== email) return;
+      if ( emailEditVersionRef.current !== emailVersion || latestForm.current.email.trim() !== email) {
+        return;
+      }
       if (!data.isSuccess) throw new Error(data.message || '발송 실패');
 
       const seconds = Number(data.result?.expiresInSeconds);
@@ -381,7 +387,10 @@ const SignUpPage = () => {
 
 
     } catch (err) {
-      if (latestForm.current.email.trim() === email) {
+      if (
+        emailEditVersionRef.current === emailVersion &&
+        latestForm.current.email.trim() === email
+      ) {
         setErrors(prev => ({
           ...prev,
           email: getError(err),
