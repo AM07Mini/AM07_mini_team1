@@ -156,7 +156,7 @@ const SelectedList = styled.div`
   
   height: ${(props) => props.$height}px;
   min-height: 60px;
-  max-height: 400px;
+  max-height: 250px;
   overflow-y: auto;
   
   padding: 8px;
@@ -273,13 +273,15 @@ const handleSelectItem = (item) => {
     setTempSelected(updated);
   };
 
-  // 🌟 [직접 입력 중복 차단]
   const handleCreateCustom = async (e) => {
     if (e.key === 'Enter' && customInput.trim() !== '') {
       e.preventDefault();
       const name = customInput.trim();
 
-      if (tempSelected.some((s) => s.name === name)) {
+      const isTempSelected = tempSelected.some((s) => s.name === name);
+      const isAlreadyAdded = existingIngredients.some((ing) => ing.name === name);
+
+      if (isTempSelected || isAlreadyAdded) {
         alert('이미 추가된 재료입니다!');
         return;
       }

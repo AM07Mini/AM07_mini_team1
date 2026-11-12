@@ -1,5 +1,5 @@
 import IngredientSearchModal from './IngredientSearchModal';
-import { createRecipeText, uploadThumbnail, uploadStepImage } from "../../../api/recipeApi";
+import { createRecipeText, uploadThumbnail, uploadStepImage, createIngredient } from "../../../api/recipeApi";
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import PageIntro from '../../../components/styled/PageIntro';
@@ -62,24 +62,6 @@ const PhotoBox = styled.label`
   gap: 6px;
   cursor: pointer;
   overflow: hidden;
-`;
-
-const DeletePhotoButton = styled.button`
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: rgba(0, 0, 0, 0.6);
-  color: white;
-  border: none;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 2; /* 파일 input보다 위에 오도록 설정 */
 `;
 
 const PreviewImage = styled.img`
@@ -294,6 +276,24 @@ const StepPhoto = styled.label`
   overflow: hidden;
 `;
 
+const DeletePhotoButton = styled.button`
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+`;
+
 const SubLabel = styled.p`
   ${font('sub')}
   font-weight: 500;
@@ -442,41 +442,35 @@ export default function RecipeWritePage() {
   };
 
   const handleStepImageUpload = (index, e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setSteps(prevSteps => {
-        const newSteps = [...prevSteps];
-        if (newSteps[index]) {
-          newSteps[index] = { ...newSteps[index], imageFile: file };
-        }
-        return newSteps;
-      });
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
+      const file = e.target.files[0];
+      if (file) {
         setSteps(prevSteps => {
           const newSteps = [...prevSteps];
-          if (newSteps[index] && newSteps[index].imageFile === file) {
-            newSteps[index] = { ...newSteps[index], image: reader.result };
+          if (newSteps[index]) {
+            newSteps[index] = { ...newSteps[index], imageFile: file };
           }
           return newSteps;
         });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
-  const handleStepTextChange = (index, value) => {
-    const newSteps = [...steps];
-    newSteps[index].text = value;
-    setSteps(newSteps);
-  };
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setSteps(prevSteps => {
+            const newSteps = [...prevSteps];
+            if (newSteps[index] && newSteps[index].imageFile === file) {
+              newSteps[index] = { ...newSteps[index], image: reader.result };
+            }
+            return newSteps;
+          });
+        };
+        reader.readAsDataURL(file);
+        e.target.value = ""; 
+      }
+    };
 
   const handleRemoveStepImage = (index) => {
     setSteps(prevSteps => {
       const newSteps = [...prevSteps];
       if (newSteps[index]) {
-        // 기존 blob URL 메모리 해제
         if (newSteps[index].image && newSteps[index].image.startsWith('blob:')) {
           URL.revokeObjectURL(newSteps[index].image);
         }
@@ -488,6 +482,12 @@ export default function RecipeWritePage() {
       }
       return newSteps;
     });
+  };
+
+  const handleStepTextChange = (index, value) => {
+    const newSteps = [...steps];
+    newSteps[index].text = value;
+    setSteps(newSteps);
   };
 
   const handleAddStep = () => {
@@ -502,7 +502,6 @@ export default function RecipeWritePage() {
     setSelectedIngredients(selectedIngredients.filter((_, index) => index !== indexToRemove));
   };
 
-  // 수량 변경 핸들러 통합
   const handleQuantityChange = (index, newQuantity) => {
     const updated = [...selectedIngredients];
     updated[index].quantity = newQuantity;
@@ -550,6 +549,16 @@ export default function RecipeWritePage() {
       for (const item of (selectedIngredients || [])) {
         const cleanName = item.name ? item.name.replace(/[\[\]]/g, '').trim() : "";
         let mappedId = (item.id && item.id < 1000000) ? Number(item.id) : (ingredientIdMap[cleanName] || 0);
+
+        // 🌟 Coderabbit 지적 반영: ID가 없거나 매핑 안 된 재료는 서버에 자동 등록하여 ID를 받아오도록 복구
+        if (mappedId === 0 && cleanName) {
+          try {
+            const newIngredient = await createIngredient(cleanName);
+            mappedId = newIngredient?.id || 0;
+          } catch (err) {
+            console.error("식재료 자동 등록 실패:", err);
+          }
+        }
 
         if (mappedId > 0) {
           processedIngredients.push({
@@ -775,6 +784,7 @@ export default function RecipeWritePage() {
                 rows={2}
               />
             </StepBody>
+            
             <StepPhoto>
               <HiddenFileInput 
                 type="file" 
