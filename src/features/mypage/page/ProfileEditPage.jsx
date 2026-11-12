@@ -10,6 +10,7 @@ import { colors, PAGE_PADDING, radius, font } from '../../../components/styled/t
 import { useAuth } from '../../../utils/context/AuthContext';
 import { isAuthError } from '../authError';
 import { INTRO_MAX, NICKNAME_MAX, NICKNAME_MIN } from '../constants';
+import ActionSheet from '../../../components/styled/ActionSheet';
 import Avatar from '../../../components/styled/Avatar';
 import TopBar from '../../../components/layout/TopBar';
 import StatusMessage from '../../../components/styled/StatusMessage';
@@ -47,26 +48,6 @@ const CameraButton = styled.button`
   padding: 0;
   border: none;
   background: url('/icons/camera-button.svg') no-repeat center;
-  cursor: pointer;
-`;
-
-// 사진 아래 글자 버튼 줄 — 사진 변경 · 기본 이미지로
-const PhotoActions = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  ${font('sub')}
-  color: ${colors.grey3};
-`;
-
-const TextButton = styled.button`
-  padding: 0;
-  border: none;
-  background: none;
-  font-family: inherit;
-  ${font('sub')}
-  font-weight: 500;
-  color: ${(props) => (props.$muted ? colors.grey1 : colors.secondary)};
   cursor: pointer;
 `;
 
@@ -167,7 +148,8 @@ const ProfileEditPage = () => {
   const [interestsLoaded, setInterestsLoaded] = useState(false); // 관심 요리를 모두 불러왔는지
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
-  const [photoRemoved, setPhotoRemoved] = useState(false); // 저장할 때 서버 사진을 지울지 (기본 이미지로)
+  const [photoRemoved, setPhotoRemoved] = useState(false); // 저장할 때 서버 사진을 지울지 (사진 삭제하기)
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false); // 카메라 버튼을 누르면 뜨는 메뉴
   const [nicknameCheck, setNicknameCheck] = useState({ nickname: '', available: false });
   const [saving, setSaving] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false); // 버튼 문구 · 비활성화용
@@ -249,7 +231,7 @@ const ProfileEditPage = () => {
     setPhotoRemoved(false);
   };
 
-  // 기본 이미지로 — 새로 고른 사진은 취소하고, 서버 사진은 저장할 때 지움
+  // 사진 삭제하기 — 새로 고른 사진은 취소하고, 서버 사진은 저장할 때 지움 (기본 모양으로)
   const photoRemoveHandler = () => {
     if (saving) return;
     setPhotoFile(null);
@@ -289,7 +271,7 @@ const ProfileEditPage = () => {
         // 다음 단계에서 실패해 다시 저장할 때 같은 사진을 또 올리지 않도록
         setPhotoFile(null);
       } else if (photoRemoved) {
-        // 1-2) 기본 이미지로 — 서버 사진 지우기
+        // 1-2) 사진 삭제하기를 골랐으면 서버 사진 지우기
         await api.delete('/users/me/profile-image');
         setOriginal((prev) => ({ ...prev, profileImageUrl: null }));
         setPhotoRemoved(false);
@@ -383,24 +365,25 @@ const ProfileEditPage = () => {
         <PhotoBox>
           <Photo>
             <Avatar src={shownPhoto} size={96} />
-            <CameraButton type="button" aria-label="사진 변경" onClick={() => fileInputRef.current.click()}>
+            <CameraButton
+              type="button"
+              aria-label="프로필 사진 바꾸기"
+              aria-haspopup="dialog"
+              onClick={() => !saving && setPhotoMenuOpen(true)}
+            >
               <img src="/icons/camera.svg" alt="" />
             </CameraButton>
           </Photo>
-          <PhotoActions>
-            <TextButton type="button" onClick={() => fileInputRef.current.click()}>
-              사진 변경
-            </TextButton>
-            {shownPhoto && (
-              <>
-                <span aria-hidden="true">|</span>
-                <TextButton type="button" $muted onClick={photoRemoveHandler}>
-                  기본 이미지로
-                </TextButton>
-              </>
-            )}
-          </PhotoActions>
           <HiddenFileInput ref={fileInputRef} type="file" accept="image/*" onChange={photoChangeHandler} />
+          <ActionSheet
+            open={photoMenuOpen}
+            title="프로필 사진"
+            actions={[
+              { title: '사진 불러오기', onClick: () => fileInputRef.current.click() },
+              { title: '사진 삭제하기', onClick: photoRemoveHandler, danger: true, disabled: !shownPhoto },
+            ]}
+            closeHandler={() => setPhotoMenuOpen(false)}
+          />
         </PhotoBox>
 
         <Field>
