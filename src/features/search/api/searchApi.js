@@ -1,5 +1,6 @@
 import api from '../../../api/axios';
-import { getDifficulty } from '../../../utils/difficulty';
+import { getCategories } from '../../../api/categoryApi';
+import { formatDifficulty } from '../../../utils/difficulty';
 
 const CATALOG_REQUEST_TIMEOUT_MS = 10_000;
 
@@ -35,7 +36,7 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
   const [flavorsOutcome, foodTypesOutcome, categoriesOutcome] = await Promise.allSettled([
     getResult('/flavors/catalog', signal),
     getResult('/food-types', signal),
-    isLoggedIn ? getResult('/categories', signal) : Promise.resolve(null),
+    isLoggedIn ? getCategories(signal) : Promise.resolve([]),
   ]);
 
   if (signal.aborted) return [];
@@ -51,18 +52,10 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
     foodTypesOutcome.status === 'fulfilled'
       ? foodTypesOutcome.value?.map(({ id, name }) => ({ value: id, label: name })) || []
       : [];
-  const categoryResult =
-    categoriesOutcome.status === 'fulfilled' ? categoriesOutcome.value : null;
-  const isCategoryList =
-    Array.isArray(categoryResult) ||
-    (Array.isArray(categoryResult?.defaults) && Array.isArray(categoryResult?.mine));
-  const categories = Array.isArray(categoryResult)
-    ? categoryResult.map(({ id, name }) => ({ value: id, label: name }))
-    : isCategoryList
-      ? [...categoryResult.defaults, ...categoryResult.mine].map(({ id, name }) => ({
-          value: id,
-          label: name,
-        }))
+  // 카테고리 목록은 공용 api/categoryApi.js에서 [{ id, name }] 모양으로 받아 옴
+  const categories =
+    categoriesOutcome.status === 'fulfilled'
+      ? categoriesOutcome.value.map(({ id, name }) => ({ value: id, label: name }))
       : [];
 
   return [
@@ -90,9 +83,7 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
         ? '카테고리 필터는 로그인 후 사용할 수 있습니다.'
         : categoriesOutcome.status === 'rejected'
           ? '카테고리를 불러오지 못했습니다.'
-          : !isCategoryList
-            ? '카테고리 API 응답 형식이 올바르지 않습니다.'
-            : '',
+          : '',
     ),
   ];
 };
@@ -137,15 +128,9 @@ export const fetchSearchRecipes = async (keyword, filters, signal, size = 20) =>
       id: recipe.id,
       title: recipe.title,
       image: recipe.thumbnailUrl,
-      description:
-        recipe.description ||
-        [
-          getDifficulty(recipe.difficulty)?.label,
-          Number.isFinite(recipe.cookingMinutes) ? `${recipe.cookingMinutes}분` : null,
-        ]
-          .filter(Boolean)
-          .join(' · ') ||
-        '레시피 설명이 없습니다.',
+      meta:
+        formatDifficulty(recipe.difficulty, recipe.cookingMinutes) ||
+        '난이도 정보 없음',
     })),
     totalElements: result.totalElements,
   };

@@ -171,31 +171,44 @@ const SignUpPage = () => {
   const handleCheck = async (name) => {
     const value = latestForm.current[name].trim();
     const error = validate(name, value);
+
     setErrors(prev => ({ ...prev, [name]: error }));
     if (error || loading) return;
 
     setLoading(true);
     setNotice('');
+    setChecked(prev => ({ ...prev, [name]: false }));
 
     try {
       const { data } = await checkApis[name](value);
+
       if (latestForm.current[name].trim() !== value) return;
 
-      if (!data.isSuccess || typeof data.result?.available !== 'boolean') {
-        throw new Error(data.message || '중복 확인에 실패했습니다.');
+      if (!data.isSuccess ||
+          typeof data.result?.available !== 'boolean') {
+        throw new Error(
+          data.message || '중복 확인에 실패했습니다.'
+        );
       }
 
-      setChecked(prev => ({ ...prev, [name]: data.result.available }));
+      const available = data.result.available;
 
-      if (data.result.available) {
-        const label = fields.find(f => f.name === name).label;
-        setNotice(`사용 가능한 ${label}입니다.`);
-      } else {
-        setErrors(prev => ({ ...prev, [name]: '이미 사용 중입니다.' }));
-      }
+      setChecked(prev => ({
+        ...prev,
+        [name]: available,
+      }));
+
+      setErrors(prev => ({
+        ...prev,
+        [name]: available ? '' : '이미 사용 중입니다.',
+      }));
+
     } catch (err) {
       if (latestForm.current[name].trim() === value) {
-        setNotice(getError(err));
+        setErrors(prev => ({
+          ...prev,
+          [name]: getError(err),
+        }));
       }
     } finally {
       setLoading(false);
@@ -209,6 +222,12 @@ const SignUpPage = () => {
     setLoading(true);
     setEmailVerified(false);
     setNotice('');
+
+    setErrors(prev => ({
+      ...prev,
+      email: '',
+      code: '',
+    }));
 
     try {
       const { data } = await sendEmailCode(email, 'SIGN_UP');
@@ -237,12 +256,13 @@ const SignUpPage = () => {
           : null
       );
 
-      setNotice(
-        '인증번호 발송 요청이 처리되었습니다. 메일함을 확인해주세요.'
-      );
+
     } catch (err) {
       if (latestForm.current.email.trim() === email) {
-        setNotice(getError(err));
+        setErrors(prev => ({
+          ...prev,
+          email: getError(err),
+        }));
       }
     } finally {
       setLoading(false);
@@ -283,11 +303,14 @@ const SignUpPage = () => {
       }
 
       setEmailVerified(true);
-      setNotice('이메일 인증이 완료되었습니다.');
+
     } catch (err) {
       if (latestForm.current.email.trim() === email &&
           latestForm.current.code.trim() === code) {
-        setNotice(getError(err));
+        setErrors(prev => ({
+          ...prev,
+          code: getError(err),
+        }));
       }
     } finally {
       setLoading(false);
@@ -396,6 +419,7 @@ const SignUpPage = () => {
           {visibleFields.map(({ name, label, type, placeholder, check }) => (
             <Field key={name}>
               <TextInput
+
                 label={label}
                 name={name}
                 type={type || 'text'}
@@ -443,28 +467,54 @@ const SignUpPage = () => {
                 )}
               </TextInput>
 
-              {name === 'code' && (
-                <FormMessage $tone={expired ? 'error' : 'success'}>
-                  {expired
-                    ? '인증번호가 만료되었습니다. 다시 발송해주세요.'
-                    : emailVerified
-                      ? '이메일 인증이 완료되었습니다.'
-                      : '이메일로 받은 인증번호를 입력해주세요.'}
+              {/* 아이디·닉네임·이메일 중복 확인 성공 */}
+              {check && checked[name] && !errors[name] && (
+                <FormMessage $tone="success" role="status">
+                  사용 가능한 {label}입니다.
                 </FormMessage>
               )}
+
+              {/* 이메일 인증번호 안내 */}
+              {name === 'code' && (
+                <FormMessage
+                  id={errors.code ? 'signup-code-error' : undefined}
+                  $tone={expired || errors.code ? 'error' : 'success'}
+                  role={expired || errors.code ? 'alert' : 'status'}
+                >
+                  {expired
+                    ? '인증번호가 만료되었습니다. 다시 발송해주세요.'
+                    : errors.code
+                      ? errors.code
+                      : emailVerified
+                        ? '이메일 인증이 완료되었습니다.'
+                        : '인증번호 발송 요청이 처리되었습니다. 메일함을 확인해주세요.'}
+                </FormMessage>
+              )}
+
+              {/* 비밀번호 일치 확인 */}
               {name === 'confirmPassword' &&
                 form.confirmPassword &&
-                form.password === form.confirmPassword && (
-                  <FormMessage $tone="success">비밀번호가 일치합니다.</FormMessage>
+                form.password === form.confirmPassword &&
+                !errors.confirmPassword && (
+                  <FormMessage $tone="success">
+                    비밀번호가 일치합니다.
+                  </FormMessage>
                 )}
 
-              {errors[name] && (
-                <FormMessage id={`signup-${name}-error`} $tone="error" role="alert">
+              {/* 각 입력창의 오류 메시지 */}
+              {name !== 'code' && errors[name] && (
+                <FormMessage
+                  id={`signup-${name}-error`}
+                  $tone="error"
+                  role="alert"
+                >
                   {errors[name]}
                 </FormMessage>
               )}
 
             </Field>
+
+
           ))}
 
           <Field>
@@ -480,7 +530,11 @@ const SignUpPage = () => {
             {errors.agree && (<FormMessage $tone="error" role="alert"> {errors.agree} </FormMessage> )}
           </Field>
 
-          {notice && <FormMessage role="status" $tone="success">{notice}</FormMessage>}
+          {notice && (
+            <FormMessage role="alert" $tone="error">
+              {notice}
+            </FormMessage>
+          )}
           <Button title="가입하기" type="submit" disabled={loading} />
         </Form>
       </Content>
