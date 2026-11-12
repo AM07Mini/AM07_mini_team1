@@ -231,7 +231,7 @@ const SearchPage = () => {
         <SearchInput
           value={query}
           changeHandler={(event) => setQuery(event.target.value)}
-          placeholder="레시피 이름, 재료로 검색"
+          placeholder="레시피 이름, 해시태그로 검색 (예: #자취요리)"
         />
         <SearchSelectionSummary
           filters={filters}
