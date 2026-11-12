@@ -432,14 +432,25 @@ const [steps, setSteps] = useState([
   const handleStepImageUpload = (index, e) => {
       const file = e.target.files[0];
       if (file) {
-        const newSteps = [...steps];
-        
-        newSteps[index].imageFile = file; 
+        // 🌟 1. 파일이 선택되는 즉시 imageFile을 안전하게 먼저 저장 (함수형 업데이트)
+        setSteps(prevSteps => {
+          const newSteps = [...prevSteps];
+          if (newSteps[index]) {
+            newSteps[index].imageFile = file;
+          }
+          return newSteps;
+        });
 
+        // 2. FileReader는 화면 미리보기(Base64) 로드 용도로만 사용
         const reader = new FileReader();
         reader.onloadend = () => {
-          newSteps[index].image = reader.result;
-          setSteps([...newSteps]);
+          setSteps(prevSteps => {
+            const newSteps = [...prevSteps];
+            if (newSteps[index]) {
+              newSteps[index].image = reader.result;
+            }
+            return newSteps;
+          });
         };
         reader.readAsDataURL(file);
       }
@@ -531,6 +542,8 @@ const [steps, setSteps] = useState([
       return;
     }
 
+    let createdRecipeId = null; // 🌟 생성된 레시피 ID를 안전하게 추적할 변수
+
     try {
       // 🔒 중복 클릭 방지 잠금 시작
       setIsSubmitting(true);
@@ -564,7 +577,7 @@ const [steps, setSteps] = useState([
 
       // 서버가 제공한 공식 재료 ID 매핑 딕셔너리
       const ingredientIdMap = {
-        "계란": 1, "달걀": 1, // 달걀/계란 동일 처리
+        "계란": 1, "달걀": 1,
         "밥": 2,
         "대파": 3,
         "양파": 4,
@@ -583,22 +596,18 @@ const [steps, setSteps] = useState([
         "배포확인파": 17
       };
 
-      // 1. 선택된 재료들을 순회하며 처리
       const processedIngredients = [];
-      
+
       for (const item of (selectedIngredients || [])) {
         const cleanName = item.name ? item.name.replace(/[\[\]]/g, '').trim() : "";
         let mappedId = (item.id && item.id < 1000000) ? Number(item.id) : (ingredientIdMap[cleanName] || 0);
 
-        // 🌟 만약 매핑된 ID가 없다면(0이라면), 서버에 직접 등록 API를 호출해서 새 ID 받아오기!
         if (mappedId === 0 && cleanName) {
           try {
-            const res = await createIngredient({ name: cleanName });
-            // 서버 응답 구조에 맞춰 새 id 추출 (예: res.result.id 또는 res.id 등)
-            mappedId = res.result?.id || res.id; 
+            const newIngredient = await createIngredient(cleanName);
+            mappedId = newIngredient?.id || 0;
           } catch (err) {
-            // 만약 이미 등록된 재료(409)라면, 검색 API 등으로 해당 재료 ID를 다시 조회해오거나 예외 처리
-            console.log("이미 등록된 재료이거나 등록 중 오류 발생:", err);
+            console.error("식재료 자동 등록 실패:", err);
           }
         }
 
@@ -607,6 +616,8 @@ const [steps, setSteps] = useState([
             ingredientId: mappedId,
             quantity: item.quantity || "1개"
           });
+        } else {
+          alert(`"${cleanName}" 재료의 시스템 ID를 확인할 수 없어 등록에서 제외됩니다.`);
         }
       }
 
@@ -627,43 +638,46 @@ const [steps, setSteps] = useState([
           ? selectedFlavors.map(flavor => getFlavorId(flavor)).filter(Boolean) 
           : [1],
         
-
         hashtags: customKeywords,
         
         ingredients: processedIngredients
       };
-            
+          
       console.log('서버로 보내는 최종 Payload:', JSON.stringify(recipePayload, null, 2));
 
       // 1. 레시피 텍스트 등록 (recipeId 반환 받음)
-      const recipeId = await createRecipeText(recipePayload);
+      createdRecipeId = await createRecipeText(recipePayload);
 
       // 2. 메인 썸네일 사진이 있다면 업로드
-      if (mainImageFile) {
-        await uploadThumbnail(recipeId, mainImageFile);
+      if (mainImageFile && createdRecipeId) {
+        await uploadThumbnail(createdRecipeId, mainImageFile);
       }
 
-      // 🌟 3. 각 단계별(Step)로 사진이 있는 경우 순서대로 업로드
-      if (steps && steps.length > 0) {
+      // 3. 각 단계별(Step)로 사진이 있는 경우 순서대로 업로드
+      if (steps && steps.length > 0 && createdRecipeId) {
         const imageUploadPromises = steps.map((stepItem, index) => {
-          // stepItem.imageFile 에 저장해둔 실제 File 객체가 있다고 가정
           if (stepItem.imageFile) {
-            const stepOrder = index + 1; // 1부터 시작하는 단계 순서
-            return uploadStepImage(recipeId, stepOrder, stepItem.imageFile);
+            const stepOrder = index + 1;
+            return uploadStepImage(createdRecipeId, stepOrder, stepItem.imageFile);
           }
           return null;
         }).filter(Boolean);
 
-        // 모든 단계 사진 업로드가 끝날 때까지 대기
         await Promise.all(imageUploadPromises);
       }
-      alert('레시피가 성공적으로 등록되었습니다! 🎉');
 
+      alert('레시피가 성공적으로 등록되었습니다! 🎉');
       navigate('/');
 
     } catch (error) {
       console.error('레시피 등록 실패:', error);
-      alert('레시피 등록 중 오류가 발생했습니다.');
+      
+      // 🌟 레시피 텍스트는 만들어졌는데 이미지에서 에러가 난 경우 구분해서 안내
+      if (createdRecipeId) {
+        alert(`레시피 기본 정보는 등록되었으나(ID: ${createdRecipeId}), 이미지 업로드 중 오류가 발생했습니다.`);
+      } else {
+        alert('레시피 등록 중 오류가 발생했습니다.');
+      }
     } finally {
       // 🔓 버튼 잠금 해제
       setIsSubmitting(false);
@@ -700,7 +714,14 @@ const [steps, setSteps] = useState([
 
   useEffect(() => {
     return () => {
+      if (mainImage && mainImage.startsWith('blob:')) {
+        URL.revokeObjectURL(mainImage);
+      }
+    };
+  }, [mainImage]);
 
+  useEffect(() => {
+    return () => {
       if (steps) {
         steps.forEach(s => {
           if (s.image && s.image.startsWith('blob:')) {
@@ -709,7 +730,7 @@ const [steps, setSteps] = useState([
         });
       }
     };
-  }, [mainImage, steps]);
+  }, [steps]);
 
 
   return (
