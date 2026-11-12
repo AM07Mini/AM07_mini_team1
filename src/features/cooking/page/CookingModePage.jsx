@@ -18,23 +18,42 @@ import TimerSheet from '../item/TimerSheet';
 import useCookingTimers from '../useCookingTimers';
 import { alertTimerDone, useScreenWakeLock } from '../cookingDevice';
 
-// 화면 높이를 꽉 채우고, 아래 버튼은 항상 바닥에
+// 화면 높이에 딱 맞춤 — 위(상단바 · 진행 · 타이머)와 아래(버튼)는 고정, 가운데(사진 · 본문)만 스크롤
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   background-color: ${colors.white};
 `;
 
-const Body = styled.div`
-  flex: 1;
+// 고정되는 위쪽 — 단계 진행 + 타이머 패널(있을 때). 본문을 내렸으면 아래쪽에 옅은 그림자
+const Top = styled.div`
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  box-shadow: ${(props) => (props.$scrolled ? '0 8px 16px -8px rgba(10, 37, 51, 0.15)' : 'none')};
+  transition: box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 8px ${PAGE_PADDING}px 24px;
+  padding: 8px ${PAGE_PADDING}px 16px;
+`;
+
+// 스크롤되는 가운데 — 단계 사진 + 본문 (한 레시피 단계 글 합계 최대 1000자)
+const Body = styled.div`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 ${PAGE_PADDING}px 24px;
 `;
 
 const StepPhoto = styled.img`
+  flex-shrink: 0;
   width: 100%;
   height: 150px;
   border-radius: 16px;
@@ -42,19 +61,34 @@ const StepPhoto = styled.img`
   background-color: ${colors.grey4};
 `;
 
-// 타이머 패널이 있으면 화면이 좁아지므로 글자를 조금 작게 (피그마 22 → 20)
+// 본문 글자 — 짧으면 피그마처럼 크게, 길수록 읽기 편하게 작게
+// (타이머 패널이 있으면 짧은 글도 22 → 20)
+const instructionStyle = (text, compact) => {
+  if (text.length <= 60) return compact ? { size: 20, lineHeight: 29, weight: 700 } : { size: 22, lineHeight: 32, weight: 700 };
+  if (text.length <= 160) return { size: 18, lineHeight: 27, weight: 700 };
+  return { size: 16, lineHeight: 26, weight: 500 };
+};
+
 const Instruction = styled.p`
+  flex-shrink: 0;
   margin: 8px 0 0;
-  font-size: ${(props) => (props.$compact ? 20 : 22)}px;
-  font-weight: 700;
-  line-height: ${(props) => (props.$compact ? 29 : 32)}px;
+  font-size: ${(props) => props.$style.size}px;
+  font-weight: ${(props) => props.$style.weight};
+  line-height: ${(props) => props.$style.lineHeight}px;
   color: ${colors.dark};
   word-break: keep-all;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
 `;
 
+// 본문이 아래로 더 있으면 위쪽에 옅은 그림자 — 스크롤할 게 남았다는 표시
 const Footer = styled.footer`
-  position: sticky;
-  bottom: 0;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  padding-top: 12px;
+  box-shadow: ${(props) => (props.$moreBelow ? '0 -8px 16px -8px rgba(10, 37, 51, 0.15)' : 'none')};
+  transition: box-shadow 0.2s;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -158,6 +192,21 @@ const CookingModePage = () => {
 
   useEffect(() => () => clearTimeout(lastAddedTimer.current), []);
 
+  // 가운데 스크롤 영역 — 단계를 넘기면 맨 위로, 아래에 더 있는지 표시
+  const bodyRef = useRef(null);
+  const [moreBelow, setMoreBelow] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const updateMoreBelow = () => {
+    const body = bodyRef.current;
+    if (!body) return;
+    setMoreBelow(body.scrollHeight - body.scrollTop - body.clientHeight > 4);
+    setScrolled(body.scrollTop > 4);
+  };
+  useEffect(() => {
+    bodyRef.current?.scrollTo(0, 0);
+    updateMoreBelow();
+  }, [stepIndex, recipe, timers.length]);
+
   // 요리 모드를 나가면 레시피 상세로 — 상세에서 들어왔으면 뒤로, 아니면 상세로 바꿔치기
   const leave = () => {
     if (fromDetail) moveUrl(-1);
@@ -214,7 +263,6 @@ const CookingModePage = () => {
   const nextHandler = () => {
     if (!isLast) {
       setStepIndex((i) => i + 1);
-      window.scrollTo(0, 0);
       return;
     }
     // 아직 도는 타이머가 있으면 꺼지기 전에 확인
@@ -231,7 +279,7 @@ const CookingModePage = () => {
         closeHandler={closeHandler}
         timerHandler={() => setSheetOpen(true)}
       />
-      <Body>
+      <Top $scrolled={scrolled}>
         <StepProgress current={stepIndex + 1} total={steps.length} />
         {timers.length > 0 && (
           <TimerPanel
@@ -245,13 +293,15 @@ const CookingModePage = () => {
             newTimerHandler={() => setSheetOpen(true)}
           />
         )}
+      </Top>
+      <Body ref={bodyRef} onScroll={updateMoreBelow} tabIndex={0} aria-label={`STEP ${stepIndex + 1} 설명`}>
         {/* 이 단계의 사진 — 없으면 레시피 대표 사진 (단계별 재료는 API에 없어서 표시하지 않음) */}
-        {stepPhoto && <StepPhoto key={stepPhoto} src={stepPhoto} alt="" />}
-        <Instruction $compact={timers.length > 0} aria-live="polite">
+        {stepPhoto && <StepPhoto key={stepPhoto} src={stepPhoto} alt="" onLoad={updateMoreBelow} />}
+        <Instruction $style={instructionStyle(steps[stepIndex], timers.length > 0)} aria-live="polite">
           {steps[stepIndex]}
         </Instruction>
       </Body>
-      <Footer>
+      <Footer $moreBelow={moreBelow}>
         <Hint>요리하는 동안 화면이 꺼지지 않아요</Hint>
         <Buttons>
           <PrevButton
@@ -259,7 +309,6 @@ const CookingModePage = () => {
             disabled={stepIndex === 0}
             onClick={() => {
               setStepIndex((i) => Math.max(0, i - 1));
-              window.scrollTo(0, 0);
             }}
           >
             이전
