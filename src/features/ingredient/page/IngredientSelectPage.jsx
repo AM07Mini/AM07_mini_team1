@@ -108,7 +108,9 @@ const IngredientSelectPage = () => {
   );
 
   // 새로운 식재료 추가 가능 여부
+  // 서버 목록을 다 불러온 뒤에만 직접 추가 가능 (불러오기 전엔 이미 있는 재료도 없다고 판단하므로)
   const canAdd =
+    loadStatus === "done" &&
     keyword !== "" &&
     !ingredients.some((ingredient) => ingredient.name === keyword);
 
