@@ -279,7 +279,7 @@ const RecipeReadPage = () => {
         {/* 요리 시작하기 */}
         <Button
           title="이 레시피로 요리 시작하기"
-          onClick={() => {}}
+          onClick={() => navigate(`/recipe/cook/${id}`)}
         />
       </Sheet>
     </div>

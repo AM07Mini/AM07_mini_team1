@@ -46,7 +46,7 @@ const Stats = styled.div`
   background-color: ${colors.surface};
 `;
 
-// 숫자 칸 — 레시피는 그냥 표시
+// 숫자 칸
 const Stat = styled.div`
   flex: 1;
   display: flex;
@@ -55,7 +55,7 @@ const Stat = styled.div`
   gap: 2px;
 `;
 
-// 팔로워 · 팔로잉 칸 — 누르면 목록으로 가는 링크 (새 탭에서 열기도 가능)
+// 누르면 요리 앨범 · 팔로우 목록으로 가는 링크 (새 탭에서 열기도 가능)
 const StatLink = styled(Stat).attrs({ as: Link })`
   text-decoration: none;
 `;
@@ -70,13 +70,14 @@ const StatName = styled.span`
   color: ${colors.grey1};
 `;
 
-// 프로필 카드 — 사진·닉네임·소개, 레시피·팔로워·팔로잉 수, 프로필 편집 버튼
-// 팔로워 · 팔로잉 수를 누르면 /mypage/follow?tab=... 으로 이동
+// 프로필 카드 — 사진·닉네임·소개, 요리 앨범·팔로워·팔로잉 수, 프로필 편집 버튼
+// 요리 앨범 → /mypage/album, 팔로워 · 팔로잉 → /mypage/follow?tab=...
+// 요리 앨범 수는 아직 API에 없어서 0 (albumCount가 생기면 그대로 표시)
 const ProfileCard = ({ profile, editHandler }) => {
   const stats = [
-    { name: '레시피', value: profile.recipeCount },
-    { name: '팔로워', value: profile.followerCount, tab: 'followers' },
-    { name: '팔로잉', value: profile.followingCount, tab: 'following' },
+    { name: '요리 앨범', value: profile.albumCount ?? 0, to: '/mypage/album' },
+    { name: '팔로워', value: profile.followerCount, to: '/mypage/follow?tab=followers' },
+    { name: '팔로잉', value: profile.followingCount, to: '/mypage/follow?tab=following' },
   ];
 
   return (
@@ -97,12 +98,10 @@ const ProfileCard = ({ profile, editHandler }) => {
               <StatName>{stat.name}</StatName>
             </>
           );
-          return stat.tab ? (
-            <StatLink key={stat.name} to={`/mypage/follow?tab=${stat.tab}`}>
+          return (
+            <StatLink key={stat.name} to={stat.to}>
               {content}
             </StatLink>
-          ) : (
-            <Stat key={stat.name}>{content}</Stat>
           );
         })}
       </Stats>
