@@ -9,12 +9,12 @@ const Grid = styled.div`
 
 const IngredientList = ({ ingredients, selected, onToggle }) => (
   <Grid>
-    {ingredients.map((name) => (
+    {ingredients.map((ingredient) => (
       <IngredientItem
-        key={name}
-        name={name}
-        checked={selected.includes(name)}
-        onToggle={onToggle}
+        key={ingredient.id}
+        name={ingredient.name}
+        selected={selected.includes(ingredient.id)}
+        onToggle={() => onToggle(ingredient.id)}
       />
     ))}
   </Grid>

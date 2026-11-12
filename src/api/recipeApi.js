@@ -35,6 +35,18 @@ export const createIngredient = async (name) => {
     console.error('식재료 등록 API 에러:', error);
     throw error;
   }
+  
+};
+
+// 내 식재료 전체 교체
+export const updateMyIngredients = async (ingredientIds) => {
+  try {
+    const response = await api.put('/users/me/ingredients', { ingredientIds });
+    return response.data;
+  } catch (error) {
+    console.error('내 식재료 저장 API 에러:', error);
+    throw error;
+  }
 };
 
 export const uploadStepImage = async (recipeId, stepOrder, imageFile) => {
