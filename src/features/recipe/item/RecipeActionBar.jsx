@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import Text from "../../../components/styled/Text";
 import { colors } from "../../../components/styled/theme";
+import Icon from "../../../components/styled/Icon";
 
 // 좋아요, 후기 페이지 이동, 저장 기능
 const HEART = "#E5484D";
@@ -38,6 +39,9 @@ const ActionBar = styled.div`
   }
 
   .save {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
     margin-left: auto;
     color: ${({ $saved }) =>
         $saved ? colors.primary : colors.grey1};
@@ -73,7 +77,8 @@ const RecipeActionBar = ({
                     💬 후기 {reviewCount}
                 </button>
                 <button type="button" className="save" disabled={pendingSave} onClick={onSave}>
-                    {saved ? "★" : "☆"} 저장 {saveCount}
+                    <Icon name="bookmark" size={18} filled={saved} />
+                    저장 {saveCount}
                 </button>
             </ActionBar>
 
