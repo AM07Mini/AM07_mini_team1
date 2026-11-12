@@ -36,3 +36,22 @@ export const createIngredient = async (name) => {
     throw error;
   }
 };
+
+export const uploadStepImage = async (recipeId, stepOrder, imageFile) => {
+  const formData = new FormData();
+  formData.append('image', imageFile);
+
+  const token = localStorage.getItem('accessToken');
+
+  const response = await axios.post(
+    `http://43.203.236.120/api/v1/recipes/${recipeId}/step-images?stepOrder=${stepOrder}`,
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+      }
+    }
+  );
+  return response.data;
+};
