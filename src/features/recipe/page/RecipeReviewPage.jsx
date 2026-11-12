@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
+import { useAuth } from "../../../utils/context/AuthContext";
 import SectionHeader from "../../../components/styled/SectionHeader";
 import TopBar from "../../../components/layout/TopBar";
 import Button from "../../../components/styled/Button";
@@ -10,7 +11,7 @@ import { toDetail } from "../data/recipDetailMapeer";
 import { toReview, toReply } from "../data/reviewMapper";
 import { colors, radius, shadows, PAGE_PADDING, font } from "../../../components/styled/theme";
 import {
-    createReview, getReviews, getReplies, createReply, deleteReply,
+    createReview, getReviews, getReplies, createReply, deleteReview, deleteReply,
     likeReview, unlikeReview,
 } from "../../../api/reviewApi";
 import { getRecipeDetail, likeRecipe, unlikeRecipe } from "../../../api/recipeDetailApi";
@@ -157,6 +158,7 @@ const errorMessage = (e, fallback) => e.response?.data?.message ?? fallback;
 const RecipeReviewPage = () => {
     const navigate = useNavigate();
     const { id } = useParams(); // 레시피 id
+    const { user } = useAuth();
     const inputRef = useRef(null);
 
     // 상단 요약 + 레시피 좋아요
@@ -269,7 +271,13 @@ const RecipeReviewPage = () => {
         try {
             const result = await getReplies(id, reviewId);
             const list = Array.isArray(result) ? result : result?.content ?? [];
-            patchReview(reviewId, { replies: list.map(toReply), replyCount: list.length });
+            patchReview(reviewId, {
+                replies: list.map((reply) => ({
+                    ...toReply(reply),
+                    mine: user?.userId != null && String(reply.authorId) === String(user.userId),
+                })),
+                replyCount: list.length,
+            });
         } catch (e) {
             setSubmitError(errorMessage(e, "답글을 불러오지 못했어요."));
         }
@@ -298,6 +306,19 @@ const RecipeReviewPage = () => {
             }));
         } catch (e) {
             setSubmitError(errorMessage(e, "답글 삭제에 실패했어요."));
+        }
+    };
+
+    const removeReview = async (reviewId) => {
+        if (!window.confirm("후기를 삭제할까요?")) return;
+        setSubmitError("");
+        try {
+            await deleteReview(id, reviewId);
+            setReviews((prev) => prev.filter((review) => review.id !== reviewId));
+            setTotal((prev) => Math.max(0, prev - 1));
+            if (replyTarget?.id === reviewId) setReplyTarget(null);
+        } catch (e) {
+            setSubmitError(errorMessage(e, "후기 삭제에 실패했어요."));
         }
     };
 
@@ -377,9 +398,11 @@ const RecipeReviewPage = () => {
                             key={review.id}
                             data={review}
                             active={replyTarget?.id === review.id}
+                            isMine={user?.userId != null && String(review.authorId) === String(user.userId)}
                             onLike={toggleReviewLike}
                             onReplyClick={startReply}
                             onToggleReplies={toggleReplies}
+                            onDeleteReview={removeReview}
                             onDeleteReply={removeReply}
                         />
                     ))}
