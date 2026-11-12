@@ -8,7 +8,10 @@ import SearchEmptyState from './SearchEmptyState';
 const Results = styled.section`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  margin: 0 -24px -28px;
+  padding: 16px 24px 28px;
+  background: ${colors.surface};
 `;
 
 const RecipeGrid = styled.div`
