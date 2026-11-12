@@ -54,6 +54,15 @@ const paths = {
   // 펼치기 · 접기
   chevronDown: <path d="m6 9 6 6 6-6" />,
   chevronUp: <path d="m6 15 6-6 6 6" />,
+  chevronLeft: <path d="m15 6-6 6 6 6" />,
+  chevronRight: <path d="m9 6 6 6-6 6" />,
+  // 공유 — 피그마 "공유 버튼" (위 화살표 + 상자)
+  share: (
+    <>
+      <path d="M12 15V4M16.5 8.5 12 4 7.5 8.5" />
+      <path d="M5 12.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-6.5" />
+    </>
+  ),
   // 북마크 — filled로 채우면 저장된 상태
   bookmark: <path d="M6 3h12v18l-6-4.5L6 21z" />,
   // 가운데 플로팅 버튼 — 셰프 모자

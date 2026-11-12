@@ -48,7 +48,7 @@ const IconButton = styled.button`
 
 // 피그마에서 받은 아이콘 파일이 있으면 그걸 쓰고, 없으면 공용 Icon
 const figmaIcons = { settings: '/icons/setting.svg' };
-const iconLabels = { settings: '설정', search: '검색', bell: '알림' };
+const iconLabels = { settings: '설정', search: '검색', bell: '알림', share: '공유' };
 
 // 상단바 — 가운데 제목, 왼쪽 뒤로가기(선택), 오른쪽 아이콘 버튼(선택)
 // 사용: <TopBar title="요리 추천" showBack />
