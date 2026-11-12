@@ -288,6 +288,12 @@ const CookingModePage = () => {
   // 버튼이 작아 접기를 누르려다 잘못 누를 수 있으므로 한 번 더 물어봄
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const deleteMainHandler = (timer) => setDeleteTargetId(timer.id);
+  // 묻는 사이 그 타이머가 끝나면 창을 닫음 (끝남 알림과 겹치지 않게, 나중에 시간을 더해도 다시 열리지 않게)
+  useEffect(() => {
+    if (deleteTargetId === null) return;
+    const target = timers.find((t) => t.id === deleteTargetId);
+    if (!target || target.done) setDeleteTargetId(null);
+  }, [timers, deleteTargetId]);
   const confirmDeleteMain = () => {
     const target = timers.find((t) => t.id === deleteTargetId);
     setDeleteTargetId(null);
@@ -303,7 +309,7 @@ const CookingModePage = () => {
   const isLast = stepIndex === steps.length - 1;
   const stepPhoto = recipe.stepImages[stepIndex + 1] ?? recipe.image;
   const menuTimer = timers.find((t) => t.id === menuTimerId && !t.done);
-  const deleteTarget = timers.find((t) => t.id === deleteTargetId); // 그사이 끝나서 빠졌으면 창이 닫힘
+  const deleteTarget = timers.find((t) => t.id === deleteTargetId && !t.done); // 그사이 끝나면 창이 닫힘
   const finishedTimer = timers.find((t) => t.done); // 먼저 끝난 것부터 하나씩 알림
 
   const nextHandler = () => {
