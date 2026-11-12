@@ -5,6 +5,7 @@ import { useAuth } from "../../../utils/context/AuthContext";
 import SectionHeader from "../../../components/styled/SectionHeader";
 import TopBar from "../../../components/layout/TopBar";
 import Button from "../../../components/styled/Button";
+import ConfirmDialog from "../../../components/styled/ConfirmDialog";
 import Text from "../../../components/styled/Text";
 import RecipeCommentItem from "../item/RecipeCommentItem";
 import { toDetail } from "../data/recipDetailMapeer";
@@ -178,6 +179,8 @@ const RecipeReviewPage = () => {
     const [replyTarget, setReplyTarget] = useState(null); // { id, name }
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState("");
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
     const patchReview = useCallback(
         (reviewId, patch) =>
@@ -295,30 +298,38 @@ const RecipeReviewPage = () => {
         inputRef.current?.focus();
     };
 
-    const removeReply = async (reviewId, replyId) => {
-        if (!window.confirm("답글을 삭제할까요?")) return;
-        setSubmitError("");
-        try {
-            await deleteReply(id, reviewId, replyId);
-            patchReview(reviewId, (r) => ({
-                replies: (r.replies ?? []).filter((x) => x.id !== replyId),
-                replyCount: Math.max(0, (r.replyCount ?? 1) - 1),
-            }));
-        } catch (e) {
-            setSubmitError(errorMessage(e, "답글 삭제에 실패했어요."));
-        }
+    const removeReply = (reviewId, replyId) => {
+        setDeleteTarget({ type: "reply", reviewId, replyId });
     };
 
-    const removeReview = async (reviewId) => {
-        if (!window.confirm("후기를 삭제할까요?")) return;
+    const removeReview = (reviewId) => {
+        setDeleteTarget({ type: "review", reviewId });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget || deleting) return;
+        const target = deleteTarget;
+        setDeleting(true);
         setSubmitError("");
         try {
-            await deleteReview(id, reviewId);
-            setReviews((prev) => prev.filter((review) => review.id !== reviewId));
-            setTotal((prev) => Math.max(0, prev - 1));
-            if (replyTarget?.id === reviewId) setReplyTarget(null);
+            if (target.type === "review") {
+                await deleteReview(id, target.reviewId);
+                setReviews((prev) => prev.filter((review) => review.id !== target.reviewId));
+                setTotal((prev) => Math.max(0, prev - 1));
+                if (replyTarget?.id === target.reviewId) setReplyTarget(null);
+            } else {
+                await deleteReply(id, target.reviewId, target.replyId);
+                patchReview(target.reviewId, (r) => ({
+                    replies: (r.replies ?? []).filter((reply) => reply.id !== target.replyId),
+                    replyCount: Math.max(0, (r.replyCount ?? 1) - 1),
+                }));
+            }
+            setDeleteTarget(null);
         } catch (e) {
-            setSubmitError(errorMessage(e, "후기 삭제에 실패했어요."));
+            setSubmitError(errorMessage(e, target.type === "review" ? "후기 삭제에 실패했어요." : "답글 삭제에 실패했어요."));
+            setDeleteTarget(null);
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -429,6 +440,16 @@ const RecipeReviewPage = () => {
                     <button type="submit" disabled={comment.trim() === "" || submitting}>등록</button>
                 </div>
             </CommentBar>
+            <ConfirmDialog
+                open={Boolean(deleteTarget)}
+                title={deleteTarget?.type === "review" ? "후기를 삭제할까요?" : "답글을 삭제할까요?"}
+                description="삭제한 내용은 복구할 수 없어요."
+                dangerTitle="삭제"
+                dangerHandler={confirmDelete}
+                keepTitle="취소"
+                closeHandler={() => setDeleteTarget(null)}
+                dangerOnRight
+            />
         </div>
     );
 };

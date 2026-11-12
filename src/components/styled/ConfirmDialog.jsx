@@ -59,25 +59,27 @@ const DialogButton = styled.button`
 
 // 왼쪽 — 되돌릴 수 없는 쪽 (빨간 글자)
 const DangerButton = styled(DialogButton)`
-  border: 1px solid ${colors.grey3};
-  background-color: ${colors.white};
-  font-weight: 500;
-  color: ${colors.alert};
+  order: ${({ $right }) => ($right ? 2 : 0)};
+  border: ${({ $right }) => ($right ? 'none' : `1px solid ${colors.grey3}`)};
+  background-color: ${({ $right }) => ($right ? colors.danger : colors.white)};
+  font-weight: ${({ $right }) => ($right ? 700 : 500)};
+  color: ${({ $right }) => ($right ? colors.white : colors.alert)};
 `;
 
 // 오른쪽 — 하던 일을 이어서 (기본 선택)
 const KeepButton = styled(DialogButton)`
-  border: none;
-  background-color: ${colors.primary};
-  font-weight: 700;
-  color: ${colors.white};
+  order: ${({ $dangerOnRight }) => ($dangerOnRight ? 1 : 0)};
+  border: ${({ $dangerOnRight }) => ($dangerOnRight ? `1px solid ${colors.grey3}` : 'none')};
+  background-color: ${({ $dangerOnRight }) => ($dangerOnRight ? colors.white : colors.primary)};
+  font-weight: ${({ $dangerOnRight }) => ($dangerOnRight ? 500 : 700)};
+  color: ${({ $dangerOnRight }) => ($dangerOnRight ? colors.dark : colors.white)};
 `;
 
 // 가운데 확인 창 — "요리를 그만할까요?"처럼 되돌릴 수 없는 일을 한 번 더 물을 때
 // 바깥을 누르거나 Esc를 누르면 keep(계속)과 같음. 열리면 계속 버튼에 포커스
 // 사용: <ConfirmDialog open title="요리를 그만할까요?" description={'...\n...'}
 //         dangerTitle="그만하기" dangerHandler={exit} keepTitle="계속 요리하기" closeHandler={() => setOpen(false)} />
-const ConfirmDialog = ({ open, title, description, dangerTitle, dangerHandler, keepTitle, closeHandler }) => {
+const ConfirmDialog = ({ open, title, description, dangerTitle, dangerHandler, keepTitle, closeHandler, dangerOnRight = false }) => {
   const boxRef = useModalLayer(open, closeHandler);
 
   if (!open) return null;
@@ -88,11 +90,11 @@ const ConfirmDialog = ({ open, title, description, dangerTitle, dangerHandler, k
         <Title>{title}</Title>
         {description && <Description>{description}</Description>}
         <Buttons>
-          <DangerButton type="button" onClick={dangerHandler}>
+          <DangerButton type="button" $right={dangerOnRight} onClick={dangerHandler}>
             {dangerTitle}
           </DangerButton>
           {/* 실수로 Enter를 눌러도 안전하게 계속 쪽에 먼저 포커스 */}
-          <KeepButton type="button" onClick={closeHandler} data-autofocus>
+          <KeepButton type="button" $dangerOnRight={dangerOnRight} onClick={closeHandler} data-autofocus>
             {keepTitle}
           </KeepButton>
         </Buttons>

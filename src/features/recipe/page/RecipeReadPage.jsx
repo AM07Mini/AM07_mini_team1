@@ -1,13 +1,16 @@
 
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../../utils/context/AuthContext";
 
 import Button from "../../../components/styled/Button";
+import ConfirmDialog from "../../../components/styled/ConfirmDialog";
 import Text from "../../../components/styled/Text";
 import { colors } from "../../../components/styled/theme";
 
 import {
   getRecipeDetail,
+  deleteRecipe,
   likeRecipe,
   unlikeRecipe,
   bookmarkRecipe,
@@ -40,6 +43,7 @@ import {
 const RecipeReadPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
 
   // 레시피 정보
   const [recipe, setRecipe] = useState(null);
@@ -55,11 +59,14 @@ const RecipeReadPage = () => {
   const [pendingLike, setPendingLike] = useState(false);
   const [pendingSave, setPendingSave] = useState(false);
   const [pendingFollow, setPendingFollow] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // 액션 에러
   const [actionError, setActionError] = useState("");
 
   const authorId = recipe?.author.id;
+  const isMine = user?.userId != null && authorId != null && String(user.userId) === String(authorId);
 
   // 후기 페이지 이동
   const goReviews = () => {
@@ -165,6 +172,26 @@ const RecipeReadPage = () => {
     }
   };
 
+  const handleDelete = () => {
+    if (!pendingDelete) setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (pendingDelete) return;
+    setPendingDelete(true);
+    setActionError("");
+    try {
+      await deleteRecipe(id);
+      setDeleteDialogOpen(false);
+      navigate("/mypage");
+    } catch (e) {
+      setActionError(e.response?.data?.message ?? "레시피 삭제에 실패했어요.");
+      setDeleteDialogOpen(false);
+    } finally {
+      setPendingDelete(false);
+    }
+  };
+
   // 팔로우 처리
   const handleFollow = async () => {
     if (pendingFollow || !authorId) return;
@@ -240,10 +267,20 @@ const RecipeReadPage = () => {
       {/* 레시피 대표 이미지 */}
       <RecipeHero
         recipe={recipe}
-        saved={saved}
-        pendingSave={pendingSave}
+        isMine={isMine}
+        pendingDelete={pendingDelete}
         onBack={() => navigate(-1)}
-        onSave={handleSave}
+        onDelete={handleDelete}
+      />
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        title="레시피를 삭제할까요?"
+        description="삭제하면 받은 후기와 좋아요도 함께 사라지고 되돌릴 수 없어요."
+        dangerTitle="삭제"
+        dangerHandler={confirmDelete}
+        keepTitle="취소"
+        closeHandler={() => setDeleteDialogOpen(false)}
+        dangerOnRight
       />
 
       <Sheet>
