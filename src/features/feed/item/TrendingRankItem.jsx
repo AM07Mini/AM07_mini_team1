@@ -55,7 +55,7 @@ const Info = styled.div`
 const Title = styled.h3`
   margin: 0;
   overflow: hidden;
-  ${font('cardTitle')}
+  ${font('itemTitle')}
   color: ${colors.dark};
   text-overflow: ellipsis;
   white-space: nowrap;

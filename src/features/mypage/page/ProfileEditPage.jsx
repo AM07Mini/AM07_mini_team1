@@ -10,6 +10,7 @@ import { colors, PAGE_PADDING, radius, font } from '../../../components/styled/t
 import { useAuth } from '../../../utils/context/AuthContext';
 import { isAuthError } from '../authError';
 import { INTRO_MAX, NICKNAME_MAX, NICKNAME_MIN } from '../constants';
+import ActionSheet from '../../../components/styled/ActionSheet';
 import Avatar from '../../../components/styled/Avatar';
 import TopBar from '../../../components/layout/TopBar';
 import StatusMessage from '../../../components/styled/StatusMessage';
@@ -47,16 +48,6 @@ const CameraButton = styled.button`
   padding: 0;
   border: none;
   background: url('/icons/camera-button.svg') no-repeat center;
-  cursor: pointer;
-`;
-
-const TextButton = styled.button`
-  padding: 0;
-  border: none;
-  background: none;
-  ${font('sub')}
-  font-weight: 500;
-  color: ${colors.secondary};
   cursor: pointer;
 `;
 
@@ -137,6 +128,12 @@ const MenuItem = styled.button`
   ${font('option')}
   color: ${(props) => (props.$danger ? colors.danger : colors.dark)};
   cursor: pointer;
+
+  // 저장 · 탈퇴 중에는 흐리게
+  &:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
 `;
 
 // 두 id 목록이 순서와 상관없이 같은지
@@ -157,6 +154,8 @@ const ProfileEditPage = () => {
   const [interestsLoaded, setInterestsLoaded] = useState(false); // 관심 요리를 모두 불러왔는지
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
+  const [photoRemoved, setPhotoRemoved] = useState(false); // 저장할 때 서버 사진을 지울지 (사진 삭제하기)
+  const [photoMenuOpen, setPhotoMenuOpen] = useState(false); // 카메라 버튼을 누르면 뜨는 메뉴
   const [nicknameCheck, setNicknameCheck] = useState({ nickname: '', available: false });
   const [saving, setSaving] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false); // 버튼 문구 · 비활성화용
@@ -217,11 +216,15 @@ const ProfileEditPage = () => {
   const introChanged = original !== null && form.intro !== original.intro;
   const interestsChanged = interestsLoaded && !sameIds(interestIds, originalInterestIds);
   // 닉네임 길이는 바꿨을 때만 검사 (원래 닉네임 그대로면 소개 · 관심 요리는 저장 가능)
-  const canSave = (!nicknameChanged || nicknameLengthOk) && nicknameOk && !saving;
+  // 저장 중이거나 탈퇴 중이면 다른 조작은 모두 막음
+  const busy = saving || withdrawing;
+  const canSave = (!nicknameChanged || nicknameLengthOk) && nicknameOk && !busy;
+  // 화면에 보여줄 사진 — 새로 고른 사진 > (지우기로 한 게 아니면) 서버 사진 > 없음(기본 모양)
+  const shownPhoto = photoPreview || (photoRemoved ? null : original?.profileImageUrl);
 
   const changeHandler = (e) => {
     // 저장 중에 바꾼 값은 저장되지 않으니 막기
-    if (saving) return;
+    if (busy) return;
     const { name, value } = e.target;
     // 한 줄 소개는 최대 40자
     if (name === 'intro' && value.length > INTRO_MAX) return;
@@ -233,9 +236,21 @@ const ProfileEditPage = () => {
     if (!file) return;
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
+    setPhotoRemoved(false);
+  };
+
+  // 사진 삭제하기 — 새로 고른 사진은 취소하고, 서버 사진은 저장할 때 지움 (기본 모양으로)
+  const photoRemoveHandler = () => {
+    if (busy) return;
+    setPhotoFile(null);
+    setPhotoPreview('');
+    // 같은 파일을 다시 골라도 onChange가 불리도록 선택 기록 비우기
+    fileInputRef.current.value = '';
+    if (original.profileImageUrl) setPhotoRemoved(true);
   };
 
   const nicknameCheckHandler = async () => {
+    if (busy) return;
     try {
       const response = await api.get('/auth/nickname/check', { params: { nickname: form.nickname } });
       setNicknameCheck({ nickname: form.nickname, available: response.data.result.available });
@@ -246,24 +261,33 @@ const ProfileEditPage = () => {
   };
 
   const interestToggleHandler = (id) => {
-    if (saving) return;
+    if (busy) return;
     setInterestIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   const submitHandler = async (e) => {
     e.preventDefault();
-    if (!canSave) return;
+    // 탈퇴 요청이 막 시작된 순간(화면이 아직 안 바뀜)에도 저장되지 않게 ref까지 확인
+    if (!canSave || withdrawingRef.current) return;
     setSaving(true);
     try {
       // 1) 사진을 새로 골랐으면 업로드 (multipart, 필드 이름 image)
       if (photoFile) {
         const formData = new FormData();
         formData.append('image', photoFile);
-        await api.post('/users/me/profile-image', formData, {
+        const uploadResponse = await api.post('/users/me/profile-image', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
+        // 서버에 사진이 생겼다고 기록 — 다음 단계가 실패한 뒤 '사진 삭제하기'를 고르면 DELETE가 가도록
+        const uploadedUrl = uploadResponse.data.result?.profileImageUrl ?? photoPreview;
+        setOriginal((prev) => ({ ...prev, profileImageUrl: uploadedUrl }));
         // 다음 단계에서 실패해 다시 저장할 때 같은 사진을 또 올리지 않도록
         setPhotoFile(null);
+      } else if (photoRemoved) {
+        // 1-2) 사진 삭제하기를 골랐으면 서버 사진 지우기
+        await api.delete('/users/me/profile-image');
+        setOriginal((prev) => ({ ...prev, profileImageUrl: null }));
+        setPhotoRemoved(false);
       }
       // 2) 닉네임 · 한 줄 소개 중 바뀐 것만 보내기 (안 보낸 값은 서버에서 그대로 유지)
       if (nicknameChanged || introChanged) {
@@ -306,7 +330,7 @@ const ProfileEditPage = () => {
   const withdrawHandler = async () => {
     // 탈퇴 요청 중에는 다시 누르지 못하게
     // state는 화면이 다시 그려져야 바뀌어서, 아주 빠른 두 번 클릭은 ref로 막음
-    if (withdrawingRef.current) return;
+    if (withdrawingRef.current || saving) return;
     if (!window.confirm('정말 탈퇴할까요? 기록한 레시피가 모두 사라져요.')) return;
     withdrawingRef.current = true;
     setWithdrawing(true);
@@ -341,7 +365,7 @@ const ProfileEditPage = () => {
   if (error || !original) {
     return (
       <>
-        <TopBar title="프로필 편집" showBack />
+        <TopBar title="프로필 편집" showBack backDisabled={busy} />
         <StatusMessage message={error?.message ?? '불러오는 중이에요…'} needLogin={error?.needLogin} />
       </>
     );
@@ -349,19 +373,30 @@ const ProfileEditPage = () => {
 
   return (
     <>
-      <TopBar title="프로필 편집" showBack />
+      <TopBar title="프로필 편집" showBack backDisabled={busy} />
       <Form onSubmit={submitHandler}>
         <PhotoBox>
           <Photo>
-            <Avatar src={photoPreview || original.profileImageUrl} size={96} />
-            <CameraButton type="button" aria-label="사진 변경" onClick={() => fileInputRef.current.click()}>
+            <Avatar src={shownPhoto} size={96} />
+            <CameraButton
+              type="button"
+              aria-label="프로필 사진 바꾸기"
+              aria-haspopup="dialog"
+              onClick={() => !busy && setPhotoMenuOpen(true)}
+            >
               <img src="/icons/camera.svg" alt="" />
             </CameraButton>
           </Photo>
-          <TextButton type="button" onClick={() => fileInputRef.current.click()}>
-            사진 변경
-          </TextButton>
           <HiddenFileInput ref={fileInputRef} type="file" accept="image/*" onChange={photoChangeHandler} />
+          <ActionSheet
+            open={photoMenuOpen}
+            title="프로필 사진"
+            actions={[
+              { title: '사진 불러오기', onClick: () => fileInputRef.current.click() },
+              { title: '사진 삭제하기', onClick: photoRemoveHandler, danger: true, disabled: !shownPhoto },
+            ]}
+            closeHandler={() => setPhotoMenuOpen(false)}
+          />
         </PhotoBox>
 
         <Field>
@@ -370,13 +405,14 @@ const ProfileEditPage = () => {
             name="nickname"
             value={form.nickname}
             changeHandler={changeHandler}
+            disabled={busy}
             placeholder="닉네임을 입력해주세요"
           >
             <Button
               title="중복 확인"
               variant="inline"
               onClick={nicknameCheckHandler}
-              disabled={!nicknameChanged || !nicknameLengthOk}
+              disabled={!nicknameChanged || !nicknameLengthOk || busy}
             />
           </TextInput>
           {renderNicknameMessage()}
@@ -387,6 +423,7 @@ const ProfileEditPage = () => {
           name="intro"
           value={form.intro}
           changeHandler={changeHandler}
+          disabled={busy}
           placeholder="나를 소개해주세요"
         >
           <Counter>
@@ -412,6 +449,7 @@ const ProfileEditPage = () => {
                   key={item.id}
                   title={item.name}
                   selected={interestIds.includes(item.id)}
+                  disabled={busy}
                   onClick={() => interestToggleHandler(item.id)}
                 />
               ))}
@@ -420,15 +458,15 @@ const ProfileEditPage = () => {
         )}
 
         <Menu>
-          <MenuItem type="button" onClick={() => moveUrl('/mypage/password')}>
+          <MenuItem type="button" onClick={() => moveUrl('/mypage/password')} disabled={busy}>
             비밀번호 변경
             <img src="/icons/chevron-right.svg" alt="" />
           </MenuItem>
-          <MenuItem type="button" onClick={logoutHandler}>
+          <MenuItem type="button" onClick={logoutHandler} disabled={busy}>
             로그아웃
             <img src="/icons/chevron-right.svg" alt="" />
           </MenuItem>
-          <MenuItem type="button" $danger onClick={withdrawHandler} disabled={withdrawing}>
+          <MenuItem type="button" $danger onClick={withdrawHandler} disabled={busy}>
             {withdrawing ? '탈퇴하는 중…' : '회원 탈퇴'}
             <img src="/icons/chevron-right.svg" alt="" />
           </MenuItem>

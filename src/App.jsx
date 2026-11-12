@@ -1,9 +1,9 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import styled from 'styled-components';
 import BottomBar from './components/layout/BottomBar';
 import ScrollToTop from './components/layout/ScrollToTop';
 import { colors } from './components/styled/theme';
-import { AuthProvider } from './utils/context/AuthContext';
+import { AuthProvider, useAuth } from './utils/context/AuthContext';
 
 // user
 import SignInPage from './features/user/page/SignInPage';
@@ -52,6 +52,16 @@ const Content = styled.main`
   flex: 1;
 `;
 
+const HomeRoute = () => {
+  const { isLoggedIn } = useAuth();
+
+  if (!isLoggedIn) {
+    return <Navigate to="/signin" replace />;
+  }
+
+  return <IngredientSelectPage />;
+};
+
 const App = () => (
   <AuthProvider>
     <BrowserRouter>
@@ -94,7 +104,7 @@ const App = () => (
             />
 
             {/* ingredient */}
-            <Route path="/" element={<IngredientSelectPage />} />
+            <Route path="/" element={<HomeRoute />} />
 
             {/* recipe */}
             <Route path="/recipe/recommend" element={<RecipeRecommendPage />} />
