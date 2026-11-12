@@ -25,7 +25,7 @@ export const getReplies = (recipeId, reviewId, { page = 0, size = 50 } = {}, sig
     .then((res) => res.data.result);
 
 export const createReply = (recipeId, reviewId, body) =>
-  api.post(`/recipes/${recipeId}/reviews/${reviewId}/replies`, { body }).then(pick);
+  api.post(`/recipes/${recipeId}/reviews/${reviewId}/replies`, { body });
 
 export const deleteReply = (recipeId, reviewId, replyId) =>
   api.delete(`/recipes/${recipeId}/reviews/${reviewId}/replies/${replyId}`);
