@@ -16,7 +16,7 @@ const toCardData = ({ recipe }) => ({
   title: recipe.title,
   time: `${recipe.cookingMinutes}분`,
   image: recipe.thumbnailUrl,
-  to: `/recipe/${recipe.id}`,
+  to: `/recipe/read/${recipe.id}`,
 });
 
 

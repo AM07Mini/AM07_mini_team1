@@ -1,22 +1,66 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
-import SectionHeader from '../../../components/styled/SectionHeader';
-import Avatar from "../../../components/styled/Avatar";
-import BackIcon from "../../../components/styled/BackIcon";
-import CircleIconButton from "../../../components/styled/CircleIconButton";
-import Icon from "../../../components/styled/Icon";
-import FollowButton from "../../../components/styled/FollowButton";
 import Button from "../../../components/styled/Button";
 import Chip from "../../../components/styled/Chip";
 import Text from "../../../components/styled/Text";
-import { RECIPE, INITIAL_REVIEWS } from "../data/recipeMock";
-import { useNavigate, useParams, Link } from "react-router-dom";
-import { colors, radius, font } from "../../../components/styled/theme";
+import {
+  getRecipeDetail,
+  likeRecipe,
+  unlikeRecipe,
+  bookmarkRecipe,
+  unbookmarkRecipe,
+} from "../../../api/recipeDetailApi";
+import { getFollowStatus, followUser, unfollowUser } from "../../../api/followApi";
+import { colors, radius } from "../../../components/styled/theme";
 
+const HEART = "#E5484D";
+
+const LEVEL = {
+  EASY: "★☆☆ 쉬움",
+  MEDIUM: "★★☆ 보통",
+  HARD: "★★★ 어려움",
+};
+
+// API 응답 → 화면용 데이터
+const toDetail = (r) => ({
+  id: r.id,
+  title: r.title,
+  image: r.thumbnailUrl,
+  author: {
+    id: r.authorId,
+    name: r.authorNickname,
+    avatar: r.authorProfileImageUrl,
+    meta: "", // 레시피 수/팔로워는 응답에 없음
+  },
+  stats: [
+    { name: "난이도", value: LEVEL[r.difficulty] ?? r.difficulty },
+    { name: "조리 시간", value: `${r.cookingMinutes}분` },
+  ],
+  hashtags: (r.hashtags ?? []).map((t) => `#${t}`),
+  likes: r.likeCount ?? 0,
+  liked: !!r.likedByMe,
+  saved: !!r.bookmarkedByMe,
+  ingredients: (r.ingredients ?? []).map((i) => ({
+    name: i.name,
+    amount: i.quantity,
+    owned: false, // 내 냉장고 비교는 별도 로직 필요
+  })),
+  // "1. ...\n2. ..." 문자열을 줄 단위로 나누고 번호 제거
+  steps: (r.instructions ?? "")
+    .split("\n")
+    .map((s) => s.replace(/^\d+\.\s*/, "").trim())
+    .filter(Boolean),
+});
+
+// 팔로우 여부 응답 변환 (필드명은 추측 — Swagger 응답에 맞게 수정)
+const toFollowing = (r) =>
+  typeof r === "boolean" ? r : !!(r?.isFollowing ?? r?.following ?? r?.followed);
 
 const Hero = styled.div`
   position: relative;
   height: 300px;
+  background: ${colors.grey4};
 
   > img {
     width: 100%;
@@ -25,20 +69,41 @@ const Hero = styled.div`
   }
 `;
 
-// 사진 위 버튼 자리 — 왼쪽 뒤로가기, 오른쪽 북마크
-const HeroActions = styled.div`
+const BackButton = styled.button`
   position: absolute;
   top: 15px;
   left: 24px;
-  right: 24px;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: ${colors.white};
+  color: ${colors.dark};
+  font-size: 18px;
+  cursor: pointer;
 `;
 
-// 북마크 아이콘 색 — 저장하면 진한 색으로 채움
-const BookmarkColor = styled.span`
-  display: flex;
+const BookmarkButton = styled.button`
+  position: absolute;
+  top: 15px;
+  right: 24px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: ${colors.white};
+  font-size: 18px;
   color: ${({ $saved }) => ($saved ? colors.primary : colors.grey2)};
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
 const Sheet = styled.article`
@@ -58,19 +123,44 @@ const Section = styled.section`
   gap: 12px;
 `;
 
+const Row = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
 const Author = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
 
+  > img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
   > div {
     flex: 1;
     display: flex;
     flex-direction: column;
   }
-  a {
-    color: inherit;
-    text-decoration: none;
+`;
+
+const FollowButton = styled.button`
+  padding: 6px 14px;
+  border: 1px solid ${colors.primary};
+  border-radius: 14px;
+  background: ${({ $on }) => ($on ? colors.white : colors.accent2)};
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: ${colors.primary};
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 
@@ -109,11 +199,19 @@ const ActionBar = styled.div`
     border: none;
     background: none;
     font-family: inherit;
-    ${font('option')}
+    font-size: 14px;
+    font-weight: 500;
     cursor: pointer;
   }
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
   .like {
-    color: ${({ $liked }) => ($liked ? colors.heart : colors.grey2)};
+    color: ${({ $liked }) => ($liked ? HEART : colors.grey2)};
+  }
+  .review {
+    color: ${colors.grey1};
   }
   .save {
     margin-left: auto;
@@ -136,7 +234,7 @@ const OwnedBadge = styled.span`
   padding: 2px 8px;
   border-radius: ${radius.small}px;
   background: ${colors.accent2};
-  ${font('hashtag')}
+  font-size: 11px;
   font-weight: 700;
   color: ${colors.primary};
 `;
@@ -156,84 +254,192 @@ const StepNumber = styled.span`
   height: 28px;
   border-radius: 50%;
   background: ${colors.primary};
-  ${font('sub')}
+  font-size: 13px;
   font-weight: 700;
   color: ${colors.white};
 `;
 
+const StateBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+`;
 
-// 레시피 상세 — 재료, 조리 순서, 후기
-const RecipeDetailPage = () => {
+// 레시피 상세 — 재료, 조리 순서
+const RecipeReadPage = () => {
   const navigate = useNavigate();
-  const { id = RECIPE.id } = useParams();
+  const { id } = useParams();
   const goReviews = () => navigate(`/recipe/${id}/reviews`);
 
-  // 뒤로가기 — 들어온 화면으로 돌아감 (마이 페이지, 검색, 피드 등)
-  // 주소로 바로 들어와서 돌아갈 화면이 없으면 홈으로
-  const backHandler = () => {
-    if (window.history.state?.idx > 0) navigate(-1);
-    else navigate("/", { replace: true }); // 상세 기록을 홈으로 바꿔서 브라우저 뒤로가기로 다시 상세에 오지 않게
-  };
-
+  const [recipe, setRecipe] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [following, setFollowing] = useState(false);
-  const [reviews, setReviews] = useState(INITIAL_REVIEWS);
-  const [comment, setComment] = useState("");
+  const [pendingLike, setPendingLike] = useState(false);
+  const [pendingSave, setPendingSave] = useState(false);
+  const [pendingFollow, setPendingFollow] = useState(false);
+  const [actionError, setActionError] = useState("");
 
-  const likeCount = RECIPE.likes + (liked ? 1 : 0);
-  const saveCount = RECIPE.saves + (saved ? 1 : 0);
+  const authorId = recipe?.author.id;
 
-  const toggleReviewLike = (id) =>
-    setReviews((prev) =>
-      prev.map((r) =>
-        r.id === id ? { ...r, liked: !r.liked, likes: r.likes + (r.liked ? -1 : 1) } : r
-      )
-    );
+  // 레시피 상세 조회
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
 
-  const submitComment = (e) => {
-    e.preventDefault();
-    const text = comment.trim();
-    if (!text) return;
-    setReviews((prev) => [
-      { id: Date.now(), avatar: "", name: "나", when: "방금", text, likes: 0, liked: false },
-      ...prev,
-    ]);
-    setComment("");
+    getRecipeDetail(id, controller.signal)
+      .then((r) => {
+        const detail = toDetail(r);
+        setRecipe(detail);
+        setLiked(detail.liked);
+        setSaved(detail.saved);
+      })
+      .catch((e) => {
+        if (e.name === "CanceledError") return;
+        setRecipe(null);
+        setError(e.response?.data?.message ?? e.message ?? "불러오지 못했어요.");
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [id]);
+
+  // 작성자 팔로우 여부 조회
+  useEffect(() => {
+    if (!authorId) return;
+    const controller = new AbortController();
+
+    getFollowStatus(authorId, controller.signal)
+      .then((r) => setFollowing(toFollowing(r)))
+      .catch(() => {}); // 실패하면 "팔로우" 상태로 둠
+
+    return () => controller.abort();
+  }, [authorId]);
+
+  // 좋아요: 화면을 먼저 바꾸고 실패하면 되돌림 (켜기 POST / 끄기 DELETE)
+  const handleLike = async () => {
+    if (pendingLike) return; // 연타 방지
+    const prev = liked;
+    setLiked(!prev);
+    setPendingLike(true);
+    setActionError("");
+    try {
+      await (prev ? unlikeRecipe(id) : likeRecipe(id));
+    } catch (e) {
+      setLiked(prev);
+      setActionError(e.response?.data?.message ?? "좋아요 처리에 실패했어요.");
+    } finally {
+      setPendingLike(false);
+    }
   };
+
+  // 저장: 켜기 POST / 끄기 DELETE
+  const handleSave = async () => {
+    if (pendingSave) return;
+    const prev = saved;
+    setSaved(!prev);
+    setPendingSave(true);
+    setActionError("");
+    try {
+      await (prev ? unbookmarkRecipe(id) : bookmarkRecipe(id));
+    } catch (e) {
+      setSaved(prev);
+      setActionError(e.response?.data?.message ?? "저장 처리에 실패했어요.");
+    } finally {
+      setPendingSave(false);
+    }
+  };
+
+  // 팔로우: 켜기 POST / 끄기 DELETE
+  const handleFollow = async () => {
+    if (pendingFollow || !authorId) return;
+    const prev = following;
+    setFollowing(!prev);
+    setPendingFollow(true);
+    setActionError("");
+    try {
+      await (prev ? unfollowUser(authorId) : followUser(authorId));
+    } catch (e) {
+      setFollowing(prev);
+      setActionError(e.response?.data?.message ?? "팔로우 처리에 실패했어요.");
+    } finally {
+      setPendingFollow(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <StateBox>
+        <Text variant="sub" color={colors.grey1}>레시피를 불러오는 중이에요...</Text>
+      </StateBox>
+    );
+  }
+
+  if (error || !recipe) {
+    return (
+      <StateBox role="alert">
+        <Text variant="cardTitle">레시피를 불러오지 못했어요</Text>
+        {error && <Text variant="sub" color={colors.grey1}>{error}</Text>}
+        <Button title="뒤로 가기" variant="outline" onClick={() => navigate(-1)} />
+      </StateBox>
+    );
+  }
+
+  // 서버 값에 "처음 상태에서 내가 바꾼 만큼"만 반영
+  const likeCount = recipe.likes + (liked === recipe.liked ? 0 : liked ? 1 : -1);
 
   return (
     <div>
       <Hero>
-        <HeroActions>
-          <CircleIconButton label="뒤로가기" onClick={backHandler}>
-            <BackIcon />
-          </CircleIconButton>
-          <CircleIconButton label="저장" pressed={saved} onClick={() => setSaved((v) => !v)}>
-            <BookmarkColor $saved={saved}>
-              <Icon name="bookmark" size={20} filled={saved} />
-            </BookmarkColor>
-          </CircleIconButton>
-        </HeroActions>
+        {recipe.image && <img src={recipe.image} alt={recipe.title} />}
+        <BackButton type="button" aria-label="뒤로" onClick={() => navigate(-1)}>
+          ←
+        </BackButton>
+        <BookmarkButton
+          type="button"
+          $saved={saved}
+          aria-pressed={saved}
+          aria-label="저장"
+          disabled={pendingSave}
+          onClick={handleSave}
+        >
+          {saved ? "★" : "☆"}
+        </BookmarkButton>
       </Hero>
 
       <Sheet>
         <Section>
-          <Text variant="pageTitle" as="h2">{RECIPE.title}</Text>
+          <Text variant="pageTitle" as="h2">{recipe.title}</Text>
 
           <Author>
-            <Avatar src={RECIPE.author.avatar} size={32} />
+            {recipe.author.avatar && <img src={recipe.author.avatar} alt="" />}
             <div>
-              <Text variant="label">
-                <Link to={RECIPE.author.to}>{RECIPE.author.name}</Link>
-              </Text>
-              <Text variant="caption" color={colors.grey1}>{RECIPE.author.meta}</Text>
+              <Text variant="label">{recipe.author.name}</Text>
+              {recipe.author.meta && (
+                <Text variant="caption" color={colors.grey1}>{recipe.author.meta}</Text>
+              )}
             </div>
-            <FollowButton following={following} onClick={() => setFollowing((v) => !v)} />
+            <FollowButton
+              type="button"
+              $on={following}
+              aria-pressed={following}
+              disabled={pendingFollow}
+              onClick={handleFollow}
+            >
+              {following ? "팔로잉" : "팔로우"}
+            </FollowButton>
           </Author>
 
           <Stats>
-            {RECIPE.stats.map((s) => (
+            {recipe.stats.map((s) => (
               <div key={s.name}>
                 <Text variant="caption" color={colors.grey1}>{s.name}</Text>
                 <Text variant="label">{s.value}</Text>
@@ -241,24 +447,36 @@ const RecipeDetailPage = () => {
             ))}
           </Stats>
 
-          <ChipRow>
-            {RECIPE.hashtags.map((tag) => (
-              <Chip key={tag} title={tag} selected />
-            ))}
-          </ChipRow>
+          {recipe.hashtags.length > 0 && (
+            <ChipRow>
+              {recipe.hashtags.map((tag) => (
+                <Chip key={tag} title={tag} selected />
+              ))}
+            </ChipRow>
+          )}
 
           <ActionBar $liked={liked} $saved={saved}>
-            <button type="button" className="like" onClick={() => setLiked((v) => !v)}>
+            <button type="button" className="like" disabled={pendingLike} onClick={handleLike}>
               ♥ 좋아요 {likeCount}
             </button>
-            <button type="button" onClick={goReviews}>💬 후기 {reviews.length}</button>
-            <Text> ★ 저장 {saveCount} </Text>
+            <button type="button" className="review" onClick={goReviews}>
+              💬 후기
+            </button>
+            <button type="button" className="save" disabled={pendingSave} onClick={handleSave}>
+              {saved ? "★" : "☆"} 저장
+            </button>
           </ActionBar>
+          {actionError && (
+            <Text variant="caption" color={HEART} role="alert">{actionError}</Text>
+          )}
         </Section>
 
         <Section>
-          <SectionHeader title="재료" right="내 냉장고와 비교" />
-          {RECIPE.ingredients.map((item) => (
+          <Row>
+            <Text variant="sectionTitle" as="h3">재료</Text>
+            <Text variant="caption" color={colors.accent1}>내 냉장고와 비교</Text>
+          </Row>
+          {recipe.ingredients.map((item) => (
             <IngredientRow key={item.name}>
               <Text variant="body">{item.name}</Text>
               {item.owned && <OwnedBadge>보유</OwnedBadge>}
@@ -270,24 +488,23 @@ const RecipeDetailPage = () => {
         </Section>
 
         <Section>
-          <SectionHeader title="조리 순서" right={`${RECIPE.steps.length}단계`} />
-          {RECIPE.steps.map((text, index) => (
-            <StepRow key={text}>
+          <Row>
+            <Text variant="sectionTitle" as="h3">조리 순서</Text>
+            <Text variant="caption" color={colors.accent1}>{recipe.steps.length}단계</Text>
+          </Row>
+          {recipe.steps.map((text, index) => (
+            <StepRow key={`${index}-${text}`}>
               <StepNumber>{index + 1}</StepNumber>
               <Text variant="body">{text}</Text>
             </StepRow>
           ))}
         </Section>
 
-        {/* 이 레시피로 요리 시작하기 버튼 */}
-        <Button
-          title="이 레시피로 요리 시작하기"
-          onClick={() => navigate("")}
-        />
-        
+        {/* TODO: 요리 시작하기 이동 경로가 정해지면 연결 */}
+        <Button title="이 레시피로 요리 시작하기" onClick={() => {}} />
       </Sheet>
     </div>
   );
 };
 
-export default RecipeDetailPage;
+export default RecipeReadPage;
