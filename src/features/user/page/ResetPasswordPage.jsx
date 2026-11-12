@@ -104,6 +104,12 @@ const ResetPasswordPage = () => {
       label: '8~20자',
       valid: password.length >= 8 && password.length <= 20,
     },
+    {
+      label: '허용 문자 사용',
+      valid:
+        password.length > 0 &&
+        /^[A-Za-z0-9!@#$%^&*]+$/.test(password),
+    }
   ];
 
   const passwordMatched =

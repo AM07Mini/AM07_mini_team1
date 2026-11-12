@@ -256,33 +256,25 @@ const RecoveryPage = ({ purpose }) => {
       }
 
 
-      if (isFind) {
-        const response = await findLoginId(address, enteredCode);
 
-        if (
-          latestEmail.current.trim() !== address ||
-          latestCode.current.trim() !== enteredCode
-        ) return;
+      const response = isFind
+        ? await findLoginId(address, enteredCode)
+        : await issueResetKey(address, enteredCode);
 
-        if (response.data?.isSuccess !== true) {
-          throw new Error(
-            response.data?.message || '아이디 안내 메일 발송에 실패했습니다.'
-          );
-        }
-      } else {
-        const response = await issueResetKey(address, enteredCode);
+      if (
+        latestEmail.current.trim() !== address ||
+        latestCode.current.trim() !== enteredCode
+      ) return;
 
-        if (
-          latestEmail.current.trim() !== address ||
-          latestCode.current.trim() !== enteredCode
-        ) return;
-
-        if (response.data?.isSuccess !== true) {
-          throw new Error(
-            response.data?.message || '비밀번호 재설정 메일 발송에 실패했습니다.'
-          );
-        }
+      if (response.data?.isSuccess !== true) {
+        throw new Error(
+          response.data?.message ||
+            (isFind
+              ? '아이디 안내 메일 발송에 실패했습니다.'
+              : '비밀번호 재설정 메일 발송에 실패했습니다.')
+        );
       }
+
 
       setCompleted(true);
 

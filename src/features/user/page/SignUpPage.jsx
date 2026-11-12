@@ -239,7 +239,7 @@ const SignUpPage = () => {
       setDeadline(null);
       setRemaining(null);
     }
-    if (name === 'code') setEmailVerified(false);
+
   };
 
 
@@ -594,7 +594,7 @@ const SignUpPage = () => {
                     </CheckMark>
                   )}
 
-                  {/* 이 아래의 인증번호 코드는 그대로 유지 */}
+
                   {name === 'code' && (
                     <>
                       {remaining !== null && (
@@ -607,7 +607,7 @@ const SignUpPage = () => {
                         type="button"
                         variant="inline"
                         title="인증 확인"
-                        disabled={emailVerified || expired || loading}
+                        disabled={expired || loading}
                         onClick={handleVerifyCode}
                       />
                     </>
