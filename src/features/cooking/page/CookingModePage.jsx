@@ -148,7 +148,24 @@ const NextButton = styled(StepButton)`
 // "면 1분이 끝났어요!" · "계란 1분 30초가 끝났어요!"
 const doneMessage = (timer) => `${timer.name} ${josa(formatDuration(timer.totalMs), '이/가')} 끝났어요!`;
 
-const HIGHLIGHT_MS = 2000; // +N분 버튼 강조 · 토스트 시간
+const HIGHLIGHT_MS = 2000;
+
+// 타이머 칸 접힘 상태 기억 — 저장소를 못 쓰는 환경(사생활 보호 모드 등)이면 펼친 상태로
+const COLLAPSE_KEY = 'recipely.cookingTimersCollapsed';
+const readCollapsed = () => {
+  try {
+    return localStorage.getItem(COLLAPSE_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+const saveCollapsed = (collapsed) => {
+  try {
+    localStorage.setItem(COLLAPSE_KEY, collapsed ? '1' : '0');
+  } catch {
+    // 기억하지 못해도 이번 화면에서는 그대로 동작
+  }
+}; // +N분 버튼 강조 · 토스트 시간
 
 // 07 요리 모드 — 레시피 상세의 "이 레시피로 요리 시작하기"로 들어옴
 // 단계를 한 장씩 넘기고, 타이머는 단계와 상관없이 따로 여러 개 돌아감
@@ -164,6 +181,17 @@ const CookingModePage = () => {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [confirmKind, setConfirmKind] = useState(null); // 'exit'(✕) | 'finish'(요리 완료) — 타이머가 꺼지기 전에 물어봄
   const [menuTimerId, setMenuTimerId] = useState(null); // 메뉴를 연 작은 타이머
+  // 타이머 칸 접기 — 고른 상태를 이 브라우저에 기억 (다음 요리 때도 그대로)
+  const [timersCollapsed, setTimersCollapsed] = useState(() => readCollapsed());
+  const toggleTimersCollapsed = () => {
+    const next = !timersCollapsed;
+    setTimersCollapsed(next);
+    saveCollapsed(next);
+    // 누른 버튼이 사라지므로 바뀐 쪽의 펼치기/접기 버튼으로 포커스를 옮김 (키보드 사용자)
+    requestAnimationFrame(() => {
+      document.querySelector(`[aria-label="타이머"] [aria-expanded], button[aria-expanded="false"]`)?.focus();
+    });
+  };
   const [lastAdded, setLastAdded] = useState(null); // { id, minutes } — 방금 누른 +N분
   const lastAddedTimer = useRef(null);
   const [toast, showToast] = useToast(HIGHLIGHT_MS);
@@ -296,6 +324,8 @@ const CookingModePage = () => {
           <TimerPanel
             timers={timers}
             now={now}
+            collapsed={timersCollapsed}
+            toggleHandler={toggleTimersCollapsed}
             lastAdded={lastAdded}
             addTimeHandler={addTimeHandler}
             togglePauseHandler={togglePause}
