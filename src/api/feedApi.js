@@ -24,6 +24,9 @@ const TRENDING_SORTS = {
 export const getTrendingPage = (sort = 'WEEKLY', page = 0, size = PAGE_SIZE) =>
     api.get('/recipes/search', { params: { sort: TRENDING_SORTS[sort], page, size } }).then(pick);
 
+// 내가 저장한 식재료 [{ id, name }] (로그인 필요)
+export const getMyIngredients = () => api.get('/users/me/ingredients').then(pick);
+
 const toggle = (url, on) => (on ? api.post(url) : api.delete(url));
 
 export const setLike = (recipeId, on) => toggle(`/recipes/${recipeId}/likes`, on);

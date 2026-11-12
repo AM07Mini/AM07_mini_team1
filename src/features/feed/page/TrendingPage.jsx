@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
@@ -6,7 +6,8 @@ import { getTrendingPage } from '../../../api/feedApi';
 import { toTrendingRow } from '../feedMapper';
 import { Notice, NoticeAction } from '../feedStyles';
 import usePagedList from '../hooks/usePagedList';
-import { countMissing, getMyIngredientNames } from '../myIngredients';
+import { countMissing } from '../myIngredients';
+import useMyIngredients from '../hooks/useMyIngredients';
 import UnderlineTab from '../../../components/styled/UnderlineTab';
 import IngredientFilter from '../item/IngredientFilter';
 import LikePeriodSelect from '../item/LikePeriodSelect';
@@ -60,9 +61,11 @@ const TrendingPage = () => {
   const [period, setPeriod] = useState('WEEKLY');
   const sort = tab === 'LATEST' ? 'LATEST' : period;
   const ranked = tab === 'POPULAR';
-  const [onlyMine, setOnlyMine] = useState(false);
-  const myIngredients = useMemo(() => getMyIngredientNames(), []);
+  const [onlyMineChecked, setOnlyMine] = useState(false);
+  const { names: myIngredients, status: myIngredientStatus } = useMyIngredients();
   const hasMyIngredients = myIngredients.length > 0;
+  // 로그아웃 등으로 재료가 없어지면 토글이 켜져 있어도 거르지 않음
+  const onlyMine = onlyMineChecked && hasMyIngredients;
 
   const fetchPage = useCallback(
     (page) =>
@@ -136,7 +139,8 @@ const TrendingPage = () => {
         </Controls>
         <Caption>
           {captionBySort[sort]}
-          {!hasMyIngredients && ' 재료를 등록하면 "내 재료로만"을 쓸 수 있어요.'}
+          {myIngredientStatus === 'needLogin' && ' 로그인하면 "내 재료로만"을 쓸 수 있어요.'}
+          {myIngredientStatus === 'done' && !hasMyIngredients && ' 재료를 등록하면 "내 재료로만"을 쓸 수 있어요.'}
         </Caption>
         {renderList()}
       </Wrapper>
