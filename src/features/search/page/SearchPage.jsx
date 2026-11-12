@@ -217,6 +217,12 @@ const SearchPage = () => {
     };
   }, [filters, query, selected]);
 
+  const selectedConditions = filters.flatMap((filter) =>
+    (selected[filter.key] || []).map(
+      (value) => filter.items.find((item) => item.value === value)?.label ?? String(value),
+    ),
+  );
+
   return (
     <Page>
       <TopBar ref={topBarRef} title="검색" />
@@ -225,7 +231,7 @@ const SearchPage = () => {
         <SearchInput
           value={query}
           changeHandler={(event) => setQuery(event.target.value)}
-          placeholder="레시피 이름, 해시태그로 검색 (예: #매콤)"
+          placeholder="레시피 이름, 재료로 검색"
         />
         <SearchSelectionSummary
           filters={filters}
@@ -254,6 +260,7 @@ const SearchPage = () => {
               )
             }
             onReset={resetFilters}
+            selectedConditions={selectedConditions}
           />
         </div>
       </Main>
