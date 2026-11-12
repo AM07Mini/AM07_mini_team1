@@ -1,9 +1,9 @@
 import { memo } from "react";
 import CheckButton from "../../../components/styled/CheckButton";
 
-// 식재료 한 칸 — 선택 여부만 props로 받고 토글은 부모가 처리
-const IngredientItem = ({ name, checked, onToggle }) => (
-  <CheckButton title={name} checked={checked} onClick={() => onToggle(name)} />
+// selected: 선택 여부, onToggle: 부모가 id를 묶어서 넘겨줌
+const IngredientItem = ({ name, selected, onToggle }) => (
+  <CheckButton title={name} checked={selected} onClick={onToggle} />
 );
 
 export default memo(IngredientItem);

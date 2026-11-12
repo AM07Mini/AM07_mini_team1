@@ -45,14 +45,16 @@ const Row = styled.div`
 const RecipeRecommendPage = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
-  const ingredients = state?.ingredients ?? [];
-  const joined = ingredients.join(" · ");
+  const ingredientIds = state?.ingredientIds ?? [];
+  const ingredientNames = state?.ingredientNames ?? [];
+  const joined = ingredientNames.join(" · ");
+  const idsKey = ingredientIds.join(",");
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-  if (ingredients.length === 0) {
+ useEffect(() => {
+  if (ingredientIds.length === 0) {
     setLoading(false);
     return;
   }
@@ -60,15 +62,25 @@ const RecipeRecommendPage = () => {
   setLoading(true);
   setError("");
 
-  getRecommendedRecipes({ ingredientNames: ingredients, size: 100 }, controller.signal)
+  getRecommendedRecipes(
+    {
+      ingredientIds: ingredientIds.filter((id) => id > 0), // 임시 음수 id 제외
+      ingredientNames: ingredientNames.filter((_, i) => ingredientIds[i] < 0),
+    },
+    controller.signal
+  )
     .then((result) => setRecipes(result.content.map(toCardData)))
     .catch((e) => {
-      if (e.name !== "CanceledError") setError(e.message);
+      if (e.name === "CanceledError") return;
+      setRecipes([]);
+      setError(e.response?.data?.message ?? e.message ?? "요청에 실패했어요.");
     })
-    .finally(() => setLoading(false));
+    .finally(() => {
+      if (!controller.signal.aborted) setLoading(false);
+    });
 
   return () => controller.abort();
-}, [joined]);
+}, [idsKey]);
 
   return (
     <div>
@@ -81,7 +93,7 @@ const RecipeRecommendPage = () => {
 
         <SummaryBox>
           <Text variant="cardTitle" >
-            선택한 재료 {ingredients.length}개
+            선택한 재료 {ingredientNames.length}개
           </Text>
           <Text variant="cardTitle">{joined || "-"}</Text>
           <Text variant="sub" color={colors.grey1}>

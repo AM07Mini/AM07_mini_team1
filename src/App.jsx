@@ -30,6 +30,11 @@ import MyPage from './features/mypage/page/MyPage';
 import ProfileEditPage from './features/mypage/page/ProfileEditPage';
 import PasswordChangePage from './features/mypage/page/PasswordChangePage';
 import FollowListPage from './features/mypage/page/FollowListPage';
+import CookAlbumPage from './features/mypage/page/CookAlbumPage';
+
+// cooking
+import CookingModePage from './features/cooking/page/CookingModePage';
+import CookingDonePage from './features/cooking/page/CookingDonePage';
 
 // feed
 import FeedPage from './features/feed/page/FeedPage';
@@ -120,6 +125,11 @@ const App = () => (
             <Route path="/mypage/edit" element={<ProfileEditPage />} />
             <Route path="/mypage/password" element={<PasswordChangePage />} />
             <Route path="/mypage/follow" element={<FollowListPage />} />
+            <Route path="/mypage/album" element={<CookAlbumPage />} />
+
+            {/* cooking */}
+            <Route path="/recipe/cook/:id" element={<CookingModePage />} />
+            <Route path="/recipe/cook/:id/done" element={<CookingDonePage />} />
 
             {/* feed */}
             <Route path="/feed" element={<FeedPage />} />
