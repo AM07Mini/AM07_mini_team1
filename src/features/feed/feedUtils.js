@@ -4,10 +4,8 @@ export const feedTabs = [
   { value: 'latest', title: '최신' },
 ];
 
-// 난이도 표기는 공용 utils/difficulty.js 사용
 export { formatDifficulty } from '../../utils/difficulty';
 
-// 숫자 표기(2.3천 등)는 공용 utils/format.js 사용
 export { formatCount } from '../../utils/format';
 
 export const formatAgo = (minutes) => {
