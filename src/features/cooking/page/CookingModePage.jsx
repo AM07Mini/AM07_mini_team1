@@ -19,11 +19,12 @@ import useCookingTimers from '../useCookingTimers';
 import { alertTimerDone, useScreenWakeLock } from '../cookingDevice';
 
 // 화면 높이에 딱 맞춤 — 위(상단바 · 진행 · 타이머)와 아래(버튼)는 고정, 가운데(사진 · 본문)만 스크롤
+// 가로 화면처럼 높이가 아주 낮으면 본문이 최소 높이를 지키도록 화면 전체가 스크롤됨 (버튼은 바닥에 붙어 있음)
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   height: 100dvh;
-  overflow: hidden;
+  overflow-y: auto;
   background-color: ${colors.white};
 `;
 
@@ -43,7 +44,7 @@ const Top = styled.div`
 // 스크롤되는 가운데 — 단계 사진 + 본문 (한 레시피 단계 글 합계 최대 1000자)
 const Body = styled.div`
   flex: 1;
-  min-height: 0;
+  min-height: 160px; // 낮은 화면에서도 사진 · 본문이 사라지지 않게
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -83,7 +84,8 @@ const Instruction = styled.p`
 
 // 본문이 아래로 더 있으면 위쪽에 옅은 그림자 — 스크롤할 게 남았다는 표시
 const Footer = styled.footer`
-  position: relative;
+  position: sticky;
+  bottom: 0;
   z-index: 1;
   flex-shrink: 0;
   padding-top: 12px;
@@ -202,10 +204,14 @@ const CookingModePage = () => {
     setMoreBelow(body.scrollHeight - body.scrollTop - body.clientHeight > 4);
     setScrolled(body.scrollTop > 4);
   };
+  // 단계가 바뀔 때만 맨 위로 — 타이머를 더하거나 지울 때는 읽던 위치 그대로, 그림자 표시만 다시 계산
   useEffect(() => {
     bodyRef.current?.scrollTo(0, 0);
     updateMoreBelow();
-  }, [stepIndex, recipe, timers.length]);
+  }, [stepIndex, recipe]);
+  useEffect(() => {
+    updateMoreBelow();
+  }, [timers.length]);
 
   // 요리 모드를 나가면 레시피 상세로 — 상세에서 들어왔으면 뒤로, 아니면 상세로 바꿔치기
   const leave = () => {
