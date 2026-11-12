@@ -553,7 +553,7 @@ const SignUpPage = () => {
                 placeholder={placeholder}
                 value={form[name]}
                 changeHandler={handleChange}
-                disabled={name === 'email' && checked.email}
+                disabled={name === 'email' && codeSent}
                 invalid={Boolean(errors[name])}
                 describedBy={
                   errors[name] ? `signup-${name}-error` : undefined
@@ -637,7 +637,7 @@ const SignUpPage = () => {
                 </FormMessage>
               )}
 
-              {name === 'email' && checked.email && (
+              {name === 'email' && codeSent && (
                 <Button
                   type="button"
                   variant="outline"
