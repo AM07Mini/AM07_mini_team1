@@ -432,10 +432,14 @@ const [steps, setSteps] = useState([
   const handleStepImageUpload = (index, e) => {
       const file = e.target.files[0];
       if (file) {
+        
         setSteps(prevSteps => {
           const newSteps = [...prevSteps];
           if (newSteps[index]) {
-            newSteps[index].imageFile = file;
+            newSteps[index] = {
+              ...newSteps[index],
+              imageFile: file
+            };
           }
           return newSteps;
         });
@@ -444,16 +448,18 @@ const [steps, setSteps] = useState([
         reader.onloadend = () => {
           setSteps(prevSteps => {
             const newSteps = [...prevSteps];
-
             if (newSteps[index] && newSteps[index].imageFile === file) {
-              newSteps[index].image = reader.result;
+              newSteps[index] = {
+                ...newSteps[index],
+                image: reader.result
+              };
             }
             return newSteps;
           });
         };
         reader.readAsDataURL(file);
       }
-  };
+    };
 
   const handleStepTextChange = (index, value) => {
     const newSteps = [...steps];
