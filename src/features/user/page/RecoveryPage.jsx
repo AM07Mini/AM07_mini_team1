@@ -98,8 +98,8 @@ const RecoveryPage = ({ purpose }) => {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [codeSent, setCodeSent] = useState(false);
+  const [sendFeedback, setSendFeedback] = useState('');
   const [completed, setCompleted] = useState(false);
-  const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [deadline, setDeadline] = useState(null);
@@ -137,9 +137,9 @@ const RecoveryPage = ({ purpose }) => {
     setCode('');
     setCodeSent(false);
     setCompleted(false);
+    setSendFeedback('');
     setDeadline(null);
     setRemaining(null);
-    setNotice('');
     setError('');
   };
 
@@ -147,6 +147,7 @@ const RecoveryPage = ({ purpose }) => {
     if (busyRef.current) return;
 
     const address = latestEmail.current.trim();
+    const isResend = codeSent;
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address)) {
       setError('올바른 이메일 주소를 입력해주세요.');
@@ -156,7 +157,7 @@ const RecoveryPage = ({ purpose }) => {
     busyRef.current = true;
     setLoading(true);
     setError('');
-    setNotice('');
+    setSendFeedback('');
 
     try {
       const { data } = await sendEmailCode(address, purpose);
@@ -181,7 +182,13 @@ const RecoveryPage = ({ purpose }) => {
           : null
       );
 
-      setNotice('인증번호 발송 요청이 접수되었습니다. 이메일을 확인해주세요.');
+      setSendFeedback(
+        isResend
+          ? '인증번호를 다시 발송했습니다. 이메일을 확인해주세요.'
+          : '인증번호를 발송했습니다. 이메일을 확인해주세요.'
+      );
+
+
     } catch (err) {
       if (latestEmail.current.trim() === address) {
         setError(getError(err));
@@ -212,7 +219,6 @@ const RecoveryPage = ({ purpose }) => {
     busyRef.current = true;
     setLoading(true);
     setError('');
-    setNotice('');
 
     try {
       const { data } = await verifyEmailCode(
@@ -371,6 +377,7 @@ const RecoveryPage = ({ purpose }) => {
                       latestCode.current = value;
                       setCode(value);
                       setError('');
+                      setSendFeedback('');
                     }}
                     invalid={Boolean(error)}
                   >
@@ -381,18 +388,23 @@ const RecoveryPage = ({ purpose }) => {
                     )}
                   </TextInput>
 
-                  <FormMessage $tone="success">
+                  <FormMessage $tone={expired ? 'error' : 'success'}>
                     {expired
                       ? '인증번호가 만료되었습니다. 다시 발송해주세요.'
-                      : '이메일로 받은 인증번호를 입력해주세요.'}
+                      : sendFeedback ||
+                        '이메일로 발송한 6자리 인증번호를 입력해주세요.'}
                   </FormMessage>
                 </>
               )}
 
-              {notice && <FormMessage role="status" $tone="success">{notice}</FormMessage>}
-              {error && (
-                <FormMessage $tone="error" role="alert">{error}</FormMessage>
+
+              {error &&
+                !(expired && error === '인증번호가 만료되었습니다. 다시 발송해주세요.') && (
+                  <FormMessage $tone="error" role="alert">
+                    {error}
+                  </FormMessage>
               )}
+
             </Fields>
 
             <BottomActions>
