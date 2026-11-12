@@ -73,6 +73,8 @@ const useCookingTimers = ({ finishHandler } = {}) => {
     setTimers((prev) =>
       prev.map((t) => {
         if (t.id !== id || t.done) return t;
+        // 이미 시간이 다 됐으면 멈추지 않음 — 다음 틱에 끝남 처리 · 알림이 그대로 이어지게
+        if (t.endAt !== null && t.endAt <= at) return t;
         return t.endAt === null
           ? { ...t, endAt: at + t.pausedRemainingMs }
           : { ...t, endAt: null, pausedRemainingMs: Math.max(0, t.endAt - at) };

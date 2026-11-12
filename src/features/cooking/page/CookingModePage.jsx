@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { getRecipeDetail } from '../../../api/recipeDetailApi';
 import ActionSheet from '../../../components/styled/ActionSheet';
@@ -119,12 +119,14 @@ const HIGHLIGHT_MS = 2000; // +N분 버튼 강조 · 토스트 시간
 const CookingModePage = () => {
   const { id } = useParams();
   const moveUrl = useNavigate();
+  // 레시피 상세에서 들어왔는지 — 후기 화면이나 주소로 바로 왔으면 나갈 때 상세로 보냄
+  const fromDetail = useLocation().state?.fromDetail === true;
 
   const [recipe, setRecipe] = useState(null);
   const [loadError, setLoadError] = useState('');
   const [stepIndex, setStepIndex] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [exitOpen, setExitOpen] = useState(false);
+  const [confirmKind, setConfirmKind] = useState(null); // 'exit'(✕) | 'finish'(요리 완료) — 타이머가 꺼지기 전에 물어봄
   const [menuTimerId, setMenuTimerId] = useState(null); // 메뉴를 연 작은 타이머
   const [lastAdded, setLastAdded] = useState(null); // { id, minutes } — 방금 누른 +N분
   const lastAddedTimer = useRef(null);
@@ -156,15 +158,22 @@ const CookingModePage = () => {
 
   useEffect(() => () => clearTimeout(lastAddedTimer.current), []);
 
-  // 요리 모드를 나가면 레시피 상세로 — 상세에서 들어왔으면 뒤로, 주소로 바로 왔으면 상세로 바꿔치기
+  // 요리 모드를 나가면 레시피 상세로 — 상세에서 들어왔으면 뒤로, 아니면 상세로 바꿔치기
   const leave = () => {
-    if (window.history.state?.idx > 0) moveUrl(-1);
+    if (fromDetail) moveUrl(-1);
     else moveUrl(`/recipe/read/${id}`, { replace: true });
   };
 
+  // 마지막 단계 → 요리 완료 (뒤로가기로 요리 모드에 다시 들어오지 않게 바꿔치기)
+  const finish = () => {
+    moveUrl(`/recipe/cook/${id}/done`, { replace: true, state: { title: recipe.title, fromDetail } });
+  };
+
+  const unfinishedCount = timers.filter((t) => !t.done).length;
+
   // ✕ — 타이머가 있으면 한 번 더 물어봄
   const closeHandler = () => {
-    if (timers.length > 0) setExitOpen(true);
+    if (timers.length > 0) setConfirmKind('exit');
     else leave();
   };
 
@@ -208,8 +217,9 @@ const CookingModePage = () => {
       window.scrollTo(0, 0);
       return;
     }
-    // 마지막 단계 → 요리 완료 (뒤로가기로 요리 모드에 다시 들어오지 않게 바꿔치기)
-    moveUrl(`/recipe/cook/${id}/done`, { replace: true, state: { title: recipe.title } });
+    // 아직 도는 타이머가 있으면 꺼지기 전에 확인
+    if (unfinishedCount > 0) setConfirmKind('finish');
+    else finish();
   };
 
   return (
@@ -290,16 +300,28 @@ const CookingModePage = () => {
         closeHandler={() => setMenuTimerId(null)}
       />
       <ConfirmDialog
-        open={exitOpen}
+        open={confirmKind === 'exit'}
         title="요리를 그만할까요?"
         description={`진행 중인 타이머 ${timers.length}개가 모두 꺼지고\n요리 기록은 남지 않아요.`}
         dangerTitle="그만하기"
         dangerHandler={() => {
-          setExitOpen(false);
+          setConfirmKind(null);
           leave();
         }}
         keepTitle="계속 요리하기"
-        closeHandler={() => setExitOpen(false)}
+        closeHandler={() => setConfirmKind(null)}
+      />
+      <ConfirmDialog
+        open={confirmKind === 'finish'}
+        title="요리를 완료할까요?"
+        description={`아직 도는 타이머 ${unfinishedCount}개가\n모두 꺼져요.`}
+        dangerTitle="완료하기"
+        dangerHandler={() => {
+          setConfirmKind(null);
+          finish();
+        }}
+        keepTitle="계속 요리하기"
+        closeHandler={() => setConfirmKind(null)}
       />
     </Wrapper>
   );

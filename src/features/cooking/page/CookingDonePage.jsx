@@ -176,9 +176,9 @@ const CookingDonePage = () => {
     setPhotoPreview(URL.createObjectURL(file));
   };
 
-  // 요리 모드는 이미 바꿔치기 되어 있으므로 뒤로 가면 레시피 상세
+  // 상세에서 시작했으면 뒤로(요리 모드는 이미 바꿔치기 되어 바로 상세), 아니면 상세로 바꿔치기
   const backToRecipe = () => {
-    if (window.history.state?.idx > 0) moveUrl(-1);
+    if (location.state?.fromDetail === true) moveUrl(-1);
     else moveUrl(`/recipe/read/${id}`, { replace: true });
   };
 
