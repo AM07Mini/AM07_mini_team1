@@ -199,8 +199,6 @@ const RemoveButton = styled.button`
 `;
 
 export default function IngredientSearchModal({ isOpen, onClose, onAddIngredients }) {
-  if (!isOpen) return null;
-
   const [keyword, setKeyword] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [tempSelected, setTempSelected] = useState([]); // 하단에 모아둘 선택된 재료들 [{ id, name, quantity }]
@@ -284,6 +282,8 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
     setSearchResults([]);
     onClose();
   };
+
+  if (!isOpen) return null;
 
   return (
     <Overlay>
