@@ -41,13 +41,7 @@ export const createIngredient = async (name) => {
 // 내 식재료 전체 교체
 export const updateMyIngredients = async (ingredientIds) => {
   try {
-    const response = await axios.put(
-      '/users/me/ingredients',
-      {
-        ingredientIds,
-      }
-    );
-
+    const response = await api.put('/users/me/ingredients', { ingredientIds });
     return response.data;
   } catch (error) {
     console.error('내 식재료 저장 API 에러:', error);
