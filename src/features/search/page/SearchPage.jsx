@@ -17,6 +17,8 @@ import {
 import { useAuth } from '../../../utils/context/AuthContext';
 import { colors, radius, shadows, font } from '../../../components/styled/theme';
 
+const MAX_HASHTAG_SUGGESTIONS = 30;
+
 const Page = styled.div`
   min-height: 100%;
   display: flex;
@@ -87,14 +89,17 @@ const SearchPage = () => {
     difficulty: [],
     maxCookingMinutes: [],
   });
+  const selectedKey = JSON.stringify(selected);
   const [hashtagCatalog, setHashtagCatalog] = useState(null);
   const [hashtagCatalogLoading, setHashtagCatalogLoading] = useState(false);
   const [hashtagCatalogError, setHashtagCatalogError] = useState('');
   const hashtagPrefix = query.match(/#([^#\s]*)$/)?.[1];
   const hashtagInputActive = hashtagPrefix !== undefined;
-  const hashtagOptions = hashtagCatalog?.filter((hashtag) =>
+  const matchingHashtags =
+    hashtagCatalog?.selectedKey === selectedKey ? hashtagCatalog.hashtags : [];
+  const hashtagOptions = matchingHashtags.filter((hashtag) =>
     hashtag.slice(1).toLocaleLowerCase().startsWith(hashtagPrefix?.toLocaleLowerCase() ?? ''),
-  ) ?? [];
+  ).slice(0, MAX_HASHTAG_SUGGESTIONS) ?? [];
   const [recipes, setRecipes] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -176,14 +181,18 @@ const SearchPage = () => {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (!hashtagInputActive || hashtagCatalog !== null) return undefined;
+    if (!hashtagInputActive || hashtagCatalog?.selectedKey === selectedKey) return undefined;
 
     const controller = new AbortController();
     setHashtagCatalogLoading(true);
     setHashtagCatalogError('');
 
     fetchSearchHashtags(selected, controller.signal)
-      .then(setHashtagCatalog)
+      .then((hashtags) => {
+        if (!controller.signal.aborted) {
+          setHashtagCatalog({ selectedKey, hashtags });
+        }
+      })
       .catch((requestError) => {
         if (!controller.signal.aborted) {
           setHashtagCatalogError(
@@ -198,7 +207,7 @@ const SearchPage = () => {
       });
 
     return () => controller.abort();
-  }, [hashtagInputActive, hashtagCatalog, selected]);
+  }, [hashtagInputActive, hashtagCatalog, selected, selectedKey]);
 
   const toggleFilter = (key, value, selectionMode, maxSelections) => {
     setSelected((current) => {

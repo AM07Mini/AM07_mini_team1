@@ -88,10 +88,10 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
   ];
 };
 
-export const fetchSearchRecipes = async (keyword, filters, signal, size = 20) => {
+export const fetchSearchRecipes = async (keyword, filters, signal, size = 20, page = 0) => {
   const params = {
     scope: 'PUBLIC',
-    page: 0,
+    page,
     size,
   };
   const normalizedKeyword = keyword.trim();
@@ -142,8 +142,17 @@ export const fetchSearchRecipes = async (keyword, filters, signal, size = 20) =>
 };
 
 export const fetchSearchHashtags = async (filters, signal) => {
-  const { recipes } = await fetchSearchRecipes('', filters, signal, 100);
-  return [...new Set(recipes.flatMap((recipe) => recipe.hashtags))];
+  const pageSize = 100;
+  const firstPage = await fetchSearchRecipes('', filters, signal, pageSize);
+  const hashtags = new Set(firstPage.recipes.flatMap((recipe) => recipe.hashtags));
+  const totalPages = Math.ceil(firstPage.totalElements / pageSize);
+
+  for (let page = 1; page < totalPages; page += 1) {
+    const result = await fetchSearchRecipes('', filters, signal, pageSize, page);
+    result.recipes.forEach((recipe) => recipe.hashtags.forEach((hashtag) => hashtags.add(hashtag)));
+  }
+
+  return signal.aborted ? [] : [...hashtags];
 };
 
 export const fetchRelaxedSearchSuggestions = async (keyword, selected, filters, signal) => {
