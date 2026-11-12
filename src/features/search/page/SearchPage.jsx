@@ -181,7 +181,12 @@ const SearchPage = () => {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    if (!hashtagInputActive || hashtagCatalog?.selectedKey === selectedKey) return undefined;
+    if (!hashtagInputActive) return undefined;
+    if (hashtagCatalog?.selectedKey === selectedKey) {
+      setHashtagCatalogLoading(false);
+      setHashtagCatalogError('');
+      return undefined;
+    }
 
     const controller = new AbortController();
     setHashtagCatalogLoading(true);
