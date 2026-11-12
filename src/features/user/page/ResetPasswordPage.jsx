@@ -22,6 +22,11 @@ const Content = styled.div`
   display: flex;
   flex-direction: column;
   padding: 32px ${PAGE_PADDING}px 24px;
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    padding-top: 16px;
+    padding-bottom: 12px;
+  }
 `;
 
 const Intro = styled.div`
@@ -38,6 +43,10 @@ const Fields = styled.div`
   display: flex;
   flex-direction: column;
   gap: 22px;
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    gap: 16px;
+  }
 `;
 
 const Field = styled.div`
@@ -61,6 +70,14 @@ const Hint = styled.span`
 const BottomArea = styled.div`
   margin-top: auto;
   padding-top: 32px;
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+    background: ${colors.white};
+  }
 `;
 
 const passwordRegex =
@@ -87,6 +104,12 @@ const ResetPasswordPage = () => {
       label: '8~20자',
       valid: password.length >= 8 && password.length <= 20,
     },
+    {
+      label: '허용 문자 사용',
+      valid:
+        password.length > 0 &&
+        /^[A-Za-z0-9!@#$%^&*]+$/.test(password),
+    }
   ];
 
   const passwordMatched =

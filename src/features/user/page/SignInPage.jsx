@@ -14,6 +14,11 @@ const Wrapper = styled.div`
   min-height: 100dvh;
   padding: clamp(40px, 9vh, 80px) ${PAGE_PADDING}px 32px;
   background: ${colors.white};
+
+  @media (max-width: 480px) and (max-height: 600px) {
+    padding-top: 16px;
+    padding-bottom: 24px;
+  }
 `;
 
 const Intro = styled.header`
@@ -21,6 +26,10 @@ const Intro = styled.header`
   flex-direction: column;
   align-items: center;
   gap: 18px;
+
+  @media (max-width: 480px) and (max-height: 600px) {
+    gap: 10px;
+  }
 `;
 
 const LogoCircle = styled.div`
@@ -40,6 +49,11 @@ const LoginForm = styled.form`
   flex-direction: column;
   gap: 16px;
   margin-top: 28px;
+
+  @media (max-width: 480px) and (max-height: 600px) {
+    gap: 12px;
+    margin-top: 18px;
+  }
 `;
 
 const LinkArea = styled.nav`
@@ -47,6 +61,10 @@ const LinkArea = styled.nav`
   justify-content: center;
   gap: 12px;
   margin-top: 17px;
+
+  @media (max-width: 480px) and (max-height: 600px) {
+    margin-top: 12px;
+  }
 `;
 
 const MenuLink = styled(Link)`
