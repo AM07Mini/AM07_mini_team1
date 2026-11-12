@@ -39,8 +39,10 @@ const Title = styled.h1`
 `;
 
 // 오른쪽 타이머 버튼 — 타이머가 있으면 옅은 민트, 도는 중이면 오른쪽 위 점
+// 오른쪽 여백에 딱 붙어 보이게 살짝 오른쪽으로 (왼쪽 ✕와 대칭)
 const TimerButton = styled.button`
   position: relative;
+  margin-right: -6px;
   display: flex;
   align-items: center;
   justify-content: center;

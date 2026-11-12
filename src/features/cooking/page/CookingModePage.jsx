@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { getRecipeDetail } from '../../../api/recipeDetailApi';
+import ActionSheet from '../../../components/styled/ActionSheet';
 import ConfirmDialog from '../../../components/styled/ConfirmDialog';
 import StatusMessage from '../../../components/styled/StatusMessage';
 import Toast, { useToast } from '../../../components/styled/Toast';
@@ -124,11 +125,12 @@ const CookingModePage = () => {
   const [stepIndex, setStepIndex] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [exitOpen, setExitOpen] = useState(false);
+  const [menuTimerId, setMenuTimerId] = useState(null); // 메뉴를 연 작은 타이머
   const [lastAdded, setLastAdded] = useState(null); // { id, minutes } — 방금 누른 +N분
   const lastAddedTimer = useRef(null);
   const [toast, showToast] = useToast(HIGHLIGHT_MS);
 
-  const { timers, now, addTimer, addTime, togglePause, removeTimer } = useCookingTimers({
+  const { timers, now, addTimer, addTime, togglePause, resetTimer, removeTimer } = useCookingTimers({
     finishHandler: alertTimerDone,
   });
 
@@ -179,10 +181,15 @@ const CookingModePage = () => {
     lastAddedTimer.current = setTimeout(() => setLastAdded(null), HIGHLIGHT_MS);
   };
 
-  // 작은 칩 — 끝난 것은 확인(빼기), 나머지는 멈춤/다시 시작
+  // 작은 칩 — 끝난 것은 확인(빼기), 나머지는 일시정지/삭제 메뉴
   const chipHandler = (timer) => {
     if (timer.done) removeTimer(timer.id);
-    else togglePause(timer.id);
+    else setMenuTimerId(timer.id);
+  };
+
+  const resetHandler = (timerId) => {
+    resetTimer(timerId);
+    showToast('메인 타이머를 처음 시간으로 되돌렸어요');
   };
 
   if (loadError) return <StatusMessage message={loadError} />;
@@ -190,7 +197,8 @@ const CookingModePage = () => {
 
   const steps = recipe.steps.length > 0 ? recipe.steps : ['조리 순서가 아직 없어요. 레시피를 보며 요리해 주세요.'];
   const isLast = stepIndex === steps.length - 1;
-  const stepPhoto = recipe.stepImages[stepIndex + 1];
+  const stepPhoto = recipe.stepImages[stepIndex + 1] ?? recipe.image;
+  const menuTimer = timers.find((t) => t.id === menuTimerId && !t.done);
   const finishedTimer = timers.find((t) => t.done); // 먼저 끝난 것부터 하나씩 알림
 
   const nextHandler = () => {
@@ -221,12 +229,13 @@ const CookingModePage = () => {
             lastAdded={lastAdded}
             addTimeHandler={addTimeHandler}
             togglePauseHandler={togglePause}
+            resetHandler={resetHandler}
             chipHandler={chipHandler}
             newTimerHandler={() => setSheetOpen(true)}
           />
         )}
-        {/* 이 단계의 사진 — 작성자가 올린 단계만 보임 (단계별 재료는 API에 없어서 표시하지 않음) */}
-        {stepPhoto && <StepPhoto key={stepPhoto} src={stepPhoto} alt={`STEP ${stepIndex + 1} 사진`} />}
+        {/* 이 단계의 사진 — 없으면 레시피 대표 사진 (단계별 재료는 API에 없어서 표시하지 않음) */}
+        {stepPhoto && <StepPhoto key={stepPhoto} src={stepPhoto} alt="" />}
         <Instruction $compact={timers.length > 0} aria-live="polite">
           {steps[stepIndex]}
         </Instruction>
@@ -262,6 +271,22 @@ const CookingModePage = () => {
         stepNumber={stepIndex + 1}
         closeHandler={() => setSheetOpen(false)}
         startHandler={startTimerHandler}
+      />
+      <ActionSheet
+        open={Boolean(menuTimer)}
+        title={menuTimer ? `${menuTimer.name} 타이머` : ''}
+        actions={
+          menuTimer
+            ? [
+                {
+                  title: menuTimer.endAt === null ? '다시 시작' : '일시정지',
+                  onClick: () => togglePause(menuTimer.id),
+                },
+                { title: '삭제', danger: true, onClick: () => removeTimer(menuTimer.id) },
+              ]
+            : []
+        }
+        closeHandler={() => setMenuTimerId(null)}
       />
       <ConfirmDialog
         open={exitOpen}

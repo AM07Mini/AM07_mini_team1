@@ -51,6 +51,13 @@ const paths = {
   // 타이머 멈춤 · 다시 시작 (채워서 씀)
   pause: <path d="M8 6h3v12H8zM13 6h3v12h-3z" />,
   play: <path d="M8 5.5v13l10-6.5z" />,
+  // 초기화 — 시계 반대 방향 화살표
+  reset: (
+    <>
+      <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" />
+      <path d="M4.5 4v4h4" />
+    </>
+  ),
   // 북마크 — filled로 채우면 저장된 상태
   bookmark: <path d="M6 3h12v18l-6-4.5L6 21z" />,
   // 가운데 플로팅 버튼 — 셰프 모자
