@@ -60,14 +60,6 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
 
   return [
     makeFilter(
-      'flavorIds',
-      '맛',
-      flavors,
-      'multiple',
-      flavorsOutcome.status === 'rejected' ? '맛 필터를 불러오지 못했습니다.' : '',
-      2,
-    ),
-    makeFilter(
       'foodTypeId',
       '음식 종류',
       foodTypes,
@@ -85,13 +77,21 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
           ? '카테고리를 불러오지 못했습니다.'
           : '',
     ),
+    makeFilter(
+      'flavorIds',
+      '맛',
+      flavors,
+      'multiple',
+      flavorsOutcome.status === 'rejected' ? '맛 필터를 불러오지 못했습니다.' : '',
+      2,
+    ),
   ];
 };
 
-export const fetchSearchRecipes = async (keyword, filters, signal, size = 20) => {
+export const fetchSearchRecipes = async (keyword, filters, signal, size = 20, page = 0) => {
   const params = {
     scope: 'PUBLIC',
-    page: 0,
+    page,
     size,
   };
   const normalizedKeyword = keyword.trim();
@@ -128,12 +128,31 @@ export const fetchSearchRecipes = async (keyword, filters, signal, size = 20) =>
       id: recipe.id,
       title: recipe.title,
       image: recipe.thumbnailUrl,
+      hashtags: Array.isArray(recipe.hashtags)
+        ? recipe.hashtags
+            .filter((hashtag) => typeof hashtag === 'string')
+            .map((hashtag) => (hashtag.startsWith('#') ? hashtag : `#${hashtag}`))
+        : [],
       meta:
         formatDifficulty(recipe.difficulty, recipe.cookingMinutes) ||
         '난이도 정보 없음',
     })),
     totalElements: result.totalElements,
   };
+};
+
+export const fetchSearchHashtags = async (filters, signal) => {
+  const pageSize = 100;
+  const firstPage = await fetchSearchRecipes('', filters, signal, pageSize);
+  const hashtags = new Set(firstPage.recipes.flatMap((recipe) => recipe.hashtags));
+  const totalPages = Math.ceil(firstPage.totalElements / pageSize);
+
+  for (let page = 1; page < totalPages; page += 1) {
+    const result = await fetchSearchRecipes('', filters, signal, pageSize, page);
+    result.recipes.forEach((recipe) => recipe.hashtags.forEach((hashtag) => hashtags.add(hashtag)));
+  }
+
+  return signal.aborted ? [] : [...hashtags];
 };
 
 export const fetchRelaxedSearchSuggestions = async (keyword, selected, filters, signal) => {
