@@ -14,7 +14,7 @@ import { formatDayTitle, toDateKey, toMonthKey } from '../../../utils/calendar';
 import { isAuthError } from '../authError';
 import AlbumDayPhotoItem from '../item/AlbumDayPhotoItem';
 import AlbumShareSheet from '../item/AlbumShareSheet';
-import { createAlbumShareImage, downloadBlob } from '../albumShareImage';
+import { canDownloadFile, createAlbumShareImage, downloadBlob } from '../albumShareImage';
 import AlbumCalendar from '../list/AlbumCalendar';
 import AlbumPhotoList from '../list/AlbumPhotoList';
 
@@ -213,6 +213,10 @@ const CookAlbumPage = () => {
   // 공유 시트
   const [shareOpen, setShareOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [nicknameStatus, setNicknameStatus] = useState('idle'); // idle · loading · done(성공이든 실패든)
+  const [previewUrl, setPreviewUrl] = useState(null); // 내려받기가 막힌 브라우저에서 보여 줄 이미지
+  // 저장 차례 번호 — 시트를 닫거나 화면을 떠나면 올려서, 늦게 끝난 저장이 파일을 내려받지 않게
+  const saveRunRef = useRef(0);
   const [nickname, setNickname] = useState('');
   const [toast, showToast] = useToast();
 
@@ -327,24 +331,65 @@ const CookAlbumPage = () => {
     setSearchParams(value === 'calendar' ? { view: 'calendar' } : {}, { replace: true });
   };
 
-  // 공유 카드 제목에 쓸 닉네임 — 처음 열 때 한 번만
+  // 공유 카드 제목에 쓸 닉네임 — 처음 열 때 한 번만 (실패하면 닉네임 없이 "11월"로)
   const openShare = async () => {
     setShareOpen(true);
-    if (nickname) return;
+    if (nicknameStatus !== 'idle') return;
+    setNicknameStatus('loading');
     try {
       const { data } = await api.get('/users/me', { timeout: 10_000 });
       setNickname(data.result?.nickname ?? '');
     } catch (e) {
       console.error(e);
+    } finally {
+      setNicknameStatus('done');
     }
   };
 
+  // 시트를 닫으면 진행 중인 저장은 취소 (끝나도 내려받지 않음), 띄워 둔 이미지도 정리
+  const closeShare = () => {
+    saveRunRef.current += 1;
+    setShareOpen(false);
+    setSaving(false);
+    setPreviewUrl((url) => {
+      if (url) URL.revokeObjectURL(url);
+      return null;
+    });
+  };
+
+  // 화면을 떠나면(뒤로가기 등) 진행 중인 저장 취소
+  useEffect(
+    () => () => {
+      saveRunRef.current += 1;
+    },
+    [],
+  );
+
+  // 만드는 동안 탭을 닫거나 새로고침하려 하면 한 번 물어봄 (PC 브라우저 — 휴대폰은 대부분 묻지 않고 닫힘)
+  useEffect(() => {
+    if (!saving) return undefined;
+    const beforeUnloadHandler = (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', beforeUnloadHandler);
+    return () => window.removeEventListener('beforeunload', beforeUnloadHandler);
+  }, [saving]);
+
+  // 아직 저장하면 안 되는 이유 — 달 사진을 다 받기 전이면 카드가 비어 보이므로 기다림
+  let saveBlockedReason = null;
+  if (moreFailed) saveBlockedReason = '사진을 다 불러오지 못했어요';
+  else if (monthNeedsMore) saveBlockedReason = '사진 불러오는 중…';
+  else if (nicknameStatus === 'loading') saveBlockedReason = '준비하는 중…';
+
   // 공유 카드 → 1080×1350 PNG로 내려받기 (파일 이름: recipely-2026-11.png)
   const saveImage = async () => {
-    if (saving) return;
+    if (saving || saveBlockedReason) return;
+    saveRunRef.current += 1;
+    const run = saveRunRef.current;
     setSaving(true);
     try {
-      const blob = await createAlbumShareImage({
+      const { blob, missingCount } = await createAlbumShareImage({
         nickname,
         year,
         month,
@@ -352,13 +397,22 @@ const CookAlbumPage = () => {
         photosByDay,
         photoCount: monthPhotoCount,
       });
-      downloadBlob(blob, `recipely-${toMonthKey(year, month)}.png`);
-      showToast('이미지를 저장했어요');
+      if (run !== saveRunRef.current) return; // 그사이 시트를 닫았거나 화면을 떠남
+      if (canDownloadFile()) {
+        downloadBlob(blob, `recipely-${toMonthKey(year, month)}.png`);
+        showToast(
+          missingCount > 0
+            ? `사진 ${missingCount}장을 불러오지 못해 빈 칸으로 저장했어요`
+            : '이미지를 저장했어요',
+        );
+      } else {
+        setPreviewUrl(URL.createObjectURL(blob));
+      }
     } catch (e) {
       console.error(e);
-      showToast('이미지를 만들지 못했어요. 잠시 뒤 다시 해 주세요.');
+      if (run === saveRunRef.current) showToast('이미지를 만들지 못했어요. 잠시 뒤 다시 해 주세요.');
     } finally {
-      setSaving(false);
+      if (run === saveRunRef.current) setSaving(false);
     }
   };
 
@@ -486,8 +540,10 @@ const CookAlbumPage = () => {
       </Wrapper>
       <AlbumShareSheet
         open={shareOpen}
-        closeHandler={() => setShareOpen(false)}
+        closeHandler={closeShare}
         saving={saving}
+        blockedReason={saveBlockedReason}
+        previewUrl={previewUrl}
         saveHandler={saveImage}
         nickname={nickname}
         year={year}

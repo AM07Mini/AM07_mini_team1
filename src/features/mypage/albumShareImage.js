@@ -24,14 +24,26 @@ const setFont = (ctx, size, weight) => {
   ctx.font = `${weight} ${size}px ${fontFamily()}`;
 };
 
-// 사진 불러오기 — 실패하면 null (그날은 사진 없는 칸처럼 그림)
+const IMAGE_TIMEOUT_MS = 10_000; // 사진 한 장을 기다리는 최대 시간 (느린 망에서 저장이 끝없이 멈추지 않게)
+
+// 사진 불러오기 — 실패하거나 너무 오래 걸리면 null (그날은 사진 없는 칸처럼 그림)
 // 화면에서 이미 CORS 없이 불러온 사진이 캐시에 남아 있으면 막힐 수 있어서 주소 끝에 표시를 붙여 새로 받음
 const loadImage = (url) =>
   new Promise((resolve) => {
     const image = new Image();
+    const timer = setTimeout(() => {
+      image.src = '';
+      resolve(null);
+    }, IMAGE_TIMEOUT_MS);
     image.crossOrigin = 'anonymous';
-    image.onload = () => resolve(image);
-    image.onerror = () => resolve(null);
+    image.onload = () => {
+      clearTimeout(timer);
+      resolve(image);
+    };
+    image.onerror = () => {
+      clearTimeout(timer);
+      resolve(null);
+    };
     image.src = `${url}${url.includes('?') ? '&' : '?'}share=1`;
   });
 
@@ -68,16 +80,20 @@ const fitText = (ctx, text, maxWidth) => {
   return `${cut}…`;
 };
 
-// 카드 그리기 → PNG Blob
+// 카드 그리기 → { blob: PNG, missingCount: 못 불러와 빈 칸으로 그린 사진 수 }
 // photosByDay: { "2026-11-12": [사진, ...] } (각 날짜 최신순) — 그날 가장 최근 사진 한 장을 씀
 export const createAlbumShareImage = async ({ nickname, year, month, isCurrentMonth, photosByDay, photoCount }) => {
   await document.fonts?.ready;
 
   const { firstWeekday, days } = getMonthInfo(year, month);
+  let missingCount = 0;
   const dayPhotos = await Promise.all(
-    Array.from({ length: days }, (_, index) => {
+    Array.from({ length: days }, async (_, index) => {
       const photo = photosByDay[toDateKey(new Date(year, month, index + 1))]?.[0];
-      return photo ? loadImage(photo.imageUrl) : null;
+      if (!photo) return null;
+      const image = await loadImage(photo.imageUrl);
+      if (!image) missingCount += 1;
+      return image;
     }),
   );
 
@@ -151,9 +167,18 @@ export const createAlbumShareImage = async ({ nickname, year, month, isCurrentMo
 
   // 다른 사이트 사진이 막혀 그림판이 "오염"되면 여기서 SecurityError가 남
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('이미지를 만들지 못했어요.'))), 'image/png');
+    canvas.toBlob(
+      (blob) => (blob ? resolve({ blob, missingCount }) : reject(new Error('이미지를 만들지 못했어요.'))),
+      'image/png',
+    );
   });
 };
+
+// 파일 내려받기가 되는 브라우저인지 — 카카오톡 · 인스타그램 · 페이스북 · 라인 · 네이버 앱 안의 브라우저는
+// 내려받기를 막는 경우가 많아서, 이때는 이미지를 화면에 띄워 길게 눌러 저장하게 함
+const IN_APP_BROWSER = /KAKAOTALK|Instagram|FBAN|FBAV|Line\/|NAVER\(inapp/i;
+export const canDownloadFile = () =>
+  'download' in HTMLAnchorElement.prototype && !IN_APP_BROWSER.test(navigator.userAgent);
 
 // Blob을 파일로 내려받기 — 휴대폰은 브라우저의 다운로드 · 사진 저장 흐름을 따름
 export const downloadBlob = (blob, fileName) => {
