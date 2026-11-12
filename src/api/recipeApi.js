@@ -15,10 +15,11 @@ export const uploadThumbnail = async (recipeId, imageFile) => {
   return response.data;
 };
 
-export const searchIngredients = async (keyword) => {
+// size를 안 넘기면 서버 기본값(20개)
+export const searchIngredients = async (keyword, size) => {
   try {
     const response = await api.get('/ingredients', {
-      params: { keyword }
+      params: { keyword, size }
     });
     return response.data.result?.content || [];
   } catch (error) {
