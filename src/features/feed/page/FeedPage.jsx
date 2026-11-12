@@ -31,7 +31,7 @@ const fetcherByTab = {
 const FeedPage = () => {
   const [tab, setTab] = useState('following');
   const { isLoggedIn, user } = useAuth();
-  // 비로그인인데 팔로잉 탭이면 호출하지 않음 (401이 나니까)
+  // 비로그인인데 팔로잉 탭이면 호출하지 않음 (401)
   const needLogin = tab === 'following' && !isLoggedIn;
 
   // 탭이 바뀌면 함수가 바뀌어서 첫 페이지부터 다시 불러옴

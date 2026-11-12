@@ -28,7 +28,6 @@ export const NoticeAction = styled.button`
   cursor: pointer;
 `;
 
-// 무한 스크롤 감지용 (화면에 보이면 다음 페이지 요청)
 export const Sentinel = styled.div`
   height: 1px;
 `;
