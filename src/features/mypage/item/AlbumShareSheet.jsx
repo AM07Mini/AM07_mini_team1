@@ -10,28 +10,18 @@ const Hint = styled.p`
   color: ${colors.grey2};
 `;
 
-const Buttons = styled.div`
-  display: flex;
-  gap: 10px;
+const SaveBox = styled.div`
   width: 100%;
-
-  // 피그마처럼 두 버튼을 같은 높이로
-  button {
-    flex: 1;
-    height: 50px;
-  }
 `;
 
-// 이미지로 공유 — 달력 그대로가 아니라 공유용 카드(4:5)를 보여 주고 저장 · 공유
-// TODO: 이미지 저장 · 공유하기 동작은 방식을 정한 뒤 연결
-const AlbumShareSheet = ({ open, closeHandler, saveHandler, shareHandler, ...cardProps }) => (
-  <BottomSheet open={open} title="이미지로 공유" closeHandler={closeHandler}>
+// 이미지로 저장 — 달력 그대로가 아니라 공유용 카드(4:5, 1080×1350 PNG)를 저장
+const AlbumShareSheet = ({ open, saving, closeHandler, saveHandler, ...cardProps }) => (
+  <BottomSheet open={open} title="이미지로 저장" closeHandler={closeHandler}>
     <AlbumShareCard {...cardProps} />
     <Hint>달력 그대로가 아니라 공유용 카드로 저장돼요</Hint>
-    <Buttons>
-      <Button title="이미지 저장" variant="outline" onClick={saveHandler} />
-      <Button title="공유하기" onClick={shareHandler} />
-    </Buttons>
+    <SaveBox>
+      <Button title={saving ? '이미지 만드는 중…' : '이미지 저장'} disabled={saving} onClick={saveHandler} />
+    </SaveBox>
   </BottomSheet>
 );
 

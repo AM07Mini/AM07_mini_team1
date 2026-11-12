@@ -14,6 +14,7 @@ import { formatDayTitle, toDateKey, toMonthKey } from '../../../utils/calendar';
 import { isAuthError } from '../authError';
 import AlbumDayPhotoItem from '../item/AlbumDayPhotoItem';
 import AlbumShareSheet from '../item/AlbumShareSheet';
+import { createAlbumShareImage, downloadBlob } from '../albumShareImage';
 import AlbumCalendar from '../list/AlbumCalendar';
 import AlbumPhotoList from '../list/AlbumPhotoList';
 
@@ -211,6 +212,7 @@ const CookAlbumPage = () => {
 
   // 공유 시트
   const [shareOpen, setShareOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [nickname, setNickname] = useState('');
   const [toast, showToast] = useToast();
 
@@ -337,6 +339,29 @@ const CookAlbumPage = () => {
     }
   };
 
+  // 공유 카드 → 1080×1350 PNG로 내려받기 (파일 이름: recipely-2026-11.png)
+  const saveImage = async () => {
+    if (saving) return;
+    setSaving(true);
+    try {
+      const blob = await createAlbumShareImage({
+        nickname,
+        year,
+        month,
+        isCurrentMonth,
+        photosByDay,
+        photoCount: monthPhotoCount,
+      });
+      downloadBlob(blob, `recipely-${toMonthKey(year, month)}.png`);
+      showToast('이미지를 저장했어요');
+    } catch (e) {
+      console.error(e);
+      showToast('이미지를 만들지 못했어요. 잠시 뒤 다시 해 주세요.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   let content;
   if (error) {
     content = <StatusMessage message={error.message} needLogin={error.needLogin} />;
@@ -450,6 +475,7 @@ const CookAlbumPage = () => {
         title="요리 앨범"
         showBack
         rightIcon={view === 'calendar' && !error ? 'share' : undefined}
+        rightLabel="이미지로 저장"
         rightClickHandler={openShare}
       />
       <Wrapper>
@@ -461,9 +487,8 @@ const CookAlbumPage = () => {
       <AlbumShareSheet
         open={shareOpen}
         closeHandler={() => setShareOpen(false)}
-        // TODO: 이미지로 저장 · 공유 방식을 정한 뒤 연결
-        saveHandler={() => showToast('이미지 저장은 곧 연결할게요')}
-        shareHandler={() => showToast('공유하기는 곧 연결할게요')}
+        saving={saving}
+        saveHandler={saveImage}
         nickname={nickname}
         year={year}
         month={month}
