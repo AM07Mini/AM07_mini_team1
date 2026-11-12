@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
@@ -6,7 +6,8 @@ import { getTrendingPage } from '../../../api/feedApi';
 import { toTrendingRow } from '../feedMapper';
 import { Notice, NoticeAction } from '../feedStyles';
 import usePagedList from '../hooks/usePagedList';
-import { countMissing, getMyIngredientNames } from '../myIngredients';
+import { countMissing } from '../myIngredients';
+import useMyIngredients from '../hooks/useMyIngredients';
 import UnderlineTab from '../../../components/styled/UnderlineTab';
 import IngredientFilter from '../item/IngredientFilter';
 import LikePeriodSelect from '../item/LikePeriodSelect';
@@ -31,6 +32,17 @@ const Caption = styled.p`
   margin: -8px 0 0;
   ${font('caption')}
   color: ${colors.grey1};
+`;
+
+const CaptionAction = styled.button`
+  padding: 0;
+  border: none;
+  background: none;
+  ${font('caption')}
+  color: ${colors.primary};
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
 `;
 
 const List = styled.div`
@@ -60,9 +72,15 @@ const TrendingPage = () => {
   const [period, setPeriod] = useState('WEEKLY');
   const sort = tab === 'LATEST' ? 'LATEST' : period;
   const ranked = tab === 'POPULAR';
-  const [onlyMine, setOnlyMine] = useState(false);
-  const myIngredients = useMemo(() => getMyIngredientNames(), []);
+  const [onlyMineChecked, setOnlyMine] = useState(false);
+  const {
+    names: myIngredients,
+    status: myIngredientStatus,
+    reload: reloadMyIngredients,
+  } = useMyIngredients();
   const hasMyIngredients = myIngredients.length > 0;
+  // 로그아웃 등으로 재료가 없어지면 토글이 켜져 있어도 거르지 않음
+  const onlyMine = onlyMineChecked && hasMyIngredients;
 
   const fetchPage = useCallback(
     (page) =>
@@ -136,7 +154,16 @@ const TrendingPage = () => {
         </Controls>
         <Caption>
           {captionBySort[sort]}
-          {!hasMyIngredients && ' 재료를 등록하면 "내 재료로만"을 쓸 수 있어요.'}
+          {myIngredientStatus === 'needLogin' && ' 로그인하면 "내 재료로만"을 쓸 수 있어요.'}
+          {myIngredientStatus === 'done' && !hasMyIngredients && ' 재료를 등록하면 "내 재료로만"을 쓸 수 있어요.'}
+          {myIngredientStatus === 'error' && (
+            <>
+              {' 내 재료를 불러오지 못했어요. '}
+              <CaptionAction type="button" onClick={reloadMyIngredients}>
+                다시 시도
+              </CaptionAction>
+            </>
+          )}
         </Caption>
         {renderList()}
       </Wrapper>
