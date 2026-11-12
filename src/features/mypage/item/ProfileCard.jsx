@@ -72,7 +72,7 @@ const StatName = styled.span`
 
 // 프로필 카드 — 사진·닉네임·소개, 요리 앨범·팔로워·팔로잉 수, 프로필 편집 버튼
 // 요리 앨범 → /mypage/album, 팔로워 · 팔로잉 → /mypage/follow?tab=...
-// 요리 앨범 수는 아직 API에 없어서 0 (albumCount가 생기면 그대로 표시)
+// 요리 앨범 수는 /users/me의 albumCount (없으면 0)
 const ProfileCard = ({ profile, editHandler }) => {
   const stats = [
     { name: '요리 앨범', value: profile.albumCount ?? 0, to: '/mypage/album' },

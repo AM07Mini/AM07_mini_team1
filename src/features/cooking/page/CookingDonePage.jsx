@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import styled from 'styled-components';
+import { addAlbumPhoto, ALBUM_PHOTO_MAX_BYTES, ALBUM_PHOTO_TYPES } from '../../../api/albumApi';
 import Button from '../../../components/styled/Button';
 import Icon from '../../../components/styled/Icon';
 import { colors, font, PAGE_PADDING, TOP_BAR_HEIGHT } from '../../../components/styled/theme';
@@ -152,13 +153,16 @@ const Buttons = styled.div`
 `;
 
 // 요리 완료 — 요리 모드 마지막 단계에서 "요리 완료"를 누르면 옴
-// 완성 사진은 지금은 미리보기만 (사진 올리기 API가 생기면 연결)
+// 완성 사진은 고르는 동안 미리보기만 하고(바꿀 수 있게), 이 화면을 떠날 때 요리 앨범에 올림
+// (✕ · 후기 남기기 · 레시피로 돌아가기 모두) — 사진 없이 닫으면 앨범에 올라가지 않음
 const CookingDonePage = () => {
   const { id } = useParams();
   const location = useLocation();
   const moveUrl = useNavigate();
   const fileInputRef = useRef(null);
+  const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const recipeTitle = location.state?.title;
 
@@ -169,23 +173,51 @@ const CookingDonePage = () => {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      window.alert('사진 파일만 올릴 수 있어요.');
+    if (!ALBUM_PHOTO_TYPES.includes(file.type)) {
+      window.alert('jpg, png, webp, gif 사진만 올릴 수 있어요.');
       return;
     }
+    if (file.size > ALBUM_PHOTO_MAX_BYTES) {
+      window.alert('5MB 이하 사진만 올릴 수 있어요.');
+      return;
+    }
+    setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
   };
 
-  // 상세에서 시작했으면 뒤로(요리 모드는 이미 바꿔치기 되어 바로 상세), 아니면 상세로 바꿔치기
-  const backToRecipe = () => {
-    if (location.state?.fromDetail === true) moveUrl(-1);
-    else moveUrl(`/recipe/read/${id}`, { replace: true });
+  // 떠나기 전에 고른 사진을 앨범에 올림 — 실패하면 다시 시도하거나 사진 없이 나갈 수 있게 물어봄
+  const leaveWith = async (go) => {
+    if (uploading) return;
+    if (!photoFile) {
+      go();
+      return;
+    }
+    setUploading(true);
+    try {
+      await addAlbumPhoto(id, photoFile);
+      go();
+    } catch (e) {
+      console.error(e);
+      setUploading(false);
+      const reason = e.response?.data?.message ?? '사진을 앨범에 올리지 못했어요.';
+      if (window.confirm(`${reason}
+사진 없이 나갈까요? (취소를 누르면 이 화면에 남아요)`)) go();
+    }
   };
+
+  // 상세에서 시작했으면 뒤로(요리 모드는 이미 바꿔치기 되어 바로 상세), 아니면 상세로 바꿔치기
+  const backToRecipe = () =>
+    leaveWith(() => {
+      if (location.state?.fromDetail === true) moveUrl(-1);
+      else moveUrl(`/recipe/read/${id}`, { replace: true });
+    });
+
+  const goReview = () => leaveWith(() => moveUrl(`/recipe/${id}/reviews`, { replace: true }));
 
   return (
     <Wrapper>
       <Header>
-        <CloseButton type="button" aria-label="닫기" onClick={backToRecipe}>
+        <CloseButton type="button" aria-label="닫기" disabled={uploading} onClick={backToRecipe}>
           <Icon name="close" size={22} strokeWidth={2.2} />
         </CloseButton>
       </Header>
@@ -201,9 +233,16 @@ const CookingDonePage = () => {
           <br />
           완성 사진과 후기를 남기면 다른 사람에게 큰 도움이 돼요.
         </Description>
-        <input ref={fileInputRef} type="file" accept="image/*" hidden onChange={photoChangeHandler} />
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={ALBUM_PHOTO_TYPES.join(',')}
+          hidden
+          onChange={photoChangeHandler}
+        />
         <PhotoBox
           type="button"
+          disabled={uploading}
           aria-label={photoPreview ? '완성 사진 바꾸기' : '완성 사진 올리기'}
           onClick={() => fileInputRef.current?.click()}
         >
@@ -226,8 +265,8 @@ const CookingDonePage = () => {
         <SubNote>사진 없이 닫으면 앨범에는 올라가지 않아요</SubNote>
       </Body>
       <Buttons>
-        <Button title="후기 남기기" onClick={() => moveUrl(`/recipe/${id}/reviews`, { replace: true })} />
-        <Button title="레시피로 돌아가기" variant="outline" onClick={backToRecipe} />
+        <Button title={uploading ? '사진 올리는 중…' : '후기 남기기'} disabled={uploading} onClick={goReview} />
+        <Button title="레시피로 돌아가기" variant="outline" disabled={uploading} onClick={backToRecipe} />
       </Buttons>
     </Wrapper>
   );
