@@ -50,6 +50,14 @@ const Field = styled.div`
   gap: 7px;
 `;
 
+const CheckMark = styled.span`
+  flex-shrink: 0;
+  padding-right: 6px;
+  color: #16a34a;
+  font-size: 22px;
+  font-weight: 700;
+`;
+
 // 인증번호 남은 시간 표시
 const Timer = styled.span`
   flex-shrink: 0;
@@ -136,7 +144,49 @@ const SignUpPage = () => {
 
   const expired = deadline !== null && remaining === 0;
 
-  const visibleFields = fields.filter(f => f.name !== 'code' || codeSent);
+  const visibleFields = fields.filter(
+    f => f.name !== 'code' || (codeSent && !emailVerified)
+  );
+
+
+  const passwordValid =
+    Boolean(form.password) &&
+    !validate('password', form.password);
+
+  // 각 필드의 확인 완료 여부
+  const isFieldComplete = (name) => {
+    if (name === 'loginId' || name === 'nickname') {
+      return checked[name] && !errors[name];
+    }
+
+    if (name === 'email') {
+      return emailVerified && !expired && !errors.email;
+    }
+
+    if (name === 'password') {
+      return passwordValid && !errors.password;
+    }
+
+    if (name === 'confirmPassword') {
+      return (
+        passwordValid &&
+        Boolean(form.confirmPassword) &&
+        form.password === form.confirmPassword &&
+        !errors.confirmPassword
+      );
+    }
+
+    return false;
+  };
+
+  // 이메일 버튼의 단계별 제목
+  const emailActionTitle = !checked.email
+    ? '중복 확인'
+    : codeSent
+      ? '재발송'
+      : '인증번호 발송';
+
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -152,6 +202,7 @@ const SignUpPage = () => {
       ...prev,
       [name]: '',
       ...(name === 'email' && { code: '' }),
+      ...(name === 'password' && { confirmPassword: '' }),
     }));
     setNotice('');
 
@@ -166,6 +217,50 @@ const SignUpPage = () => {
       setRemaining(null);
     }
     if (name === 'code') setEmailVerified(false);
+  };
+
+
+  const handleChangeEmail = () => {
+    if (loading || !checked.email) return;
+
+    // 인증번호 발송 이후에는 경고 표시
+    if (codeSent) {
+      const confirmed = window.confirm(
+        '이메일을 변경하시겠습니까?\n\n' +
+        '이메일을 변경하면 기존 인증이 취소되며,\n' +
+        '새로운 이메일로 다시 인증해야 합니다.'
+      );
+
+      if (!confirmed) return;
+    }
+
+    const next = {
+      ...latestForm.current,
+      email: '',
+      code: '',
+    };
+
+    latestForm.current = next;
+    setForm(next);
+
+    setChecked(prev => ({
+      ...prev,
+      email: false,
+    }));
+
+    setCodeSent(false);
+    setEmailVerified(false);
+
+    setDeadline(null);
+    setRemaining(null);
+
+    setErrors(prev => ({
+      ...prev,
+      email: '',
+      code: '',
+    }));
+
+    setNotice('');
   };
 
   const handleCheck = async (name) => {
@@ -216,11 +311,15 @@ const SignUpPage = () => {
   };
 
   const handleSendCode = async () => {
-    if (!checked.email || loading) return;
+    if (
+      !checked.email ||
+      loading ||
+      (emailVerified && !expired)
+    ) return;
 
-    const email = form.email.trim();
+    const email = latestForm.current.email.trim();
+
     setLoading(true);
-    setEmailVerified(false);
     setNotice('');
 
     setErrors(prev => ({
@@ -248,6 +347,7 @@ const SignUpPage = () => {
 
       setForm(latestForm.current);
       setCodeSent(true);
+      setEmailVerified(false);
 
       setRemaining(validSeconds);
       setDeadline(
@@ -363,7 +463,11 @@ const SignUpPage = () => {
   }
 
   // 이메일 인증 완료 여부 검사
-  if (!codeSent || !emailVerified) {
+  if (
+    !codeSent ||
+    !emailVerified ||
+    validate('code', values.code)
+  ) {
     setNotice('이메일 인증을 먼저 완료해주세요.');
     return;
   }
@@ -426,53 +530,100 @@ const SignUpPage = () => {
                 placeholder={placeholder}
                 value={form[name]}
                 changeHandler={handleChange}
+                disabled={name === 'email' && checked.email}
                 invalid={Boolean(errors[name])}
                 describedBy={
                   errors[name] ? `signup-${name}-error` : undefined
                 }
               >
-                {check && (
-                  <Button
-                    type="button"
-                    variant="inline"
-                    disabled={loading}
-                    title={name === 'email' && checked.email
-                      ? codeSent ? '재발송' : '인증번호 발송'
-                      : '중복 확인'}
-                    onClick={() => name === 'email' && checked.email
-                      ? handleSendCode() : handleCheck(name)}
-                  />
-                )}
 
-                {name === 'code' && (
-                  <>
-                    {remaining !== null && (
-                      <Timer $expired={expired} role="timer">
-                        {formatTime(remaining)}
-                      </Timer>
+                {/* 중복 확인 및 인증번호 발송 */}
+                  {check &&
+                    (name === 'email'
+                      ? (!emailVerified || expired)
+                      : !checked[name]) && (
+                      <Button
+                        type="button"
+                        variant="inline"
+                        disabled={loading}
+                        title={name === 'email' ? emailActionTitle : '중복 확인'}
+                        onClick={() => {
+                          if (name === 'email' && checked.email) {
+                            handleSendCode();
+                          } else {
+                            handleCheck(name);
+                          }
+                        }}
+                      />
                     )}
 
-                    <Button
-                      type="button"
-                      variant="inline"
-                      title={
-                        emailVerified && !expired
-                          ? '인증 완료'
-                          : '인증 확인'
+                  {/* 확인 완료 체크 표시 */}
+                  {isFieldComplete(name) && (
+                    <CheckMark
+                      role="img"
+                      aria-label={
+                        name === 'password'
+                          ? '비밀번호 형식 충족'
+                          : `${label} 확인 완료`
                       }
-                      disabled={emailVerified || expired || loading}
-                      onClick={handleVerifyCode}
-                    />
-                  </>
-                )}
+                    >
+                      ✓
+                    </CheckMark>
+                  )}
+
+                  {/* 이 아래의 인증번호 코드는 그대로 유지 */}
+                  {name === 'code' && (
+                    <>
+                      {remaining !== null && (
+                        <Timer $expired={expired} role="timer">
+                          {formatTime(remaining)}
+                        </Timer>
+                      )}
+
+                      <Button
+                        type="button"
+                        variant="inline"
+                        title="인증 확인"
+                        disabled={emailVerified || expired || loading}
+                        onClick={handleVerifyCode}
+                      />
+                    </>
+                  )}
+
+
+
               </TextInput>
 
-              {/* 아이디·닉네임·이메일 중복 확인 성공 */}
-              {check && checked[name] && !errors[name] && (
-                <FormMessage $tone="success" role="status">
-                  사용 가능한 {label}입니다.
+              {name === 'email' &&
+                checked.email &&
+                !errors.email &&
+                !codeSent && (
+                  <FormMessage $tone="success" role="status">
+                    이메일 중복 확인이 완료되었습니다. 인증번호를 발송해주세요.
+                  </FormMessage>
+              )}
+
+              {name === 'email' && emailVerified && (
+                <FormMessage
+                  $tone={expired ? 'error' : 'success'}
+                  role={expired ? 'alert' : 'status'}
+                >
+                  {expired
+                    ? '인증번호 유효시간이 만료되었습니다. 재발송해주세요.'
+                    : '이메일 인증이 완료되었습니다.'}
                 </FormMessage>
               )}
+
+              {name === 'email' && checked.email && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  title="이메일 변경"
+                  disabled={loading}
+                  onClick={handleChangeEmail}
+                />
+              )}
+
 
               {/* 이메일 인증번호 안내 */}
               {name === 'code' && (
@@ -483,23 +634,12 @@ const SignUpPage = () => {
                 >
                   {expired
                     ? '인증번호가 만료되었습니다. 다시 발송해주세요.'
-                    : errors.code
-                      ? errors.code
-                      : emailVerified
-                        ? '이메일 인증이 완료되었습니다.'
-                        : '인증번호 발송 요청이 처리되었습니다. 메일함을 확인해주세요.'}
+                    : errors.code ||
+                      '인증번호 발송 요청이 처리되었습니다. 메일함을 확인해주세요.'}
                 </FormMessage>
               )}
 
-              {/* 비밀번호 일치 확인 */}
-              {name === 'confirmPassword' &&
-                form.confirmPassword &&
-                form.password === form.confirmPassword &&
-                !errors.confirmPassword && (
-                  <FormMessage $tone="success">
-                    비밀번호가 일치합니다.
-                  </FormMessage>
-                )}
+
 
               {/* 각 입력창의 오류 메시지 */}
               {name !== 'code' && errors[name] && (
@@ -513,8 +653,6 @@ const SignUpPage = () => {
               )}
 
             </Field>
-
-
           ))}
 
           <Field>
