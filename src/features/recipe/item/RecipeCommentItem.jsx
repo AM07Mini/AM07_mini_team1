@@ -1,14 +1,24 @@
-import { useState } from "react";
 import styled from "styled-components";
-import Avatar from "../../../components/styled/Avatar";
 import Text from "../../../components/styled/Text";
-import { colors, font } from "../../../components/styled/theme";
+import { colors } from "../../../components/styled/theme";
 
 const Wrapper = styled.div`
   display: flex;
   gap: 12px;
   padding: 8px 0 12px;
   border-bottom: 1px solid ${colors.grey4};
+  background: ${({ $active }) => ($active ? colors.grey4 : "transparent")};
+`;
+
+const Avatar = styled.div`
+  flex-shrink: 0;
+  width: ${({ $size }) => $size}px;
+  height: ${({ $size }) => $size}px;
+  border-radius: 50%;
+  background: ${colors.grey4};
+  overflow: hidden;
+
+  img { width: 100%; height: 100%; object-fit: cover; }
 `;
 
 const Body = styled.div`
@@ -42,7 +52,8 @@ const ActionButton = styled.button`
   border: none;
   background: none;
   font-family: inherit;
-  ${font('hashtag')}
+  font-size: 12px;
+  font-weight: 500;
   color: ${({ $color }) => $color ?? colors.grey1};
   cursor: pointer;
 `;
@@ -61,62 +72,14 @@ const ReplyRow = styled.div`
   gap: 8px;
 `;
 
-const ReplyForm = styled.form`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 6px 6px 14px;
-  border: 1px solid ${colors.grey3};
-  border-radius: 20px;
-  background: ${colors.white};
-
-  input {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    outline: none;
-    background: none;
-    font-family: inherit;
-    ${font('sub')}
-    color: ${colors.dark};
-  }
-  input::placeholder {
-    color: ${colors.grey2};
-  }
-  button {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 14px;
-    background: ${colors.primary};
-    font-family: inherit;
-    ${font('hashtag')}
-    font-weight: 700;
-    color: ${colors.white};
-    cursor: pointer;
-  }
-  button:disabled {
-    background: ${colors.grey3};
-    cursor: not-allowed;
-  }
-`;
-
-// 후기 한 건 — data: { id, avatar, name, when, text, shot?, likes, liked, replies? }
-const RecipeCommentItem = ({ data, onLike, onReply }) => {
-  const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
-  const replies = data.replies ?? [];
-
-  const submit = (e) => {
-    e.preventDefault();
-    const value = text.trim();
-    if (!value) return;
-    onReply(data.id, value);
-    setText("");
-  };
+// data: toReview 결과
+const RecipeCommentItem = ({ data, active, onLike, onReplyClick, onToggleReplies, onDeleteReply }) => {
+  const count = data.replies ? data.replies.length : data.replyCount;
+  const showToggle = count === null || count > 0;
 
   return (
-    <Wrapper>
-      <Avatar src={data.avatar} size={36} />
+    <Wrapper $active={active}>
+      <Avatar $size={36}>{data.avatar && <img src={data.avatar} alt="" />}</Avatar>
       <Body>
         <Head>
           <Text variant="label" as="h4">{data.name}</Text>
@@ -126,44 +89,38 @@ const RecipeCommentItem = ({ data, onLike, onReply }) => {
         {data.shot && <Shot src={data.shot} alt="" />}
 
         <Actions>
-          <ActionButton
-            type="button"
-            $color={data.liked ? colors.heart : colors.grey2}
-            onClick={() => onLike(data.id)}
-          >
+          <ActionButton type="button" $color={data.liked ? colors.heart : colors.grey2} onClick={() => onLike(data.id)}>
             ♥ {data.likes}
           </ActionButton>
-          <ActionButton type="button" onClick={() => setOpen((v) => !v)}>
-            {open ? "답글 닫기" : replies.length ? `답글 ${replies.length}개` : "답글 달기"}
+          <ActionButton type="button" $color={active ? colors.accent1 : colors.grey1} onClick={() => onReplyClick(data)}>
+            답글 달기
           </ActionButton>
+          {showToggle && (
+            <ActionButton type="button" onClick={() => onToggleReplies(data.id)}>
+              {data.repliesOpen ? "답글 접기" : count ? `답글 ${count}개 보기` : "답글 보기"}
+            </ActionButton>
+          )}
         </Actions>
 
-        {(open || replies.length > 0) && (
+        {data.repliesOpen && data.replies && data.replies.length > 0 && (
           <Replies>
-            {replies.map((reply) => (
+            {data.replies.map((reply) => (
               <ReplyRow key={reply.id}>
-                <Avatar src={reply.avatar} size={24} />
+                <Avatar $size={24}>{reply.avatar && <img src={reply.avatar} alt="" />}</Avatar>
                 <Body>
                   <Head>
                     <Text variant="label" as="h5">{reply.name}</Text>
                     <Text variant="caption" color={colors.grey2}>{reply.when}</Text>
                   </Head>
                   <Text variant="sub" color={colors.dark}>{reply.text}</Text>
+                  {reply.mine && (
+                    <ActionButton type="button" $color={colors.grey2} onClick={() => onDeleteReply(data.id, reply.id)}>
+                      삭제
+                    </ActionButton>
+                  )}
                 </Body>
               </ReplyRow>
             ))}
-
-            {open && (
-              <ReplyForm onSubmit={submit}>
-                <input
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder={`${data.name}님에게 답글 남기기`}
-                  autoFocus
-                />
-                <button type="submit" disabled={text.trim() === ""}>등록</button>
-              </ReplyForm>
-            )}
           </Replies>
         )}
       </Body>
