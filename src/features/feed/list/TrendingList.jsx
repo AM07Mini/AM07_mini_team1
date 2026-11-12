@@ -34,7 +34,9 @@ const prefersReducedMotion = () =>
 // 유행 레시피 목록 — 가로 스크롤 + 자동으로 한 칸씩 넘어감 (마우스 올리거나 손대면 잠깐 멈춤)
 const TrendingList = ({ recipes }) => {
   const wrapperRef = useRef(null);
-  const [paused, setPaused] = useState(false);
+  // 멈춘 이유를 따로 기억 — 하나가 끝나도 다른 이유가 남아 있으면 계속 멈춤
+  const [pauseReasons, setPauseReasons] = useState({ hover: false, touch: false, focus: false });
+  const paused = pauseReasons.hover || pauseReasons.touch || pauseReasons.focus;
 
   useEffect(() => {
     const el = wrapperRef.current;
@@ -52,8 +54,13 @@ const TrendingList = ({ recipes }) => {
     return () => clearInterval(timer);
   }, [paused, recipes.length]);
 
-  const pause = () => setPaused(true);
-  const resume = () => setPaused(false);
+  const setReason = (reason, on) =>
+    setPauseReasons((prev) => (prev[reason] === on ? prev : { ...prev, [reason]: on }));
+
+  // 목록 안의 다른 카드로 포커스가 옮겨갈 때는 계속 멈춰 있게 함
+  const onBlur = (event) => {
+    if (!event.currentTarget.contains(event.relatedTarget)) setReason('focus', false);
+  };
 
   // 마우스로 잡고 끌어서 넘기기 (터치는 브라우저 기본 스크롤 사용)
   const dragRef = useRef(null);
@@ -102,16 +109,17 @@ const TrendingList = ({ recipes }) => {
       onMouseUp={endDrag}
       onClickCapture={onClickCapture}
       onDragStart={(event) => event.preventDefault()}
-      onMouseEnter={pause}
+      onMouseEnter={() => setReason('hover', true)}
       onMouseLeave={() => {
         endDrag();
         if (dragRef.current?.done) dragRef.current = null;
-        resume();
+        setReason('hover', false);
       }}
-      onTouchStart={pause}
-      onTouchEnd={resume}
-      onFocus={pause}
-      onBlur={resume}
+      onTouchStart={() => setReason('touch', true)}
+      onTouchEnd={() => setReason('touch', false)}
+      onTouchCancel={() => setReason('touch', false)}
+      onFocus={() => setReason('focus', true)}
+      onBlur={onBlur}
     >
       {recipes.map((item, index) => (
         <TrendingItem key={item.id} data={item} rank={index + 1} />

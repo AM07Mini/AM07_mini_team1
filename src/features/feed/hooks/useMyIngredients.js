@@ -1,13 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getMyIngredients } from '../../../api/feedApi';
 import { useAuth } from '../../../utils/context/AuthContext';
 
 // 내가 저장한 식재료 이름 목록
-// status: 'needLogin' | 'loading' | 'done' — 실패하면 빈 목록으로 'done' (목록 화면은 그대로 보여줌)
+// status: 'needLogin' | 'loading' | 'done' | 'error'
+// 'done'은 요청이 성공했을 때만 — 빈 목록이면 진짜로 등록한 재료가 없는 것. 실패하면 'error'이고 reload로 다시 요청
 const useMyIngredients = () => {
   const { isLoggedIn } = useAuth();
   const [names, setNames] = useState([]);
   const [status, setStatus] = useState(isLoggedIn ? 'loading' : 'needLogin');
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -19,20 +21,23 @@ const useMyIngredients = () => {
     setStatus('loading');
     getMyIngredients()
       .then((result) => {
-        if (!ignore) setNames((result ?? []).map((ingredient) => ingredient.name).filter(Boolean));
+        if (ignore) return;
+        setNames((result ?? []).map((ingredient) => ingredient.name).filter(Boolean));
+        setStatus('done');
       })
       .catch(() => {
-        if (!ignore) setNames([]);
-      })
-      .finally(() => {
-        if (!ignore) setStatus('done');
+        if (ignore) return;
+        setNames([]);
+        setStatus('error');
       });
     return () => {
       ignore = true;
     };
-  }, [isLoggedIn]);
+  }, [isLoggedIn, attempt]);
 
-  return { names, status };
+  const reload = useCallback(() => setAttempt((count) => count + 1), []);
+
+  return { names, status, reload };
 };
 
 export default useMyIngredients;

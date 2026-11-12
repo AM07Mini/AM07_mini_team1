@@ -34,6 +34,17 @@ const Caption = styled.p`
   color: ${colors.grey1};
 `;
 
+const CaptionAction = styled.button`
+  padding: 0;
+  border: none;
+  background: none;
+  ${font('caption')}
+  color: ${colors.primary};
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+`;
+
 const List = styled.div`
   display: flex;
   flex-direction: column;
@@ -62,7 +73,11 @@ const TrendingPage = () => {
   const sort = tab === 'LATEST' ? 'LATEST' : period;
   const ranked = tab === 'POPULAR';
   const [onlyMineChecked, setOnlyMine] = useState(false);
-  const { names: myIngredients, status: myIngredientStatus } = useMyIngredients();
+  const {
+    names: myIngredients,
+    status: myIngredientStatus,
+    reload: reloadMyIngredients,
+  } = useMyIngredients();
   const hasMyIngredients = myIngredients.length > 0;
   // 로그아웃 등으로 재료가 없어지면 토글이 켜져 있어도 거르지 않음
   const onlyMine = onlyMineChecked && hasMyIngredients;
@@ -141,6 +156,14 @@ const TrendingPage = () => {
           {captionBySort[sort]}
           {myIngredientStatus === 'needLogin' && ' 로그인하면 "내 재료로만"을 쓸 수 있어요.'}
           {myIngredientStatus === 'done' && !hasMyIngredients && ' 재료를 등록하면 "내 재료로만"을 쓸 수 있어요.'}
+          {myIngredientStatus === 'error' && (
+            <>
+              {' 내 재료를 불러오지 못했어요. '}
+              <CaptionAction type="button" onClick={reloadMyIngredients}>
+                다시 시도
+              </CaptionAction>
+            </>
+          )}
         </Caption>
         {renderList()}
       </Wrapper>
