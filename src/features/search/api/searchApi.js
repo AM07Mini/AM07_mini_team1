@@ -1,5 +1,5 @@
 import api from '../../../api/axios';
-import { getDifficulty } from '../../../utils/difficulty';
+import { formatDifficulty } from '../../../utils/difficulty';
 
 const CATALOG_REQUEST_TIMEOUT_MS = 10_000;
 
@@ -137,15 +137,9 @@ export const fetchSearchRecipes = async (keyword, filters, signal, size = 20) =>
       id: recipe.id,
       title: recipe.title,
       image: recipe.thumbnailUrl,
-      description:
-        recipe.description ||
-        [
-          getDifficulty(recipe.difficulty)?.label,
-          Number.isFinite(recipe.cookingMinutes) ? `${recipe.cookingMinutes}분` : null,
-        ]
-          .filter(Boolean)
-          .join(' · ') ||
-        '레시피 설명이 없습니다.',
+      meta:
+        formatDifficulty(recipe.difficulty, recipe.cookingMinutes) ||
+        '난이도 정보 없음',
     })),
     totalElements: result.totalElements,
   };

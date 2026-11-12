@@ -5,7 +5,10 @@ export const searchFilters = [
     key: 'difficulty',
     title: '조리 난이도',
     selectionMode: 'single',
-    items: DIFFICULTIES.map(({ value, label }) => ({ value, label })),
+    items: DIFFICULTIES.map(({ value, label, stars }) => ({
+      value,
+      label: `${stars} ${label}`,
+    })),
   },
   {
     key: 'maxCookingMinutes',
