@@ -550,7 +550,6 @@ export default function RecipeWritePage() {
         const cleanName = item.name ? item.name.replace(/[\[\]]/g, '').trim() : "";
         let mappedId = (item.id && item.id < 1000000) ? Number(item.id) : (ingredientIdMap[cleanName] || 0);
 
-        // 🌟 Coderabbit 지적 반영: ID가 없거나 매핑 안 된 재료는 서버에 자동 등록하여 ID를 받아오도록 복구
         if (mappedId === 0 && cleanName) {
           try {
             const newIngredient = await createIngredient(cleanName);
