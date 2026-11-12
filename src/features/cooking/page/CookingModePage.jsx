@@ -209,9 +209,14 @@ const CookingModePage = () => {
     bodyRef.current?.scrollTo(0, 0);
     updateMoreBelow();
   }, [stepIndex, recipe]);
+  // 본문 칸 크기가 바뀌면(타이머 추가 · 삭제, 화면 회전 · 크기 변경) 그림자 표시를 다시 계산
   useEffect(() => {
-    updateMoreBelow();
-  }, [timers.length]);
+    const body = bodyRef.current;
+    if (!body || typeof ResizeObserver === 'undefined') return undefined;
+    const observer = new ResizeObserver(() => updateMoreBelow());
+    observer.observe(body);
+    return () => observer.disconnect();
+  }, [recipe]);
 
   // 요리 모드를 나가면 레시피 상세로 — 상세에서 들어왔으면 뒤로, 아니면 상세로 바꿔치기
   const leave = () => {
