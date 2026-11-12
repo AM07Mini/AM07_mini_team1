@@ -50,13 +50,23 @@ const CameraButton = styled.button`
   cursor: pointer;
 `;
 
+// 사진 아래 글자 버튼 줄 — 사진 변경 · 기본 이미지로
+const PhotoActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  ${font('sub')}
+  color: ${colors.grey3};
+`;
+
 const TextButton = styled.button`
   padding: 0;
   border: none;
   background: none;
+  font-family: inherit;
   ${font('sub')}
   font-weight: 500;
-  color: ${colors.secondary};
+  color: ${(props) => (props.$muted ? colors.grey1 : colors.secondary)};
   cursor: pointer;
 `;
 
@@ -157,6 +167,7 @@ const ProfileEditPage = () => {
   const [interestsLoaded, setInterestsLoaded] = useState(false); // 관심 요리를 모두 불러왔는지
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
+  const [photoRemoved, setPhotoRemoved] = useState(false); // 저장할 때 서버 사진을 지울지 (기본 이미지로)
   const [nicknameCheck, setNicknameCheck] = useState({ nickname: '', available: false });
   const [saving, setSaving] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false); // 버튼 문구 · 비활성화용
@@ -218,6 +229,8 @@ const ProfileEditPage = () => {
   const interestsChanged = interestsLoaded && !sameIds(interestIds, originalInterestIds);
   // 닉네임 길이는 바꿨을 때만 검사 (원래 닉네임 그대로면 소개 · 관심 요리는 저장 가능)
   const canSave = (!nicknameChanged || nicknameLengthOk) && nicknameOk && !saving;
+  // 화면에 보여줄 사진 — 새로 고른 사진 > (지우기로 한 게 아니면) 서버 사진 > 없음(기본 모양)
+  const shownPhoto = photoPreview || (photoRemoved ? null : original?.profileImageUrl);
 
   const changeHandler = (e) => {
     // 저장 중에 바꾼 값은 저장되지 않으니 막기
@@ -233,6 +246,17 @@ const ProfileEditPage = () => {
     if (!file) return;
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
+    setPhotoRemoved(false);
+  };
+
+  // 기본 이미지로 — 새로 고른 사진은 취소하고, 서버 사진은 저장할 때 지움
+  const photoRemoveHandler = () => {
+    if (saving) return;
+    setPhotoFile(null);
+    setPhotoPreview('');
+    // 같은 파일을 다시 골라도 onChange가 불리도록 선택 기록 비우기
+    fileInputRef.current.value = '';
+    if (original.profileImageUrl) setPhotoRemoved(true);
   };
 
   const nicknameCheckHandler = async () => {
@@ -264,6 +288,11 @@ const ProfileEditPage = () => {
         });
         // 다음 단계에서 실패해 다시 저장할 때 같은 사진을 또 올리지 않도록
         setPhotoFile(null);
+      } else if (photoRemoved) {
+        // 1-2) 기본 이미지로 — 서버 사진 지우기
+        await api.delete('/users/me/profile-image');
+        setOriginal((prev) => ({ ...prev, profileImageUrl: null }));
+        setPhotoRemoved(false);
       }
       // 2) 닉네임 · 한 줄 소개 중 바뀐 것만 보내기 (안 보낸 값은 서버에서 그대로 유지)
       if (nicknameChanged || introChanged) {
@@ -353,14 +382,24 @@ const ProfileEditPage = () => {
       <Form onSubmit={submitHandler}>
         <PhotoBox>
           <Photo>
-            <Avatar src={photoPreview || original.profileImageUrl} size={96} />
+            <Avatar src={shownPhoto} size={96} />
             <CameraButton type="button" aria-label="사진 변경" onClick={() => fileInputRef.current.click()}>
               <img src="/icons/camera.svg" alt="" />
             </CameraButton>
           </Photo>
-          <TextButton type="button" onClick={() => fileInputRef.current.click()}>
-            사진 변경
-          </TextButton>
+          <PhotoActions>
+            <TextButton type="button" onClick={() => fileInputRef.current.click()}>
+              사진 변경
+            </TextButton>
+            {shownPhoto && (
+              <>
+                <span aria-hidden="true">|</span>
+                <TextButton type="button" $muted onClick={photoRemoveHandler}>
+                  기본 이미지로
+                </TextButton>
+              </>
+            )}
+          </PhotoActions>
           <HiddenFileInput ref={fileInputRef} type="file" accept="image/*" onChange={photoChangeHandler} />
         </PhotoBox>
 

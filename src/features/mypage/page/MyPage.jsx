@@ -221,7 +221,7 @@ const MyPage = () => {
 
   return (
     <>
-      <TopBar title="마이 페이지" rightIcon="settings" rightClickHandler={() => moveUrl('/mypage/edit')} />
+      <TopBar title="마이 페이지" />
       {renderContent()}
     </>
   );
