@@ -231,6 +231,10 @@ const RecipeReadPage = () => {
     recipe.likes +
     (liked === recipe.liked ? 0 : liked ? 1 : -1);
 
+    //저장 수 계산
+    const saveCount = recipe.saves + (saved === recipe.saved ? 0 : saved ? 1 : -1);
+
+
   return (
     <div>
       {/* 레시피 대표 이미지 */}
@@ -257,6 +261,8 @@ const RecipeReadPage = () => {
             liked={liked}
             saved={saved}
             likeCount={likeCount}
+            saveCount={saveCount}
+            reviewCount={recipe.reviewCount}
             pendingLike={pendingLike}
             pendingSave={pendingSave}
             actionError={actionError}
