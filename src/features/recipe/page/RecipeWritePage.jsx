@@ -1,5 +1,5 @@
 import IngredientSearchModal from './IngredientSearchModal';
-import { createRecipeText, uploadThumbnail, searchIngredients, createIngredient, uploadStepImage } from "../../../api/recipeApi";
+import { createRecipeText, uploadThumbnail, uploadStepImage } from "../../../api/recipeApi";
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import PageIntro from '../../../components/styled/PageIntro';
@@ -30,7 +30,6 @@ const Section = styled.div`
   gap: 12px;
 `;
 
-// 조리 시간 · 인분 수 칸 — 한 줄에 반씩
 const UnitSection = styled(Section)`
   flex: 1;
   min-width: 0;
@@ -65,6 +64,24 @@ const PhotoBox = styled.label`
   overflow: hidden;
 `;
 
+const DeletePhotoButton = styled.button`
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  border: none;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2; /* 파일 input보다 위에 오도록 설정 */
+`;
+
 const PreviewImage = styled.img`
   width: 100%;
   height: 100%;
@@ -80,22 +97,6 @@ const PlusMark = styled.p`
 const PhotoTitle = styled.b`
   ${font('label')}
   color: ${colors.dark};
-`;
-
-const StepPhoto = styled.label`
-  position: relative; 
-  width: 64px;
-  height: 64px;
-  flex-shrink: 0;
-  background-color: ${colors.grey4};
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  ${font('caption')}
-  color: ${colors.grey2};
-  cursor: pointer;
-  overflow: hidden;
 `;
 
 const HiddenFileInput = styled.input`
@@ -124,7 +125,6 @@ const Input = styled.input`
   }
 `;
 
-// 맛 · 키워드 직접 입력칸 — 칩 크기
 const FlavorInput = styled(Input)`
   display: inline-block;
   width: 150px;
@@ -162,7 +162,6 @@ const LevelCard = styled.div`
   }
 `;
 
-// 선택된 재료가 없을 때
 const EmptyIngredients = styled.div`
   padding: 16px 0;
   border: 1px dashed ${colors.grey4};
@@ -200,13 +199,14 @@ const IngredientRight = styled.div`
   gap: 12px;
 `;
 
-const QuantityBadge = styled.span`
-  padding: 6px 12px;
-  border-radius: ${radius.small}px;
-  background-color: ${colors.grey4};
+const QuantityInput = styled.input`
+  width: 70px;
+  padding: 4px 8px;
+  border: 1px solid ${colors.grey3};
+  border-radius: 6px;
+  font-family: inherit;
   ${font('sub')}
-  font-weight: 500;
-  color: ${colors.primary};
+  text-align: center;
 `;
 
 const RemoveButton = styled.button`
@@ -276,6 +276,22 @@ const StepInput = styled.textarea`
   &::placeholder {
     color: ${colors.grey2};
   }
+`;
+
+const StepPhoto = styled.label`
+  position: relative; 
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  background-color: ${colors.grey4};
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  ${font('caption')}
+  color: ${colors.grey2};
+  cursor: pointer;
+  overflow: hidden;
 `;
 
 const SubLabel = styled.p`
@@ -352,7 +368,7 @@ const UnitText = styled.em`
   white-space: nowrap;
 `;
 
-// --- 3. 조리 시간 / 인분 수 컴포넌트 (숫자만 입력 제한 적용) ---
+// --- 3. 조리 시간 / 인분 수 컴포넌트 ---
 const Unit = ({ label, unit, value, onChange, placeholder }) => {
   const handleNumberChange = (e) => {
     const onlyNums = e.target.value.replace(/[^0-9]/g, '');
@@ -376,7 +392,6 @@ const Unit = ({ label, unit, value, onChange, placeholder }) => {
   );
 };
 
-
 // --- 4. 메인 컴포넌트 ---
 export default function RecipeWritePage() {
   const navigate = useNavigate();
@@ -391,11 +406,9 @@ export default function RecipeWritePage() {
   // 식재료 관련 State
   const [selectedIngredients, setSelectedIngredients] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [ingredientKeyword, setIngredientKeyword] = useState(''); 
-  const [searchedIngredients, setSearchedIngredients] = useState([]);
 
   // 조리 순서 State
-const [steps, setSteps] = useState([
+  const [steps, setSteps] = useState([
     { step: "STEP 1", text: "예: 재료를 손질해 주세요.", image: null, imageFile: null },
     { step: "STEP 2", text: "예: 팬에 기름을 두르고 볶아 주세요.", image: null, imageFile: null },
     { step: "STEP 3", text: "예: 그릇에 담아 완성해요.", image: null, imageFile: null },
@@ -404,14 +417,13 @@ const [steps, setSteps] = useState([
   // 해시태그 관련 State
   const [selectedFoodType, setSelectedFoodType] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [keywords, setKeywords] = useState('');
   const [isPublic, setIsPublic] = useState(false);
 
   const [mainImage, setMainImage] = useState(null);
   const [mainImageFile, setMainImageFile] = useState(null); 
 
   // 맛 · 키워드 관련 State
-  const [flavorTags, setFlavorTags] = useState(["#매운맛", "#간장맛", "#짠맛", "#단맛", "#고소한 맛"]);
+  const [flavorTags] = useState(["#매운맛", "#간장맛", "#짠맛", "#단맛", "#고소한 맛"]);
   const [selectedFlavors, setSelectedFlavors] = useState([]);
   const [isAddingFlavor, setIsAddingFlavor] = useState(false);
   const [customFlavorInput, setCustomFlavorInput] = useState("");
@@ -419,47 +431,40 @@ const [steps, setSteps] = useState([
 
   // 이미지 업로드 핸들러
   const handleMainImageUpload = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        if (mainImage) {
-          URL.revokeObjectURL(mainImage);
-        }
-        setMainImageFile(file);
-        setMainImage(URL.createObjectURL(file));
+    const file = e.target.files[0];
+    if (file) {
+      if (mainImage) {
+        URL.revokeObjectURL(mainImage);
       }
+      setMainImageFile(file);
+      setMainImage(URL.createObjectURL(file));
+    }
   };
 
   const handleStepImageUpload = (index, e) => {
-      const file = e.target.files[0];
-      if (file) {
-        
+    const file = e.target.files[0];
+    if (file) {
+      setSteps(prevSteps => {
+        const newSteps = [...prevSteps];
+        if (newSteps[index]) {
+          newSteps[index] = { ...newSteps[index], imageFile: file };
+        }
+        return newSteps;
+      });
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
         setSteps(prevSteps => {
           const newSteps = [...prevSteps];
-          if (newSteps[index]) {
-            newSteps[index] = {
-              ...newSteps[index],
-              imageFile: file
-            };
+          if (newSteps[index] && newSteps[index].imageFile === file) {
+            newSteps[index] = { ...newSteps[index], image: reader.result };
           }
           return newSteps;
         });
-
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setSteps(prevSteps => {
-            const newSteps = [...prevSteps];
-            if (newSteps[index] && newSteps[index].imageFile === file) {
-              newSteps[index] = {
-                ...newSteps[index],
-                image: reader.result
-              };
-            }
-            return newSteps;
-          });
-        };
-        reader.readAsDataURL(file);
-      }
-    };
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleStepTextChange = (index, value) => {
     const newSteps = [...steps];
@@ -467,79 +472,45 @@ const [steps, setSteps] = useState([
     setSteps(newSteps);
   };
 
+  const handleRemoveStepImage = (index) => {
+    setSteps(prevSteps => {
+      const newSteps = [...prevSteps];
+      if (newSteps[index]) {
+        // 기존 blob URL 메모리 해제
+        if (newSteps[index].image && newSteps[index].image.startsWith('blob:')) {
+          URL.revokeObjectURL(newSteps[index].image);
+        }
+        newSteps[index] = {
+          ...newSteps[index],
+          image: null,
+          imageFile: null
+        };
+      }
+      return newSteps;
+    });
+  };
+
   const handleAddStep = () => {
     const nextStepNumber = steps.length + 1;
     setSteps([
       ...steps,
-      { step: `STEP ${nextStepNumber}`, text: "", image: null }
+      { step: `STEP ${nextStepNumber}`, text: "", image: null, imageFile: null }
     ]);
-  };
-
-  // 검색창 타이핑 핸들러
-  const handleIngredientSearch = async (e) => {
-    const keyword = e.target.value;
-    setIngredientKeyword(keyword);
-
-    if (!keyword.trim()) {
-      setSearchedIngredients([]);
-      return;
-    }
-
-    try {
-      const content = await searchIngredients(keyword);
-      setSearchedIngredients(content); // 검색 결과 업데이트
-    } catch (error) {
-      console.error('식재료 검색 실패:', error);
-    }
-  };
-
-  // 목록에 없는 재료 직접 입력 후 엔터 쳤을 때 (서버 등록 + 선택)
-  const handleAddCustomIngredient = async (e) => {
-    if (e.key === 'Enter' && customInput.trim() !== '') {
-      e.preventDefault();
-      const newItemName = customInput.trim();
-
-      try {
-        // 1. 서버에 새 식재료 등록 API 호출 (POST /api/v1/ingredients)[cite: 14]
-        await createIngredient(newItemName);
-
-        // 2. 화면 상의 목록과 선택된 목록에 반영
-        if (!ingredients.includes(newItemName)) {
-          setIngredients([...ingredients, newItemName]);
-        }
-        if (!selectedIngredients.includes(newItemName)) {
-          setSelectedIngredients([...selectedIngredients, newItemName]);
-        }
-
-        setCustomInput("");
-        setIsAddingCustom(false);
-        setIngredientKeyword("");
-        setSearchedIngredients([]);
-      } catch (error) {
-        console.error('식재료 등록 실패:', error);
-        alert('식재료 등록 중 오류가 발생했습니다.');
-      }
-    }
-  };
-
-  // 식재료 복수 선택 핸들러
-  const handleIngredientClick = (item) => {
-    if (selectedIngredients.includes(item)) {
-      setSelectedIngredients(selectedIngredients.filter((i) => i !== item));
-    } else {
-      setSelectedIngredients([...selectedIngredients, item]);
-    }
   };
 
   const handleRemoveIngredient = (indexToRemove) => {
     setSelectedIngredients(selectedIngredients.filter((_, index) => index !== indexToRemove));
   };
 
-  
+  // 수량 변경 핸들러 통합
+  const handleQuantityChange = (index, newQuantity) => {
+    const updated = [...selectedIngredients];
+    updated[index].quantity = newQuantity;
+    setSelectedIngredients(updated);
+  };
 
-  // '레시피 저장하기' 버튼을 누르면 실행되는 핵심 함수
+  // 레시피 등록 제출 핸들러
   const handleSubmitRecipe = async () => {
-    // 1. 이미 제출 중이면 중복 실행 차단
     if (isSubmitting) return;
 
     if (!title.trim()) {
@@ -547,58 +518,31 @@ const [steps, setSteps] = useState([
       return;
     }
 
-    let createdRecipeId = null; // 🌟 생성된 레시피 ID를 안전하게 추적할 변수
+    let createdRecipeId = null;
 
     try {
-      // 🔒 중복 클릭 방지 잠금 시작
       setIsSubmitting(true);
 
       const getFoodTypeId = (type) => {
-        const map = {
-          "한식": 9, "중식": 10, "일식": 11, "양식": 12, "분식": 6, "기타": 13
-        };
+        const map = { "한식": 9, "중식": 10, "일식": 11, "양식": 12, "분식": 6, "기타": 13 };
         return map[type] || 9;
       };
 
       const getCategoryId = (cat) => {
-        const map = {
-          "메인": 1, "밑반찬": 2, "국 · 찌개": 3, "볶음밥": 4, "면 · 파스타": 5, "브런치": 6, "간식 · 디저트": 7
-        };
+        const map = { "메인": 1, "밑반찬": 2, "국 · 찌개": 3, "볶음밥": 4, "면 · 파스타": 5, "브런치": 6, "간식 · 디저트": 7 };
         return map[cat] || 1;
       };
 
       const getFlavorId = (flavor) => {
         const cleanFlavor = flavor.replace('#', '');
-        const map = {
-          "매운맛": 1,
-          "간장맛": 2,
-          "짠맛": 3,
-          "단맛": 4,
-          "고소한 맛": 5,
-          "고소맛": 5
-        };
+        const map = { "매운맛": 1, "간장맛": 2, "짠맛": 3, "단맛": 4, "고소한 맛": 5, "고소맛": 5 };
         return map[cleanFlavor] || 1; 
       };
 
-      // 서버가 제공한 공식 재료 ID 매핑 딕셔너리
       const ingredientIdMap = {
-        "계란": 1, "달걀": 1,
-        "밥": 2,
-        "대파": 3,
-        "양파": 4,
-        "당근": 5,
-        "파": 6,
-        "두부": 7,
-        "어묵": 8,
-        "만두": 9,
-        "고추": 10,
-        "소면": 11,
-        "우동사리": 12,
-        "식빵": 13,
-        "설탕": 14,
-        "우유": 15,
-        "코코아가루": 16,
-        "배포확인파": 17
+        "계란": 1, "달걀": 1, "밥": 2, "대파": 3, "양파": 4, "당근": 5, "파": 6, "두부": 7, 
+        "어묵": 8, "만두": 9, "고추": 10, "소면": 11, "우동사리": 12, "식빵": 13, "설탕": 14, 
+        "우유": 15, "코코아가루": 16, "배포확인파": 17
       };
 
       const processedIngredients = [];
@@ -606,15 +550,6 @@ const [steps, setSteps] = useState([
       for (const item of (selectedIngredients || [])) {
         const cleanName = item.name ? item.name.replace(/[\[\]]/g, '').trim() : "";
         let mappedId = (item.id && item.id < 1000000) ? Number(item.id) : (ingredientIdMap[cleanName] || 0);
-
-        if (mappedId === 0 && cleanName) {
-          try {
-            const newIngredient = await createIngredient(cleanName);
-            mappedId = newIngredient?.id || 0;
-          } catch (err) {
-            console.error("식재료 자동 등록 실패:", err);
-          }
-        }
 
         if (mappedId > 0) {
           processedIngredients.push({
@@ -626,7 +561,6 @@ const [steps, setSteps] = useState([
         }
       }
 
-      // 3. 서버가 요구하는 텍스트 데이터 포장
       const recipePayload = {
         title: title || "제목 없음",
         description: "맛있는 요리", 
@@ -635,30 +569,19 @@ const [steps, setSteps] = useState([
         portions: Number(servings) || 1,
         visibility: isPublic ? "PUBLIC" : "PRIVATE",
         difficulty: difficulty === "쉬움" ? "EASY" : difficulty === "보통" ? "MEDIUM" : "HARD",
-        
         foodTypeId: getFoodTypeId(selectedFoodType), 
         categoryIds: selectedCategory ? [getCategoryId(selectedCategory)] : [1],
-        
-        flavorIds: typeof selectedFlavors !== 'undefined' && Array.isArray(selectedFlavors) 
-          ? selectedFlavors.map(flavor => getFlavorId(flavor)).filter(Boolean) 
-          : [1],
-        
+        flavorIds: Array.isArray(selectedFlavors) ? selectedFlavors.map(flavor => getFlavorId(flavor)).filter(Boolean) : [1],
         hashtags: customKeywords,
-        
         ingredients: processedIngredients
       };
-          
-      console.log('서버로 보내는 최종 Payload:', JSON.stringify(recipePayload, null, 2));
 
-      // 1. 레시피 텍스트 등록 (recipeId 반환 받음)
       createdRecipeId = await createRecipeText(recipePayload);
 
-      // 2. 메인 썸네일 사진이 있다면 업로드
       if (mainImageFile && createdRecipeId) {
         await uploadThumbnail(createdRecipeId, mainImageFile);
       }
 
-      // 3. 각 단계별(Step)로 사진이 있는 경우 순서대로 업로드
       if (steps && steps.length > 0 && createdRecipeId) {
         const imageUploadPromises = steps.map((stepItem, index) => {
           if (stepItem.imageFile) {
@@ -676,20 +599,16 @@ const [steps, setSteps] = useState([
 
     } catch (error) {
       console.error('레시피 등록 실패:', error);
-      
-      // 🌟 레시피 텍스트는 만들어졌는데 이미지에서 에러가 난 경우 구분해서 안내
       if (createdRecipeId) {
         alert(`레시피 기본 정보는 등록되었으나(ID: ${createdRecipeId}), 이미지 업로드 중 오류가 발생했습니다.`);
       } else {
         alert('레시피 등록 중 오류가 발생했습니다.');
       }
     } finally {
-      // 🔓 버튼 잠금 해제
       setIsSubmitting(false);
     }
   };
 
-  // 맛 태그 선택/해제 핸들러
   const handleFlavorClick = (tag) => {
     if (selectedFlavors.includes(tag)) {
       setSelectedFlavors(selectedFlavors.filter((t) => t !== tag));
@@ -701,12 +620,10 @@ const [steps, setSteps] = useState([
   const handleAddCustomKeyword = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      
       const newTag = customFlavorInput.replace('#', '').trim();
       if (newTag && !customKeywords.includes(newTag)) {
         setCustomKeywords([...customKeywords, newTag]);
       }
-      
       setCustomFlavorInput('');
       setIsAddingFlavor(false);
     }
@@ -729,13 +646,12 @@ const [steps, setSteps] = useState([
       if (steps) {
         steps.forEach(s => {
           if (s.image && s.image.startsWith('blob:')) {
-          URL.revokeObjectURL(s.image);
+            URL.revokeObjectURL(s.image);
           }
         });
       }
     };
   }, [steps]);
-
 
   return (
     <>
@@ -770,7 +686,7 @@ const [steps, setSteps] = useState([
         />
       </Section>
 
-      {/* 조리 시간 / 인분 수 (숫자 전용) */}
+      {/* 조리 시간 / 인분 수 */}
       <Row>
         <Unit label="조리 시간" unit="분" value={cookingTime} onChange={setCookingTime} placeholder="예: 15" />
         <Unit label="인분 수" unit="인분" value={servings} onChange={setServings} placeholder="예: 2" />
@@ -796,14 +712,13 @@ const [steps, setSteps] = useState([
         </Row>
       </Section>
 
-      {/* 식재료 섹션 (1단계 적용) */}
+      {/* 식재료 섹션 */}
       <Section>
         <LabelRow>
           <Label>식재료</Label>
           <Hint>검색해서 추가하거나 직접 입력해요</Hint>
         </LabelRow>
 
-        {/* 선택된 재료 리스트 카드들 */}
         {selectedIngredients.length === 0 ? (
           <EmptyIngredients>
             아직 추가한 재료가 없어요.
@@ -816,9 +731,11 @@ const [steps, setSteps] = useState([
                   {item.name}
                 </IngredientName>
                 <IngredientRight>
-                  <QuantityBadge>
-                    {item.quantity}
-                  </QuantityBadge>
+                  <QuantityInput
+                    type="text"
+                    value={item.quantity}
+                    onChange={(e) => handleQuantityChange(index, e.target.value)}
+                  />
                   <RemoveButton
                     type="button"
                     onClick={() => handleRemoveIngredient(index)}
@@ -831,12 +748,10 @@ const [steps, setSteps] = useState([
           </IngredientList>
         )}
 
-        {/* + 식재료 추가하기 버튼 (누르면 모달 열림 상태로 변경) */}
         <DashedButton type="button" onClick={() => setIsModalOpen(true)} $marginTop={12}>
           + 식재료 추가하기
         </DashedButton>
       </Section>
-
 
       {/* 레시피 기록 (조리 순서) */}
       <Section>
@@ -850,7 +765,6 @@ const [steps, setSteps] = useState([
               <StepBadge>{item.step}</StepBadge>
               <StepInput
                 value={item.text}
-                // 🌟 핵심: 포커스(클릭)했을 때 '예:'로 시작하면 내용 싹 비우기
                 onFocus={() => {
                   if (item.text.startsWith("예:")) {
                     handleStepTextChange(index, "");
@@ -861,8 +775,6 @@ const [steps, setSteps] = useState([
                 rows={2}
               />
             </StepBody>
-            
-            {/* 🌟 단계별 사진 업로드 및 미리보기 영역 */}
             <StepPhoto>
               <HiddenFileInput 
                 type="file" 
@@ -871,7 +783,18 @@ const [steps, setSteps] = useState([
               />
               
               {item.image ? (
-                <PreviewImage src={item.image} alt={`step ${index + 1}`} />
+                <>
+                  <PreviewImage src={item.image} alt={`step ${index + 1}`} />
+                  <DeletePhotoButton 
+                    type="button" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveStepImage(index);
+                    }}
+                  >
+                    ✕
+                  </DeletePhotoButton>
+                </>
               ) : (
                 "+ 사진"
               )}
@@ -914,7 +837,6 @@ const [steps, setSteps] = useState([
           ))}
         </ChipGroup>
 
-        {/* 1. 맛 선택 섹션 (5가지 고정) */}
         <Section>
           <SubLabel $spaced>맛</SubLabel>
           <ChipGroup>
@@ -933,28 +855,25 @@ const [steps, setSteps] = useState([
           </ChipGroup>
         </Section>
         
-        {/* 2. 키워드(해시태그) 입력 섹션 (+ 추가 버튼 및 직접 입력) */}
         <Section>
           <SubLabel $spaced>키워드</SubLabel>
           <ChipGroup>
-            {/* 사용자가 추가한 키워드들이 칩으로 표시되는 영역 (선택사항) */}
             {customKeywords && customKeywords.map((keyword, index) => (
               <Chip
                 key={index}
                 size="medium"
                 title={`#${keyword}`}
-                selected={true} // 추가된 키워드는 선택된 상태로 표시
-                onClick={() => handleRemoveKeyword(index)} // 누르면 삭제되게 연결 가능
+                selected={true}
+                onClick={() => handleRemoveKeyword(index)}
               />
             ))}
 
-            {/* 입력창 또는 '+ 추가' 버튼 */}
             {isAddingFlavor ? (
               <FlavorInput
                 autoFocus
                 value={customFlavorInput}
                 onChange={(e) => setCustomFlavorInput(e.target.value)}
-                onKeyDown={handleAddCustomKeyword} // 엔터 치면 hashtags 배열로 들어가는 함수
+                onKeyDown={handleAddCustomKeyword}
                 placeholder="키워드 입력 후 엔터 (예: #자취요리)"
               />
             ) : (
@@ -996,6 +915,7 @@ const [steps, setSteps] = useState([
         onAddIngredients={(newItems) => {
           setSelectedIngredients([...selectedIngredients, ...newItems]);
         }}
+        existingIngredients={selectedIngredients}
       />
     </Wrapper>
     </>
