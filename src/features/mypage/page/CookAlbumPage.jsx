@@ -14,7 +14,7 @@ import { formatDayTitle, toDateKey, toMonthKey } from '../../../utils/calendar';
 import { isAuthError } from '../authError';
 import AlbumDayPhotoItem from '../item/AlbumDayPhotoItem';
 import AlbumShareSheet from '../item/AlbumShareSheet';
-import { canDownloadFile, createAlbumShareImage, downloadBlob } from '../albumShareImage';
+import { createAlbumShareImage, downloadBlob, shouldDownloadFile } from '../albumShareImage';
 import AlbumCalendar from '../list/AlbumCalendar';
 import AlbumPhotoList from '../list/AlbumPhotoList';
 
@@ -398,7 +398,7 @@ const CookAlbumPage = () => {
         photoCount: monthPhotoCount,
       });
       if (run !== saveRunRef.current) return; // 그사이 시트를 닫았거나 화면을 떠남
-      if (canDownloadFile()) {
+      if (shouldDownloadFile()) {
         downloadBlob(blob, `recipely-${toMonthKey(year, month)}.png`);
         showToast(
           missingCount > 0

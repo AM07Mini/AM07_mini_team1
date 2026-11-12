@@ -174,11 +174,19 @@ export const createAlbumShareImage = async ({ nickname, year, month, isCurrentMo
   });
 };
 
-// 파일 내려받기가 되는 브라우저인지 — 카카오톡 · 인스타그램 · 페이스북 · 라인 · 네이버 앱 안의 브라우저는
-// 내려받기를 막는 경우가 많아서, 이때는 이미지를 화면에 띄워 길게 눌러 저장하게 함
+// 파일로 내려받을지, 이미지를 띄워 길게 눌러 저장하게 할지
+// - 아이폰 · 아이패드: 어떤 브라우저든 내려받으면 사진 앱이 아니라 파일 앱에 들어가므로 → 길게 눌러 "사진 앱에 저장"
+// - 카카오톡 · 인스타그램 · 페이스북 · 라인 · 네이버 앱 안의 브라우저: 내려받기를 막는 경우가 많으므로 → 길게 눌러 저장
+// - 그 밖(안드로이드 · PC 브라우저): 파일로 내려받기
 const IN_APP_BROWSER = /KAKAOTALK|Instagram|FBAN|FBAV|Line\/|NAVER\(inapp/i;
-export const canDownloadFile = () =>
-  'download' in HTMLAnchorElement.prototype && !IN_APP_BROWSER.test(navigator.userAgent);
+
+// 최신 아이패드는 자신을 Mac이라고 알려 주므로, Mac인데 화면 터치가 되면 아이패드로 봄
+const isAppleMobile = () =>
+  /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+  (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+
+export const shouldDownloadFile = () =>
+  'download' in HTMLAnchorElement.prototype && !isAppleMobile() && !IN_APP_BROWSER.test(navigator.userAgent);
 
 // Blob을 파일로 내려받기 — 휴대폰은 브라우저의 다운로드 · 사진 저장 흐름을 따름
 export const downloadBlob = (blob, fileName) => {

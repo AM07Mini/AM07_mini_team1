@@ -14,7 +14,7 @@ const SaveBox = styled.div`
   width: 100%;
 `;
 
-// 내려받기가 막힌 브라우저용 — 만든 이미지를 그대로 보여 주고 길게 눌러 저장
+// 아이폰 · 앱 안 브라우저용 — 만든 이미지를 그대로 보여 주고 길게 눌러 저장
 const PreviewImage = styled.img`
   width: 264px;
   aspect-ratio: 4 / 5;
@@ -25,7 +25,7 @@ const PreviewImage = styled.img`
 
 // 이미지로 저장 — 달력 그대로가 아니라 공유용 카드(4:5, 1080×1350 PNG)를 저장
 // blockedReason: 아직 저장할 수 없는 이유 (예: 사진 불러오는 중) — 있으면 버튼에 보여 주고 막음
-// previewUrl: 앱 안 브라우저처럼 내려받기가 안 될 때 만든 이미지 주소
+// previewUrl: 아이폰 · 앱 안 브라우저처럼 길게 눌러 저장할 때 만든 이미지 주소
 const AlbumShareSheet = ({ open, saving, blockedReason, previewUrl, closeHandler, saveHandler, ...cardProps }) => {
   let buttonTitle = '이미지 저장';
   if (saving) buttonTitle = '이미지 만드는 중…';
