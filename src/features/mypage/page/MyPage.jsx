@@ -131,9 +131,10 @@ const MyPage = () => {
   // 분류 칩용 카테고리 — 따로 불러와서, 실패해도 페이지는 보이고 칩만 숨김
   const loadCategories = async () => {
     try {
+      // 서버 응답이 [{ id, name }] 목록으로 바뀜 (예전 { defaults, mine } 모양도 받아줌)
       const response = await api.get('/categories');
-      const { defaults = [], mine = [] } = response.data.result ?? {};
-      setCategories([...defaults, ...mine]);
+      const result = response.data.result ?? [];
+      setCategories(Array.isArray(result) ? result : [...(result.defaults ?? []), ...(result.mine ?? [])]);
     } catch (e) {
       console.error(e);
     }
