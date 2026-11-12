@@ -137,7 +137,14 @@ const CookingModePage = () => {
   useEffect(() => {
     const controller = new AbortController();
     getRecipeDetail(id, controller.signal)
-      .then((result) => setRecipe(toDetail(result)))
+      .then((result) => {
+        // 단계 사진은 상세 응답의 stepImages [{ stepOrder, imageUrl }] — 사진이 없는 단계도 있음
+        const stepImages = {};
+        (result.stepImages ?? []).forEach((image) => {
+          stepImages[image.stepOrder] = image.imageUrl;
+        });
+        setRecipe({ ...toDetail(result), stepImages });
+      })
       .catch((e) => {
         if (e.name === 'CanceledError') return;
         setLoadError(e.response?.data?.message ?? '레시피를 불러오지 못했어요.');
@@ -183,6 +190,7 @@ const CookingModePage = () => {
 
   const steps = recipe.steps.length > 0 ? recipe.steps : ['조리 순서가 아직 없어요. 레시피를 보며 요리해 주세요.'];
   const isLast = stepIndex === steps.length - 1;
+  const stepPhoto = recipe.stepImages[stepIndex + 1];
   const finishedTimer = timers.find((t) => t.done); // 먼저 끝난 것부터 하나씩 알림
 
   const nextHandler = () => {
@@ -217,8 +225,8 @@ const CookingModePage = () => {
             newTimerHandler={() => setSheetOpen(true)}
           />
         )}
-        {/* 단계별 사진은 아직 API에 없어서 레시피 대표 사진을 보여줌 */}
-        {recipe.image && <StepPhoto src={recipe.image} alt="" />}
+        {/* 이 단계의 사진 — 작성자가 올린 단계만 보임 (단계별 재료는 API에 없어서 표시하지 않음) */}
+        {stepPhoto && <StepPhoto key={stepPhoto} src={stepPhoto} alt={`STEP ${stepIndex + 1} 사진`} />}
         <Instruction $compact={timers.length > 0} aria-live="polite">
           {steps[stepIndex]}
         </Instruction>
