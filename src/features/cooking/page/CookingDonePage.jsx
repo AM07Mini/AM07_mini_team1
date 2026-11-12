@@ -163,6 +163,14 @@ const CookingDonePage = () => {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
+  // 올리는 사이 브라우저 뒤로가기로 이 화면을 떠났으면, 끝난 뒤 다른 화면으로 끌고 가지 않게
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   const recipeTitle = location.state?.title;
 
@@ -195,11 +203,15 @@ const CookingDonePage = () => {
     setUploading(true);
     try {
       await addAlbumPhoto(id, photoFile);
-      go();
+      if (mountedRef.current) go();
     } catch (e) {
       console.error(e);
+      if (!mountedRef.current) return;
       setUploading(false);
-      const reason = e.response?.data?.message ?? '사진을 앨범에 올리지 못했어요.';
+      const reason =
+        e.code === 'ECONNABORTED'
+          ? '사진을 올리는 데 시간이 너무 오래 걸려요.'
+          : (e.response?.data?.message ?? '사진을 앨범에 올리지 못했어요.');
       if (window.confirm(`${reason}
 사진 없이 나갈까요? (취소를 누르면 이 화면에 남아요)`)) go();
     }

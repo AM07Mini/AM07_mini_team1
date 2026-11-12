@@ -8,7 +8,7 @@ export const ALBUM_PAGE_SIZE = 30; // 서버 최대 50
 // 내 요리 앨범 한 페이지 — 최신순, page는 0부터
 // 결과: { content, page, size, totalElements, totalPages }
 export const getMyAlbum = async (page, signal) => {
-  const { data } = await api.get('/users/me/album', { params: { page, size: ALBUM_PAGE_SIZE }, signal });
+  const { data } = await api.get('/users/me/album', { params: { page, size: ALBUM_PAGE_SIZE }, signal, timeout: 10_000 });
   return data.result;
 };
 
@@ -20,8 +20,10 @@ export const addAlbumPhoto = async (recipeId, file) => {
   const formData = new FormData();
   formData.append('image', file);
   // 공용 axios 기본값이 JSON이라 사진은 multipart로 바꿔서 보냄 (프로필 사진 올리기와 같은 방식)
+  // 서버가 응답하지 않아도 화면이 계속 막혀 있지 않게 30초에서 끊음 (5MB 사진 기준 넉넉하게)
   const { data } = await api.post(`/recipes/${recipeId}/album`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30_000,
   });
   return data.result;
 };
