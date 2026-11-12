@@ -32,22 +32,45 @@ const Wrapper = styled.div`
 
 const Content = styled.div`
   padding: 24px ${PAGE_PADDING}px 32px;
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
 `;
 
 const Intro = styled.header`
   margin-bottom: 28px;
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    margin-bottom: 18px;
+  }
 `;
 
 const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 18px;
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    gap: 14px;
+  }
 `;
 
 const Field = styled.div`
   display: flex;
   flex-direction: column;
   gap: 7px;
+`;
+
+const SubmitBar = styled.div`
+  @media (max-width: 480px) and (max-height: 700px) {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    background: ${colors.white};
+    padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+  }
 `;
 
 const CheckMark = styled.span`
@@ -673,7 +696,13 @@ const SignUpPage = () => {
               {notice}
             </FormMessage>
           )}
-          <Button title="가입하기" type="submit" disabled={loading} />
+          <SubmitBar>
+            <Button
+              title="가입하기"
+              type="submit"
+              disabled={loading}
+            />
+          </SubmitBar>
         </Form>
       </Content>
     </Wrapper>

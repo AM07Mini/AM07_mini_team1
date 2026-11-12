@@ -21,10 +21,19 @@ const Content = styled.div`
   display: flex;
   flex-direction: column;
   padding: 32px ${PAGE_PADDING}px 24px;
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    padding-top: 16px;
+    padding-bottom: 12px;
+  }
 `;
 
 const Intro = styled.div`
   margin-bottom: 24px;
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    margin-bottom: 16px;
+  }
 `;
 
 const Form = styled.form`
@@ -39,6 +48,7 @@ const Fields = styled.div`
   gap: 20px;
 `;
 
+
 const BottomActions = styled.div`
   margin-top: auto;
   padding-top: 32px;
@@ -51,7 +61,16 @@ const BottomActions = styled.div`
     min-width: 0;
     height: 50px;
   }
+
+  @media (max-width: 480px) and (max-height: 700px) {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+    background: ${colors.white};
+  }
 `;
+
 
 const Timer = styled.span`
   padding-right: 5px;
