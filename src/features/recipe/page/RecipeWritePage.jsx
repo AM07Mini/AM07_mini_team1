@@ -432,7 +432,6 @@ const [steps, setSteps] = useState([
   const handleStepImageUpload = (index, e) => {
       const file = e.target.files[0];
       if (file) {
-        // 🌟 1. 파일이 선택되는 즉시 imageFile을 안전하게 먼저 저장 (함수형 업데이트)
         setSteps(prevSteps => {
           const newSteps = [...prevSteps];
           if (newSteps[index]) {
@@ -441,12 +440,12 @@ const [steps, setSteps] = useState([
           return newSteps;
         });
 
-        // 2. FileReader는 화면 미리보기(Base64) 로드 용도로만 사용
         const reader = new FileReader();
         reader.onloadend = () => {
           setSteps(prevSteps => {
             const newSteps = [...prevSteps];
-            if (newSteps[index]) {
+
+            if (newSteps[index] && newSteps[index].imageFile === file) {
               newSteps[index].image = reader.result;
             }
             return newSteps;
@@ -696,10 +695,9 @@ const [steps, setSteps] = useState([
   const handleAddCustomKeyword = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      if (!customFlavorInput.trim()) return;
       
       const newTag = customFlavorInput.replace('#', '').trim();
-      if (!customKeywords.includes(newTag)) {
+      if (newTag && !customKeywords.includes(newTag)) {
         setCustomKeywords([...customKeywords, newTag]);
       }
       
