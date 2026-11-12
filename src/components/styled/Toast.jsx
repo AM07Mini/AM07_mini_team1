@@ -7,7 +7,7 @@ const Pill = styled.div`
   position: fixed;
   left: 50%;
   bottom: ${(props) => props.$bottom}px;
-  z-index: 900;
+  z-index: 1100; // 시트 · 확인 창(1000) 위에도 보이게
   transform: translateX(-50%);
   max-width: calc(100% - 48px);
   padding: 10px 16px;

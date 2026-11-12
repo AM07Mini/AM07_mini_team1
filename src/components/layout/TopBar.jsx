@@ -48,13 +48,14 @@ const IconButton = styled.button`
 
 // 피그마에서 받은 아이콘 파일이 있으면 그걸 쓰고, 없으면 공용 Icon
 const figmaIcons = { settings: '/icons/setting.svg' };
-const iconLabels = { settings: '설정', search: '검색', bell: '알림' };
+const iconLabels = { settings: '설정', search: '검색', bell: '알림', share: '공유' };
 
 // 상단바 — 가운데 제목, 왼쪽 뒤로가기(선택), 오른쪽 아이콘 버튼(선택)
 // 사용: <TopBar title="요리 추천" showBack />
 //       <TopBar title="마이 페이지" rightIcon="settings" rightClickHandler={...} />
 // backDisabled: 저장 · 탈퇴 중처럼 화면을 떠나면 안 될 때 뒤로가기를 막음
-const TopBar = forwardRef(({ title, showBack, backDisabled, rightIcon, rightClickHandler }, ref) => {
+// rightLabel: 오른쪽 아이콘 버튼의 읽어 줄 이름 (기본은 아이콘 이름 — 예: share → '공유')
+const TopBar = forwardRef(({ title, showBack, backDisabled, rightIcon, rightLabel, rightClickHandler }, ref) => {
   const moveUrl = useNavigate();
 
   return (
@@ -66,7 +67,7 @@ const TopBar = forwardRef(({ title, showBack, backDisabled, rightIcon, rightClic
       )}
       <Title>{title}</Title>
       {rightIcon && (
-        <IconButton $side="right" aria-label={iconLabels[rightIcon] ?? rightIcon} onClick={rightClickHandler}>
+        <IconButton $side="right" aria-label={rightLabel ?? iconLabels[rightIcon] ?? rightIcon} onClick={rightClickHandler}>
           {figmaIcons[rightIcon] ? <img src={figmaIcons[rightIcon]} alt="" /> : <Icon name={rightIcon} />}
         </IconButton>
       )}
