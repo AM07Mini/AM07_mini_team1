@@ -78,7 +78,7 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
       'categoryIds',
       '카테고리',
       categories,
-      'multiple',
+      'single',
       !isLoggedIn
         ? '카테고리 필터는 로그인 후 사용할 수 있습니다.'
         : categoriesOutcome.status === 'rejected'
