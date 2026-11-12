@@ -57,7 +57,7 @@ const useFeedActions = ({ feeds, setFeeds, setTrending, refreshTrendingSoon, fol
           ),
         );
       },
-      // 저장 성공 후 유행 레시피 순위 갱신 (5위 밖이던 레시피가 새로 들어오거나 순서가 바뀔 수 있음)
+      // 저장 성공 후 유행 레시피 순위 갱신 (10위 밖이던 레시피가 새로 들어오거나 순서가 바뀔 수 있음)
       async () => {
         await setLike(id, next);
         refreshTrendingSoon();
