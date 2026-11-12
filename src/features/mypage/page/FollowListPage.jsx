@@ -20,6 +20,9 @@ const Wrapper = styled.div`
 
 const emptyPage = { content: [], totalElements: 0 };
 
+// 검색창 입력이 멈추고 이만큼 지나면 서버에 검색 요청 (한 글자마다 요청하지 않게)
+const SEARCH_DELAY_MS = 300;
+
 // 탭 정보 — 주소 ?tab= 값, 제목, 목록 API, 비었을 때 문구
 const tabInfo = {
   followers: { title: '팔로워', url: '/follows/followers', empty: '아직 나를 팔로우한 사람이 없어요.' },
@@ -37,6 +40,8 @@ const FollowListPage = () => {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(null); // { message, needLogin }
   const [keyword, setKeyword] = useState('');
+  // 서버 닉네임 검색 결과 — 어떤 탭 · 검색어의 결과인지 같이 기억 { tab, keyword, content, failed }
+  const [searchResult, setSearchResult] = useState(null);
   const [pendingIds, setPendingIds] = useState([]); // 팔로우 요청 중인 사람 id
 
   useEffect(() => {
@@ -46,16 +51,16 @@ const FollowListPage = () => {
     return () => controller.abort();
   }, []);
 
-  // 목록 하나를 끝까지 불러오기 — 닉네임 검색을 전체에서 하려고 페이지를 이어서 받음
-  // TODO: 서버에 닉네임 검색(keyword)이 생기면 서버 검색 + 페이지 넘기기로 바꾸기
-  const loadAllPages = async (url, signal) => {
+  // 목록 하나를 끝까지 불러오기 — keyword를 주면 서버에서 닉네임 부분 일치로 거른 목록
+  const loadAllPages = async (url, signal, keyword) => {
     const content = [];
     let page = 0;
     let totalPages = 1;
     let totalElements = 0;
     while (page < totalPages) {
       // 취소되면 api.get이 에러를 내서 반복이 바로 멈춤
-      const response = await api.get(url, { params: { page, size: FOLLOW_PAGE_SIZE }, signal });
+      const params = { page, size: FOLLOW_PAGE_SIZE, ...(keyword && { keyword }) };
+      const response = await api.get(url, { params, signal });
       const result = response.data.result;
       content.push(...result.content);
       totalPages = result.totalPages;
@@ -88,6 +93,31 @@ const FollowListPage = () => {
     }
   };
 
+  // 닉네임 검색 — 입력이 멈추면 지금 탭 목록을 서버에서 검색
+  // 검색어나 탭이 바뀌면 진행 중인 요청은 취소 (늦게 온 옛 결과가 덮어쓰지 않게)
+  const trimmedKeyword = keyword.trim();
+  useEffect(() => {
+    if (!trimmedKeyword) {
+      setSearchResult(null);
+      return undefined;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const { content } = await loadAllPages(tabInfo[tab].url, controller.signal, trimmedKeyword);
+        setSearchResult({ tab, keyword: trimmedKeyword, content });
+      } catch (e) {
+        if (e.code === 'ERR_CANCELED') return;
+        console.error(e);
+        setSearchResult({ tab, keyword: trimmedKeyword, content: [], failed: true });
+      }
+    }, SEARCH_DELAY_MS);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [trimmedKeyword, tab]);
+
   // 탭을 누르면 주소만 바꿈 (replace: 뒤로 가기 기록이 탭마다 쌓이지 않게)
   const tabChangeHandler = (value) => {
     setSearchParams({ tab: value }, { replace: true });
@@ -101,6 +131,8 @@ const FollowListPage = () => {
       ...page,
       content: page.content.map((user) => (user.id === target.id ? { ...user, followedByMe: followed } : user)),
     });
+    // 검색 결과에 있는 사람도 버튼 상태를 같이 바꿈
+    setSearchResult((prev) => (prev ? update(prev) : prev));
     setLists((prev) => {
       const following = update(prev.following);
       const isNew = followed && !following.content.some((user) => user.id === target.id);
@@ -135,10 +167,17 @@ const FollowListPage = () => {
     }
   };
 
-  // 닉네임 검색 — 불러온 목록 안에서 거름 (검색 API 없음)
-  const trimmedKeyword = keyword.trim();
-  const shownUsers = lists[tab].content.filter((user) => user.nickname.includes(trimmedKeyword));
-  const emptyMessage = trimmedKeyword ? '검색 결과가 없어요.' : tabInfo[tab].empty;
+  // 보여줄 목록 — 검색어가 없으면 전체, 있으면 지금 탭 · 검색어의 서버 결과
+  const currentResult =
+    searchResult && searchResult.tab === tab && searchResult.keyword === trimmedKeyword ? searchResult : null;
+  const shownUsers = trimmedKeyword ? currentResult?.content ?? [] : lists[tab].content;
+
+  const getEmptyMessage = () => {
+    if (!trimmedKeyword) return tabInfo[tab].empty;
+    if (!currentResult) return '검색 중이에요…';
+    if (currentResult.failed) return '검색하지 못했어요. 잠시 후 다시 시도해주세요.';
+    return '검색 결과가 없어요.';
+  };
 
   const renderContent = () => {
     if (error) return <StatusMessage message={error.message} needLogin={error.needLogin} />;
@@ -164,7 +203,7 @@ const FollowListPage = () => {
 
         <FollowUserList
           users={shownUsers}
-          emptyMessage={emptyMessage}
+          emptyMessage={getEmptyMessage()}
           pendingIds={pendingIds}
           toggleHandler={followToggleHandler}
         />
