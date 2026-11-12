@@ -60,14 +60,6 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
 
   return [
     makeFilter(
-      'flavorIds',
-      '맛',
-      flavors,
-      'multiple',
-      flavorsOutcome.status === 'rejected' ? '맛 필터를 불러오지 못했습니다.' : '',
-      2,
-    ),
-    makeFilter(
       'foodTypeId',
       '음식 종류',
       foodTypes,
@@ -84,6 +76,14 @@ export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
         : categoriesOutcome.status === 'rejected'
           ? '카테고리를 불러오지 못했습니다.'
           : '',
+    ),
+    makeFilter(
+      'flavorIds',
+      '맛',
+      flavors,
+      'multiple',
+      flavorsOutcome.status === 'rejected' ? '맛 필터를 불러오지 못했습니다.' : '',
+      2,
     ),
   ];
 };
@@ -139,6 +139,11 @@ export const fetchSearchRecipes = async (keyword, filters, signal, size = 20) =>
     })),
     totalElements: result.totalElements,
   };
+};
+
+export const fetchSearchHashtags = async (filters, signal) => {
+  const { recipes } = await fetchSearchRecipes('', filters, signal, 100);
+  return [...new Set(recipes.flatMap((recipe) => recipe.hashtags))];
 };
 
 export const fetchRelaxedSearchSuggestions = async (keyword, selected, filters, signal) => {

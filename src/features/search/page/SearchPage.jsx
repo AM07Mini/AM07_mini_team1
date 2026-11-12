@@ -11,9 +11,11 @@ import { searchFilters } from '../mockData';
 import {
   fetchRelaxedSearchSuggestions,
   fetchSearchFilterCatalogs,
+  fetchSearchHashtags,
   fetchSearchRecipes,
 } from '../api/searchApi';
 import { useAuth } from '../../../utils/context/AuthContext';
+import { colors, radius, shadows, font } from '../../../components/styled/theme';
 
 const Page = styled.div`
   min-height: 100%;
@@ -28,6 +30,48 @@ const Main = styled.main`
   padding: 18px 24px 28px;
 `;
 
+const SearchFieldContainer = styled.div`
+  position: relative;
+  z-index: 1;
+`;
+
+const HashtagSuggestions = styled.div`
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  border-radius: ${radius.button}px;
+  background: ${colors.white};
+  box-shadow: ${shadows.recipeCard};
+`;
+
+const HashtagOption = styled.button`
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  background: ${colors.white};
+  color: ${colors.dark};
+  text-align: left;
+  ${font('body')}
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: ${colors.grey4};
+    outline: none;
+  }
+`;
+
+const HashtagMessage = styled.p`
+  margin: 0;
+  padding: 12px 16px;
+  color: ${colors.grey1};
+  ${font('caption')}
+`;
+
 const SearchPage = () => {
   const { isLoggedIn } = useAuth();
   const topBarRef = useRef(null);
@@ -37,12 +81,20 @@ const SearchPage = () => {
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState(searchFilters);
   const [selected, setSelected] = useState({
-    flavorIds: [],
     foodTypeId: [],
     categoryIds: [],
+    flavorIds: [],
     difficulty: [],
     maxCookingMinutes: [],
   });
+  const [hashtagCatalog, setHashtagCatalog] = useState(null);
+  const [hashtagCatalogLoading, setHashtagCatalogLoading] = useState(false);
+  const [hashtagCatalogError, setHashtagCatalogError] = useState('');
+  const hashtagPrefix = query.match(/#([^#\s]*)$/)?.[1];
+  const hashtagInputActive = hashtagPrefix !== undefined;
+  const hashtagOptions = hashtagCatalog?.filter((hashtag) =>
+    hashtag.slice(1).toLocaleLowerCase().startsWith(hashtagPrefix?.toLocaleLowerCase() ?? ''),
+  ) ?? [];
   const [recipes, setRecipes] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -95,12 +147,6 @@ const SearchPage = () => {
         if (controller.signal.aborted) return;
         setFilters([
           {
-            key: 'flavorIds',
-            title: '맛',
-            items: [],
-            message: filterError.message || '맛 필터를 불러오지 못했습니다.',
-          },
-          {
             key: 'foodTypeId',
             title: '음식 종류',
             items: [],
@@ -114,6 +160,12 @@ const SearchPage = () => {
               ? '카테고리를 불러오지 못했습니다.'
               : '카테고리 필터는 로그인 후 사용할 수 있습니다.',
           },
+          {
+            key: 'flavorIds',
+            title: '맛',
+            items: [],
+            message: filterError.message || '맛 필터를 불러오지 못했습니다.',
+          },
           ...searchFilters,
         ]);
       }
@@ -122,6 +174,31 @@ const SearchPage = () => {
     loadFilters();
     return () => controller.abort();
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (!hashtagInputActive || hashtagCatalog !== null) return undefined;
+
+    const controller = new AbortController();
+    setHashtagCatalogLoading(true);
+    setHashtagCatalogError('');
+
+    fetchSearchHashtags(selected, controller.signal)
+      .then(setHashtagCatalog)
+      .catch((requestError) => {
+        if (!controller.signal.aborted) {
+          setHashtagCatalogError(
+            requestError?.response?.data?.message ||
+              requestError?.message ||
+              '키워드 목록을 불러오지 못했습니다.',
+          );
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setHashtagCatalogLoading(false);
+      });
+
+    return () => controller.abort();
+  }, [hashtagInputActive, hashtagCatalog, selected]);
 
   const toggleFilter = (key, value, selectionMode, maxSelections) => {
     setSelected((current) => {
@@ -146,9 +223,9 @@ const SearchPage = () => {
 
   const resetFilters = () => {
     setSelected({
-      flavorIds: [],
       foodTypeId: [],
       categoryIds: [],
+      flavorIds: [],
       difficulty: [],
       maxCookingMinutes: [],
     });
@@ -228,11 +305,39 @@ const SearchPage = () => {
       <TopBar ref={topBarRef} title="검색" />
       <Main ref={mainRef}>
         <PageIntro title="어떤 요리를 찾고 있나요?" description="맛, 음식 종류, 난이도로 레시피를 골라보세요." />
-        <SearchInput
-          value={query}
-          changeHandler={(event) => setQuery(event.target.value)}
-          placeholder="레시피 이름, 해시태그로 검색 (예: #자취요리)"
-        />
+        <SearchFieldContainer>
+          <SearchInput
+            value={query}
+            changeHandler={(event) => setQuery(event.target.value)}
+            placeholder="레시피 이름, 해시태그로 검색 (예: #자취요리)"
+          />
+          {hashtagInputActive && (
+            <HashtagSuggestions role="listbox" aria-label="해시태그 키워드">
+              {hashtagCatalogLoading ? (
+                <HashtagMessage role="status">키워드를 불러오는 중입니다.</HashtagMessage>
+              ) : hashtagCatalogError ? (
+                <HashtagMessage role="alert">{hashtagCatalogError}</HashtagMessage>
+              ) : hashtagOptions.length > 0 ? (
+                hashtagOptions.map((hashtag) => (
+                  <HashtagOption
+                    key={hashtag}
+                    type="button"
+                    role="option"
+                    aria-selected="false"
+                    onClick={() => {
+                      const hashIndex = query.lastIndexOf('#');
+                      setQuery(`${query.slice(0, hashIndex)}${hashtag} `);
+                    }}
+                  >
+                    {hashtag}
+                  </HashtagOption>
+                ))
+              ) : (
+                <HashtagMessage>일치하는 키워드가 없습니다.</HashtagMessage>
+              )}
+            </HashtagSuggestions>
+          )}
+        </SearchFieldContainer>
         <SearchSelectionSummary
           filters={filters}
           selected={selected}
