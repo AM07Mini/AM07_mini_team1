@@ -50,7 +50,7 @@ const PasswordChangePage = () => {
         newPassword: form.newPassword,
       });
       // 다른 기기의 로그인은 서버에서 끊김 — 이 기기는 그대로 로그인 유지
-      window.alert('비밀번호를 바꿨어요. 다른 기기에서는 다시 로그인해야 해요.');
+      window.alert('비밀번호를 바꿨어요.');
       moveUrl('/mypage/edit');
     } catch (err) {
       console.error(err);

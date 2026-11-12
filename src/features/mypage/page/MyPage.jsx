@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../../../api/axios';
+import { getCategories } from '../../../api/categoryApi';
 import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import SegmentTab from '../../../components/styled/SegmentTab';
@@ -131,9 +132,8 @@ const MyPage = () => {
   // 분류 칩용 카테고리 — 따로 불러와서, 실패해도 페이지는 보이고 칩만 숨김
   const loadCategories = async () => {
     try {
-      const response = await api.get('/categories');
-      const { defaults = [], mine = [] } = response.data.result ?? {};
-      setCategories([...defaults, ...mine]);
+      // 검색 탭과 같은 카테고리 목록 (공용 api/categoryApi.js)
+      setCategories(await getCategories());
     } catch (e) {
       console.error(e);
     }
@@ -220,7 +220,7 @@ const MyPage = () => {
 
   return (
     <>
-      <TopBar title="마이 페이지" rightIcon="settings" rightClickHandler={() => moveUrl('/mypage/edit')} />
+      <TopBar title="마이 페이지" />
       {renderContent()}
     </>
   );
