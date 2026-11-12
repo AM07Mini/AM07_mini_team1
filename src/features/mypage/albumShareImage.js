@@ -13,10 +13,13 @@ const SCALE = OUTPUT_WIDTH / CARD_WIDTH;
 
 const PADDING = 17;
 const CELL_WIDTH = 30;
-const CELL_HEIGHT = 34;
 const CELL_STEP_X = 32.6;
-const CELL_STEP_Y = 36.6;
 const GRID_TOP = 109;
+
+// 날짜 칸 높이 — 6주짜리 달(예: 2026년 8월)은 아래 문구(300)와 겹치지 않게 칸을 낮춤
+// 5주: 34 + 36.6 × 4 = 180 → 289까지 / 6주: 28 + 30.6 × 5 = 181 → 290까지
+export const getShareCellSize = (firstWeekday, days) =>
+  Math.ceil((firstWeekday + days) / 7) > 5 ? { height: 28, stepY: 30.6 } : { height: 34, stepY: 36.6 };
 
 // 화면과 같은 글꼴로 그리기
 const fontFamily = () => getComputedStyle(document.body).fontFamily || 'sans-serif';
@@ -136,6 +139,7 @@ export const createAlbumShareImage = async ({ nickname, year, month, isCurrentMo
   });
 
   // 날짜 칸
+  const { height: CELL_HEIGHT, stepY: CELL_STEP_Y } = getShareCellSize(firstWeekday, days);
   for (let day = 1; day <= days; day += 1) {
     const slot = firstWeekday + day - 1;
     const x = PADDING + (slot % 7) * CELL_STEP_X;

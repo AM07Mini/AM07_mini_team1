@@ -4,6 +4,7 @@ import styled from 'styled-components';
 import { getMyAlbum } from '../../../api/albumApi';
 import api from '../../../api/axios';
 import TopBar from '../../../components/layout/TopBar';
+import ActionSheet from '../../../components/styled/ActionSheet';
 import Button from '../../../components/styled/Button';
 import Icon from '../../../components/styled/Icon';
 import SegmentTab from '../../../components/styled/SegmentTab';
@@ -205,10 +206,27 @@ const CookAlbumPage = () => {
   const moreRef = useRef(null);
 
   // 달력 — 보는 달과 고른 날 (고르지 않았으면 기본 날짜)
-  const today = useMemo(() => new Date(), []);
+  // 오늘 — 화면을 켜 둔 채 자정이 지나거나, 다른 앱에 다녀오면 다시 계산 (달이 바뀌면 다음 달로 넘어갈 수 있게)
+  const [today, setToday] = useState(() => new Date());
+  useEffect(() => {
+    const refresh = () =>
+      setToday((prev) => (toDateKey(prev) === toDateKey(new Date()) ? prev : new Date()));
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+    const timer = setTimeout(refresh, nextMidnight - now);
+    const visibilityHandler = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', visibilityHandler);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', visibilityHandler);
+    };
+  }, [today]);
   const [shownMonth, setShownMonth] = useState({ year: today.getFullYear(), month: today.getMonth() });
   const [selectedKey, setSelectedKey] = useState(null);
   const monthInputRef = useRef(null);
+  const [monthListOpen, setMonthListOpen] = useState(false);
 
   // 공유 시트
   const [shareOpen, setShareOpen] = useState(false);
@@ -309,15 +327,25 @@ const CookAlbumPage = () => {
     const date = new Date(year, month + step, 1);
     changeMonth(date.getFullYear(), date.getMonth());
   };
+  // 달 고르기 — 브라우저 기본 달 고르기 창을 띄우고, 못 띄우는 브라우저(옛 사파리 · 파이어폭스 PC 등)는
+  // 아래에서 올라오는 최근 12달 목록으로 대신
   const openMonthPicker = () => {
     const input = monthInputRef.current;
-    if (!input) return;
-    try {
-      input.showPicker();
-    } catch {
-      input.focus();
+    // 달 입력을 지원하지 않는 브라우저는 type이 text로 바뀌어 있음
+    if (input && input.type === 'month' && typeof input.showPicker === 'function') {
+      try {
+        input.showPicker();
+        return;
+      } catch {
+        // 아래 목록으로
+      }
     }
+    setMonthListOpen(true);
   };
+  const recentMonths = Array.from({ length: 12 }, (_, index) => {
+    const date = new Date(today.getFullYear(), today.getMonth() - index, 1);
+    return { year: date.getFullYear(), month: date.getMonth() };
+  });
   const monthPickHandler = (e) => {
     const [pickedYear, pickedMonth] = e.target.value.split('-').map(Number);
     if (!pickedYear || !pickedMonth) return;
@@ -357,10 +385,15 @@ const CookAlbumPage = () => {
     });
   };
 
-  // 화면을 떠나면(뒤로가기 등) 진행 중인 저장 취소
+  // 화면을 떠나면(뒤로가기 등) 진행 중인 저장 취소, 띄워 둔 이미지도 정리
+  const previewUrlRef = useRef(null);
+  useEffect(() => {
+    previewUrlRef.current = previewUrl;
+  }, [previewUrl]);
   useEffect(
     () => () => {
       saveRunRef.current += 1;
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
     },
     [],
   );
@@ -378,7 +411,9 @@ const CookAlbumPage = () => {
 
   // 아직 저장하면 안 되는 이유 — 달 사진을 다 받기 전이면 카드가 비어 보이므로 기다림
   let saveBlockedReason = null;
-  if (moreFailed) saveBlockedReason = '사진을 다 불러오지 못했어요';
+  // (예전에 다른 페이지 받기에 실패했어도, 지금 보는 달을 다 받았으면 막지 않음)
+  const monthLoadFailed = monthNeedsMore && moreFailed;
+  if (monthLoadFailed) saveBlockedReason = '사진을 다 불러오지 못했어요';
   else if (monthNeedsMore) saveBlockedReason = '사진 불러오는 중…';
   else if (nicknameStatus === 'loading') saveBlockedReason = '준비하는 중…';
 
@@ -398,15 +433,13 @@ const CookAlbumPage = () => {
         photoCount: monthPhotoCount,
       });
       if (run !== saveRunRef.current) return; // 그사이 시트를 닫았거나 화면을 떠남
+      const missingNotice = `사진 ${missingCount}장을 불러오지 못해 빈 칸으로 그렸어요`;
       if (shouldDownloadFile()) {
         downloadBlob(blob, `recipely-${toMonthKey(year, month)}.png`);
-        showToast(
-          missingCount > 0
-            ? `사진 ${missingCount}장을 불러오지 못해 빈 칸으로 저장했어요`
-            : '이미지를 저장했어요',
-        );
+        showToast(missingCount > 0 ? missingNotice : '이미지를 저장했어요');
       } else {
         setPreviewUrl(URL.createObjectURL(blob));
+        if (missingCount > 0) showToast(missingNotice);
       }
     } catch (e) {
       console.error(e);
@@ -481,7 +514,7 @@ const CookAlbumPage = () => {
             </MonthArrow>
           </MonthNav>
           <MonthSummary aria-live="polite">
-            {moreFailed ? (
+            {monthLoadFailed ? (
               <>
                 사진을 더 불러오지 못했어요.{' '}
                 <RetryButton type="button" onClick={() => loadPage(nextPage)}>
@@ -551,6 +584,15 @@ const CookAlbumPage = () => {
         isCurrentMonth={isCurrentMonth}
         photosByDay={photosByDay}
         photoCount={monthPhotoCount}
+      />
+      <ActionSheet
+        open={monthListOpen}
+        title="달 고르기"
+        actions={recentMonths.map((item) => ({
+          title: `${item.year}년 ${item.month + 1}월`,
+          onClick: () => changeMonth(item.year, item.month),
+        }))}
+        closeHandler={() => setMonthListOpen(false)}
       />
       <Toast message={toast} />
     </>

@@ -107,7 +107,7 @@ const AlbumCalendar = ({ year, month, photosByDay, selectedKey, today, selectHan
           </Weekday>
         ))}
       </Weekdays>
-      <Grid role="grid" aria-label={`${year}년 ${month + 1}월`}>
+      <Grid role="group" aria-label={`${year}년 ${month + 1}월`}>
         {Array.from({ length: firstWeekday }, (_, index) => (
           <span key={`blank-${index}`} />
         ))}

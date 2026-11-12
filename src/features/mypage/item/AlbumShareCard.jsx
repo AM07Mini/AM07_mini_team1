@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { colors } from '../../../components/styled/theme';
 import { getMonthInfo, toDateKey, WEEKDAYS } from '../../../utils/calendar';
+import { getShareCellSize } from '../albumShareImage';
 
 // 공유용 카드 미리보기 — 4:5 (저장할 때는 1080×1350)
 const Card = styled.div`
@@ -57,16 +58,18 @@ const Weekday = styled.span`
   text-align: center;
 `;
 
+// 줄 간격 = 칸 높이와의 차이 (저장 이미지와 같은 크기 — getShareCellSize)
 const Grid = styled.div`
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2.6px;
+  column-gap: 2.6px;
+  row-gap: ${(props) => props.$rowGap}px;
   margin-top: 4px;
 `;
 
 const Day = styled.span`
   position: relative;
-  height: 34px;
+  height: ${(props) => props.$height}px;
   overflow: hidden;
   border-radius: 7px;
   background-color: ${(props) => (props.$photo ? colors.grey4 : colors.surface)};
@@ -111,6 +114,7 @@ const Footer = styled.p`
 // photosByDay: { "2026-11-12": [사진, ...] }, photoCount: 이달 사진 수
 const AlbumShareCard = ({ nickname, year, month, isCurrentMonth, photosByDay, photoCount }) => {
   const { firstWeekday, days } = getMonthInfo(year, month);
+  const cell = getShareCellSize(firstWeekday, days);
   const owner = nickname ? `${nickname}의 ` : '';
   const when = isCurrentMonth ? '이번 달' : `${month + 1}월에`;
 
@@ -131,7 +135,7 @@ const AlbumShareCard = ({ nickname, year, month, isCurrentMonth, photosByDay, ph
           </Weekday>
         ))}
       </Weekdays>
-      <Grid aria-hidden="true">
+      <Grid aria-hidden="true" $rowGap={cell.stepY - cell.height}>
         {Array.from({ length: firstWeekday }, (_, index) => (
           <span key={`blank-${index}`} />
         ))}
@@ -139,7 +143,7 @@ const AlbumShareCard = ({ nickname, year, month, isCurrentMonth, photosByDay, ph
           const key = toDateKey(new Date(year, month, index + 1));
           const photo = photosByDay[key]?.[0];
           return (
-            <Day key={key} $photo={Boolean(photo)}>
+            <Day key={key} $photo={Boolean(photo)} $height={cell.height}>
               {photo && <img src={photo.imageUrl} alt="" />}
               <DayNumber $photo={Boolean(photo)}>{index + 1}</DayNumber>
             </Day>
