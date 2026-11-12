@@ -53,6 +53,7 @@ export const toTrendingRow = (item) => ({
     difficulty: item.difficulty ?? null, // 서버 값 그대로 (EASY 등) — 표기는 utils/difficulty.js
     minutes: item.cookingMinutes ?? null,
     likes: item.likeCount ?? 0,
+    weeklyLikes: item.weeklyLikeCount ?? 0, // 최근 7일 좋아요 수 (이번 주 좋아요순에서 하트 옆에 표시)
     image: item.thumbnailUrl || DEFAULT_IMAGE,
     ingredientNames: (item.ingredients ?? []).map((ingredient) => ingredient.name).filter(Boolean),
 });
