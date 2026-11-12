@@ -148,6 +148,46 @@ const SignUpPage = () => {
     f => f.name !== 'code' || (codeSent && !emailVerified)
   );
 
+
+  const passwordValid =
+    Boolean(form.password) &&
+    !validate('password', form.password);
+
+  // 각 필드의 확인 완료 여부
+  const isFieldComplete = (name) => {
+    if (name === 'loginId' || name === 'nickname') {
+      return checked[name] && !errors[name];
+    }
+
+    if (name === 'email') {
+      return emailVerified && !expired && !errors.email;
+    }
+
+    if (name === 'password') {
+      return passwordValid && !errors.password;
+    }
+
+    if (name === 'confirmPassword') {
+      return (
+        passwordValid &&
+        Boolean(form.confirmPassword) &&
+        form.password === form.confirmPassword &&
+        !errors.confirmPassword
+      );
+    }
+
+    return false;
+  };
+
+  // 이메일 버튼의 단계별 제목
+  const emailActionTitle = !checked.email
+    ? '중복 확인'
+    : codeSent
+      ? '재발송'
+      : '인증번호 발송';
+
+
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     const next = {
@@ -162,6 +202,7 @@ const SignUpPage = () => {
       ...prev,
       [name]: '',
       ...(name === 'email' && { code: '' }),
+      ...(name === 'password' && { confirmPassword: '' }),
     }));
     setNotice('');
 
@@ -496,107 +537,61 @@ const SignUpPage = () => {
                 }
               >
 
-                {/* 중복 확인·인증번호 발송 버튼 */}
-                {check &&
-                  !((name === 'loginId' || name === 'nickname') && checked[name]) &&
-                  !(name === 'email' && emailVerified && !expired) && (
-                    <Button
-                      type="button"
-                      variant="inline"
-                      disabled={loading}
-                      title={
-                        name !== 'email'
-                          ? '중복 확인'
-                          : !checked.email
-                            ? '중복 확인'
-                            : codeSent
-                              ? '재발송'
-                              : '인증번호 발송'
-                      }
-                      onClick={() => {
-                        if (name === 'email' && checked.email) {
-                          handleSendCode();
-                        } else {
-                          handleCheck(name);
-                        }
-                      }}
-                    />
-                  )}
-
-                {/* 아이디·닉네임 중복 확인 완료 */}
-                {(name === 'loginId' || name === 'nickname') &&
-                  checked[name] &&
-                  !errors[name] && (
-                    <CheckMark
-                      role="img"
-                      aria-label={`${label} 중복 확인 완료`}
-                    >
-                      ✓
-                    </CheckMark>
-                  )}
-
-                {/* 이메일 인증 완료 */}
-                {name === 'email' &&
-                  emailVerified &&
-                  !expired &&
-                  !errors.email && (
-                    <CheckMark
-                      role="img"
-                      aria-label="이메일 인증 완료"
-                    >
-                      ✓
-                    </CheckMark>
-                  )}
-
-                {/* 비밀번호 유효성 검사 완료 */}
-                {name === 'password' &&
-                  form.password.length > 0 &&
-                  !validate('password', form.password) &&
-                  !errors.password && (
-                    <CheckMark
-                      role="img"
-                      aria-label="비밀번호 조건 충족"
-                    >
-                      ✓
-                    </CheckMark>
-                  )}
-
-                {/* 비밀번호 일치 확인 */}
-                {name === 'confirmPassword' &&
-                  form.confirmPassword.length > 0 &&
-                  !validate('password', form.password) &&
-                  form.password === form.confirmPassword &&
-                  !errors.confirmPassword && (
-                    <CheckMark
-                      role="img"
-                      aria-label="비밀번호 일치"
-                    >
-                      ✓
-                    </CheckMark>
-                  )}
-
-
-                {name === 'code' && (
-                  <>
-                    {remaining !== null && (
-                      <Timer $expired={expired} role="timer">
-                        {formatTime(remaining)}
-                      </Timer>
+                {/* 중복 확인 및 인증번호 발송 */}
+                  {check &&
+                    (name === 'email'
+                      ? (!emailVerified || expired)
+                      : !checked[name]) && (
+                      <Button
+                        type="button"
+                        variant="inline"
+                        disabled={loading}
+                        title={name === 'email' ? emailActionTitle : '중복 확인'}
+                        onClick={() => {
+                          if (name === 'email' && checked.email) {
+                            handleSendCode();
+                          } else {
+                            handleCheck(name);
+                          }
+                        }}
+                      />
                     )}
 
-                    <Button
-                      type="button"
-                      variant="inline"
-                      title={
-                        emailVerified && !expired
-                          ? '인증 완료'
-                          : '인증 확인'
+                  {/* 확인 완료 체크 표시 */}
+                  {isFieldComplete(name) && (
+                    <CheckMark
+                      role="img"
+                      aria-label={
+                        name === 'password'
+                          ? '비밀번호 형식 충족'
+                          : `${label} 확인 완료`
                       }
-                      disabled={emailVerified || expired || loading}
-                      onClick={handleVerifyCode}
-                    />
-                  </>
-                )}
+                    >
+                      ✓
+                    </CheckMark>
+                  )}
+
+                  {/* 이 아래의 인증번호 코드는 그대로 유지 */}
+                  {name === 'code' && (
+                    <>
+                      {remaining !== null && (
+                        <Timer $expired={expired} role="timer">
+                          {formatTime(remaining)}
+                        </Timer>
+                      )}
+
+                      <Button
+                        type="button"
+                        variant="inline"
+                        title="인증 확인"
+                        disabled={emailVerified || expired || loading}
+                        onClick={handleVerifyCode}
+                      />
+                    </>
+                  )}
+
+
+
               </TextInput>
 
               {name === 'email' &&
@@ -629,6 +624,7 @@ const SignUpPage = () => {
                 />
               )}
 
+
               {/* 이메일 인증번호 안내 */}
               {name === 'code' && (
                 <FormMessage
@@ -638,11 +634,8 @@ const SignUpPage = () => {
                 >
                   {expired
                     ? '인증번호가 만료되었습니다. 다시 발송해주세요.'
-                    : errors.code
-                      ? errors.code
-                      : emailVerified
-                        ? '이메일 인증이 완료되었습니다.'
-                        : '인증번호 발송 요청이 처리되었습니다. 메일함을 확인해주세요.'}
+                    : errors.code ||
+                      '인증번호 발송 요청이 처리되었습니다. 메일함을 확인해주세요.'}
                 </FormMessage>
               )}
 
