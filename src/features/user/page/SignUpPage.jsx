@@ -1,11 +1,13 @@
 import { useNavigate } from 'react-router-dom';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
+import PageIntro from '../../../components/styled/PageIntro';
 import TopBar from '../../../components/layout/TopBar';
 import Button from '../../../components/styled/Button';
 import TextInput from '../../../components/styled/TextInput';
 import Checkbox from '../../../components/styled/Checkbox';
-import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import FormMessage from '../../../components/styled/FormMessage';
+import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 import {checkLoginId, checkNickname, checkEmail, sendEmailCode, verifyEmailCode, signUp} from '../../../api/authApi';
 
 const checkApis = {
@@ -34,9 +36,6 @@ const Content = styled.div`
 
 const Intro = styled.header`
   margin-bottom: 28px;
-
-  h1 { margin: 0 0 8px; font-size: 25px; line-height: 1.4; }
-  p { margin: 0; font-size: 13px; color: ${colors.grey1}; }
 `;
 
 const Form = styled.form`
@@ -51,12 +50,24 @@ const Field = styled.div`
   gap: 7px;
 `;
 
-const Message = styled.p`
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: ${({ $error }) => $error ? '#d64545' : colors.accent1};
+// 인증번호 남은 시간 표시
+const Timer = styled.span`
+  flex-shrink: 0;
+  white-space: nowrap;
+  ${font('hashtag')}
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: ${({ $expired }) =>
+    $expired ? colors.danger : colors.accent1};
 `;
+
+// 초 단위를 MM:SS 형식으로 변환
+const formatTime = (seconds) => {
+  const minute = Math.floor(seconds / 60);
+  const second = seconds % 60;
+
+  return `${String(minute).padStart(2, '0')}:${String(second).padStart(2, '0')}`;
+};
 
 const validate = (name, value) => {
   switch (name) {
@@ -103,6 +114,28 @@ const SignUpPage = () => {
   const [emailVerified, setEmailVerified] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const [deadline, setDeadline] = useState(null);
+
+  const [remaining, setRemaining] = useState(null);
+
+  useEffect(() => {
+    if (deadline === null) return;
+
+    const updateTimer = () => {
+      setRemaining(
+        Math.max(0, Math.ceil((deadline - Date.now()) / 1000))
+      );
+    };
+
+    updateTimer();
+
+    const timerId = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(timerId);
+  }, [deadline]);
+
+  const expired = deadline !== null && remaining === 0;
+
   const visibleFields = fields.filter(f => f.name !== 'code' || codeSent);
 
   const handleChange = (e) => {
@@ -129,6 +162,8 @@ const SignUpPage = () => {
     if (name === 'email') {
       setCodeSent(false);
       setEmailVerified(false);
+      setDeadline(null);
+      setRemaining(null);
     }
     if (name === 'code') setEmailVerified(false);
   };
@@ -180,10 +215,31 @@ const SignUpPage = () => {
       if (latestForm.current.email.trim() !== email) return;
       if (!data.isSuccess) throw new Error(data.message || '발송 실패');
 
-      latestForm.current = { ...latestForm.current, code: '' };
+      const seconds = Number(data.result?.expiresInSeconds);
+
+      const validSeconds =
+        Number.isFinite(seconds) && seconds > 0
+          ? seconds
+          : null;
+
+      latestForm.current = {
+        ...latestForm.current,
+        code: '',
+      };
+
       setForm(latestForm.current);
       setCodeSent(true);
-      setNotice('인증번호 발송 요청이 처리되었습니다. 메일함을 확인해주세요.');
+
+      setRemaining(validSeconds);
+      setDeadline(
+        validSeconds !== null
+          ? Date.now() + validSeconds * 1000
+          : null
+      );
+
+      setNotice(
+        '인증번호 발송 요청이 처리되었습니다. 메일함을 확인해주세요.'
+      );
     } catch (err) {
       if (latestForm.current.email.trim() === email) {
         setNotice(getError(err));
@@ -200,6 +256,17 @@ const SignUpPage = () => {
 
     setErrors(prev => ({ ...prev, code: error }));
     if (error || !codeSent || loading) return;
+
+    if (
+      expired ||
+      (deadline !== null && Date.now() >= deadline)
+    ) {
+      setErrors(prev => ({
+        ...prev,
+        code: '인증번호가 만료되었습니다. 다시 발송해주세요.',
+      }));
+      return;
+    }
 
     setLoading(true);
     setEmailVerified(false);
@@ -261,6 +328,17 @@ const SignUpPage = () => {
     return;
   }
 
+  // 인증번호 유효시간 확인
+  if (
+    expired ||
+    (deadline !== null && Date.now() >= deadline)
+  ) {
+    setNotice(
+      '인증번호가 만료되었습니다. 다시 발송해주세요.'
+    );
+    return;
+  }
+
   // 이메일 인증 완료 여부 검사
   if (!codeSent || !emailVerified) {
     setNotice('이메일 인증을 먼저 완료해주세요.');
@@ -307,8 +385,11 @@ const SignUpPage = () => {
       <TopBar title="회원가입" showBack />
       <Content>
         <Intro>
-          <h1>반가워요!<br />계정을 만들어 주세요</h1>
-          <p>나만의 레시피를 기록하고 다른 사람과 나눠보세요.</p>
+          <PageIntro
+            titleAs="h1"
+            title={<>반가워요!<br />계정을 만들어 주세요</>}
+            description="나만의 레시피를 기록하고 다른 사람과 나눠보세요."
+          />
         </Intro>
 
         <Form onSubmit={handleSubmit} noValidate>
@@ -340,34 +421,47 @@ const SignUpPage = () => {
                 )}
 
                 {name === 'code' && (
-                  <Button
-                    type="button"
-                    variant="inline"
-                    title={emailVerified ? '인증 완료' : '인증 확인'}
-                    disabled={emailVerified || loading}
-                    onClick={handleVerifyCode}
-                  />
+                  <>
+                    {remaining !== null && (
+                      <Timer $expired={expired} role="timer">
+                        {formatTime(remaining)}
+                      </Timer>
+                    )}
+
+                    <Button
+                      type="button"
+                      variant="inline"
+                      title={
+                        emailVerified && !expired
+                          ? '인증 완료'
+                          : '인증 확인'
+                      }
+                      disabled={emailVerified || expired || loading}
+                      onClick={handleVerifyCode}
+                    />
+                  </>
                 )}
               </TextInput>
 
               {name === 'code' && (
-                <Message>
-                  {emailVerified
-                    ? '이메일 인증이 완료되었습니다.'
-                    : '이메일로 받은 인증번호를 입력해주세요.'}
-                </Message>
+                <FormMessage $tone={expired ? 'error' : 'success'}>
+                  {expired
+                    ? '인증번호가 만료되었습니다. 다시 발송해주세요.'
+                    : emailVerified
+                      ? '이메일 인증이 완료되었습니다.'
+                      : '이메일로 받은 인증번호를 입력해주세요.'}
+                </FormMessage>
               )}
-
               {name === 'confirmPassword' &&
                 form.confirmPassword &&
                 form.password === form.confirmPassword && (
-                  <Message>비밀번호가 일치합니다.</Message>
+                  <FormMessage $tone="success">비밀번호가 일치합니다.</FormMessage>
                 )}
 
               {errors[name] && (
-                <Message id={`signup-${name}-error`} $error role="alert">
+                <FormMessage id={`signup-${name}-error`} $tone="error" role="alert">
                   {errors[name]}
-                </Message>
+                </FormMessage>
               )}
 
             </Field>
@@ -383,10 +477,10 @@ const SignUpPage = () => {
                 setErrors(prev => ({ ...prev, agree: '' }));
               }}
             />
-            {errors.agree && (<Message $error role="alert"> {errors.agree} </Message> )}
+            {errors.agree && (<FormMessage $tone="error" role="alert"> {errors.agree} </FormMessage> )}
           </Field>
 
-          {notice && <Message role="status">{notice}</Message>}
+          {notice && <FormMessage role="status" $tone="success">{notice}</FormMessage>}
           <Button title="가입하기" type="submit" disabled={loading} />
         </Form>
       </Content>

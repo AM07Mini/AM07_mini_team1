@@ -1,5 +1,5 @@
 import styled, { css } from 'styled-components';
-import { colors, radius } from './theme';
+import { colors, radius, font } from './theme';
 
 // 피그마 버튼 4종
 const variants = {
@@ -10,8 +10,7 @@ const variants = {
     border-radius: ${radius.button}px;
     background-color: ${colors.primary};
     color: ${colors.white};
-    font-size: 16px;
-    font-weight: 700;
+    ${font('cardTitle')}
   `,
   // 보조 버튼(아웃라인) — r12
   outline: css`
@@ -21,8 +20,7 @@ const variants = {
     border-radius: ${radius.button}px;
     background-color: ${colors.white};
     color: ${colors.dark};
-    font-size: 14px;
-    font-weight: 700;
+    ${font('label')}
   `,
   // 작은 버튼 — "+ 기록", r12
   small: css`
@@ -31,8 +29,7 @@ const variants = {
     border-radius: ${radius.button}px;
     background-color: ${colors.primary};
     color: ${colors.white};
-    font-size: 14px;
-    font-weight: 700;
+    ${font('label')}
   `,
   // 입력창 안 버튼 — "중복 확인", r8
   inline: css`
@@ -41,7 +38,7 @@ const variants = {
     border-radius: ${radius.small}px;
     background-color: ${colors.primary};
     color: ${colors.white};
-    font-size: 12px;
+    ${font('hashtag')}
     font-weight: 700;
   `,
 };

@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Button from '../../../components/styled/Button';
 import Icon from '../../../components/styled/Icon';
-import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
 
 const Wrapper = styled.div`
   min-height: 100dvh;
@@ -37,14 +37,13 @@ const CheckCircle = styled.div`
 const Title = styled.h1`
   margin: 0;
   color: ${colors.dark};
-  font-size: 24px;
-  font-weight: 700;
+  ${font('pageTitle')}
 `;
 
 const Description = styled.p`
   margin: 0;
   color: ${colors.grey1};
-  font-size: 13px;
+  ${font('sub')}
   line-height: 1.7;
 `;
 
@@ -60,7 +59,7 @@ const InfoRow = styled.div`
   justify-content: space-between;
   gap: 12px;
   padding: 5px 0;
-  font-size: 12px;
+  ${font('caption')}
 
   span {
     color: ${colors.grey1};

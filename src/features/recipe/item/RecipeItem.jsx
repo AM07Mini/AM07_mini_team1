@@ -1,13 +1,14 @@
 // 레시피 카드 — 썸네일·이름·난이도·조리 시간, 누르면 상세로
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { colors, shadows, font } from '../../../components/styled/theme';
 
 const Card = styled.article`
   overflow: hidden;
-  border: 1px solid #fbfbfb;
+  border: 1px solid ${colors.surface};
   border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 2px 16px rgba(6, 51, 54, 0.1);
+  background: ${colors.white};
+  box-shadow: ${shadows.card};
 
   .thumb {
     height: 88px;
@@ -22,14 +23,14 @@ const Card = styled.article`
   }
   h3 {
     margin: 10px 12px 0;
-    font-size: 16px;
+    ${font('cardTitle')}
     line-height: 1.375;
     white-space: pre-line;
   }
   p {
     margin: 8px 12px 12px;
-    font-size: 14px;
-    color: #0f9d8a;
+    ${font('body')}
+    color: ${colors.primary};
     opacity: 0.75;
   }
 `;

@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import styled from 'styled-components';
-import Icon from '../../../components/styled/Icon';
-import { colors } from '../../../components/styled/theme';
+import Icon from './Icon';
+import { colors } from './theme';
 
 // 사진이 없을 때 닉네임 첫 글자 뒤에 깔 옅은 색 (피그마 팔로잉 목록 기준)
 const INITIAL_BACKGROUNDS = ['#EBE5FA', '#E5F5E0', '#FAEBD9'];
@@ -14,7 +15,7 @@ const Image = styled.img`
 `;
 
 // 사진이 없을 때 — 원 안에 사람 아이콘 또는 닉네임 첫 글자
-const Empty = styled.div`
+const Empty = styled.span`
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -28,10 +29,16 @@ const Empty = styled.div`
   font-weight: 700;
 `;
 
-// 프로필 사진 — src가 없으면 기본 모양
+// 프로필 사진 — src가 없거나 못 불러오면(만료된 주소 등) 기본 모양
 // name을 주면 사람 아이콘 대신 첫 글자 (colorKey로 배경색이 사람마다 고정됨)
+// 사용: <Avatar src={user.profileImageUrl} size={44} name={user.nickname} colorKey={user.id} />
 const Avatar = ({ src, size, name, colorKey = 0 }) => {
-  if (src) return <Image src={src} alt="프로필 사진" $size={size} />;
+  // 실패한 주소를 기억 — src가 바뀌면 다시 시도
+  const [failedSrc, setFailedSrc] = useState(null);
+
+  if (src && src !== failedSrc) {
+    return <Image src={src} alt="프로필 사진" $size={size} onError={() => setFailedSrc(src)} />;
+  }
 
   if (name) {
     const background = INITIAL_BACKGROUNDS[Math.abs(colorKey) % INITIAL_BACKGROUNDS.length];

@@ -1,5 +1,6 @@
 import styled from 'styled-components';
-import { colors, radius } from '../../../components/styled/theme';
+import Toggle from '../../../components/styled/Toggle';
+import { colors, radius, font } from '../../../components/styled/theme';
 
 const FilterBox = styled.label`
   display: flex;
@@ -8,54 +9,19 @@ const FilterBox = styled.label`
   gap: 12px;
   padding: 14px 16px;
   border-radius: ${radius.button}px;
-  background-color: #f6f8fb;
+  background-color: ${colors.surface};
   cursor: ${(props) => (props.$disabled ? 'default' : 'pointer')};
   opacity: ${(props) => (props.$disabled ? 0.6 : 1)};
 
   strong {
     display: block;
-    font-size: 14px;
-    font-weight: 700;
+    ${font('label')}
     color: ${colors.dark};
   }
 
   small {
-    font-size: 11px;
+    ${font('caption')}
     color: ${colors.grey2};
-  }
-`;
-
-const Switch = styled.span`
-  position: relative;
-  &:focus-within {
-    outline: 2px solid ${colors.primary};
-    outline-offset: 3px;
-  }
-  flex-shrink: 0;
-  width: 44px;
-  height: 26px;
-  border-radius: 13px;
-  background-color: ${(props) => (props.$on ? colors.primary : colors.grey3)};
-  transition: background-color 0.2s;
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    left: ${(props) => (props.$on ? '21px' : '3px')};
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: ${colors.white};
-    transition: left 0.2s;
-  }
-
-  input {
-    position: absolute;
-    inset: 0;
-    margin: 0;
-    opacity: 0;
-    cursor: inherit;
   }
 `;
 
@@ -66,15 +32,7 @@ const IngredientFilter = ({ on, disabled, onChange }) => (
       <strong>내 재료로 만들 수 있는 것만</strong>
       <small>{disabled ? '재료를 등록하면 쓸 수 있어요' : '꺼두면 없는 재료가 있어도 모두 보여줘요'}</small>
     </span>
-    <Switch $on={on}>
-      <input
-        type="checkbox"
-        role="switch"
-        checked={on}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.checked)}
-      />
-    </Switch>
+    <Toggle checked={on} disabled={disabled} changeHandler={onChange} />
   </FilterBox>
 );
 

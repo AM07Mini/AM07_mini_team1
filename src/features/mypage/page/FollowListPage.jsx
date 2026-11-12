@@ -3,36 +3,19 @@ import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../../../api/axios';
 import SearchInput from '../../../components/styled/SearchInput';
-import { colors, PAGE_PADDING } from '../../../components/styled/theme';
+import UnderlineTab from '../../../components/styled/UnderlineTab';
+import { PAGE_PADDING } from '../../../components/styled/theme';
 import { isAuthError } from '../authError';
 import { FOLLOW_PAGE_SIZE } from '../constants';
 import FollowUserList from '../list/FollowUserList';
-import MyPageTopBar from '../ui/MyPageTopBar';
-import StatusMessage from '../ui/StatusMessage';
+import TopBar from '../../../components/layout/TopBar';
+import StatusMessage from '../../../components/styled/StatusMessage';
 
 const Wrapper = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
   padding: 10px ${PAGE_PADDING}px 32px;
-`;
-
-const Tabs = styled.div`
-  display: flex;
-`;
-
-// 밑줄 탭 — 선택: 진한 굵은 밑줄 / 나머지: 옅은 얇은 밑줄
-const Tab = styled.button`
-  flex: 1;
-  padding: 10px 0;
-  border: none;
-  border-bottom: ${(props) => (props.$selected ? `3px solid ${colors.primary}` : `1px solid ${colors.grey4}`)};
-  background: none;
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: ${(props) => (props.$selected ? 700 : 400)};
-  color: ${(props) => (props.$selected ? colors.primary : colors.grey1)};
-  cursor: pointer;
 `;
 
 const emptyPage = { content: [], totalElements: 0 };
@@ -163,19 +146,15 @@ const FollowListPage = () => {
 
     return (
       <Wrapper>
-        <Tabs>
-          {Object.entries(tabInfo).map(([value, info]) => (
-            <Tab
-              key={value}
-              type="button"
-              $selected={tab === value}
-              aria-pressed={tab === value}
-              onClick={() => tabChangeHandler(value)}
-            >
-              {info.title} {lists[value].totalElements}
-            </Tab>
-          ))}
-        </Tabs>
+        <UnderlineTab
+          tabs={Object.entries(tabInfo).map(([value, info]) => ({
+            value,
+            title: `${info.title} ${lists[value].totalElements}`,
+          }))}
+          selected={tab}
+          changeHandler={tabChangeHandler}
+          label="팔로워 · 팔로잉"
+        />
 
         <SearchInput
           value={keyword}
@@ -195,7 +174,7 @@ const FollowListPage = () => {
 
   return (
     <>
-      <MyPageTopBar title={nickname} showBack />
+      <TopBar title={nickname} showBack />
       {renderContent()}
     </>
   );

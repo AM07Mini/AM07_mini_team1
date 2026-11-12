@@ -1,5 +1,5 @@
 // 공용 선 아이콘(SVG) — 색은 부모의 color를 따라감(currentColor)
-// 사용: <Icon name="back" />, <Icon name="search" size={20} />
+// 사용: <Icon name="back" />, <Icon name="search" size={20} />, <Icon name="bookmark" filled />
 const paths = {
   home: <path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />,
   search: (
@@ -34,6 +34,8 @@ const paths = {
     </>
   ),
   check: <path d="M5 12.5 9.5 17 19 7" />,
+  // 북마크 — filled로 채우면 저장된 상태
+  bookmark: <path d="M6 3h12v18l-6-4.5L6 21z" />,
   // 가운데 플로팅 버튼 — 셰프 모자
   chef: (
     <>
@@ -43,12 +45,12 @@ const paths = {
   ),
 };
 
-const Icon = ({ name, size = 24, strokeWidth = 1.8 }) => (
+const Icon = ({ name, size = 24, strokeWidth = 1.8, filled = false }) => (
   <svg
     width={size}
     height={size}
     viewBox="0 0 24 24"
-    fill="none"
+    fill={filled ? 'currentColor' : 'none'}
     stroke="currentColor"
     strokeWidth={strokeWidth}
     strokeLinecap="round"

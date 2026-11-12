@@ -1,13 +1,13 @@
 import styled from 'styled-components';
 import Icon from './Icon';
-import { colors, radius } from './theme';
+import { colors, radius, font } from './theme';
 
 const Wrapper = styled.label`
   display: flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  font-size: 13px;
+  ${font('sub')}
   color: ${colors.grey1};
 `;
 

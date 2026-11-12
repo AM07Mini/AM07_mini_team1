@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { colors } from '../../../components/styled/theme';
+import { colors, font } from '../../../components/styled/theme';
 
 const EmptyState = styled.div`
   grid-column: 1 / -1;
@@ -24,14 +24,13 @@ const EmptyIcon = styled.div`
 const Title = styled.h4`
   margin: 10px 0 0;
   color: ${colors.dark};
-  font-size: 19px;
-  font-weight: 700;
+  ${font('sectionTitle')}
 `;
 
 const Description = styled.p`
   margin: 6px 0 0;
   color: ${colors.grey1};
-  font-size: 14px;
+  ${font('body')}
 `;
 
 const SuggestionSection = styled.div`
@@ -43,7 +42,7 @@ const SuggestionSection = styled.div`
 const SuggestionTitle = styled.p`
   margin: 0 0 8px;
   color: ${colors.grey2};
-  font-size: 13px;
+  ${font('sub')}
   font-weight: 700;
 `;
 
@@ -61,7 +60,7 @@ const SuggestionButton = styled.button`
   background: ${colors.white};
   color: ${colors.dark};
   font: inherit;
-  font-size: 12px;
+  ${font('caption')}
   cursor: pointer;
 
   &:focus-visible {
@@ -73,7 +72,7 @@ const SuggestionButton = styled.button`
 const SuggestionNotice = styled.p`
   margin: 0;
   color: ${colors.grey1};
-  font-size: 12px;
+  ${font('caption')}
 `;
 
 const Actions = styled.div`
@@ -92,8 +91,7 @@ const ActionButton = styled.button`
   background: ${(props) => (props.$primary ? colors.primary : colors.white)};
   color: ${(props) => (props.$primary ? colors.white : colors.dark)};
   font: inherit;
-  font-size: 14px;
-  font-weight: 700;
+  ${font('label')}
   cursor: pointer;
 `;
 

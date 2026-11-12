@@ -1,13 +1,11 @@
+import { DIFFICULTIES } from '../../utils/difficulty';
+
 export const searchFilters = [
   {
     key: 'difficulty',
     title: '조리 난이도',
     selectionMode: 'single',
-    items: [
-      { value: 'EASY', label: '쉬움' },
-      { value: 'MEDIUM', label: '보통' },
-      { value: 'HARD', label: '어려움' },
-    ],
+    items: DIFFICULTIES.map(({ value, label }) => ({ value, label })),
   },
   {
     key: 'maxCookingMinutes',

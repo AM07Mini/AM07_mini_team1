@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 import Icon from './Icon';
-import { colors, radius } from './theme';
+import { colors, radius, font } from './theme';
 
 const Field = styled.div`
   display: flex;
@@ -20,7 +20,7 @@ const StyledInput = styled.input`
   background: none;
   outline: none;
   font-family: inherit;
-  font-size: 14px;
+  ${font('body')}
   color: ${colors.dark};
 
   &::placeholder {

@@ -1,5 +1,5 @@
 import styled from 'styled-components';
-import { colors } from '../../../components/styled/theme';
+import { colors, font } from '../../../components/styled/theme';
 import FollowUserItem from '../item/FollowUserItem';
 
 const List = styled.ul`
@@ -13,7 +13,7 @@ const List = styled.ul`
 const Empty = styled.p`
   margin: 0;
   padding: 40px 0;
-  font-size: 14px;
+  ${font('body')}
   color: ${colors.grey2};
   text-align: center;
 `;

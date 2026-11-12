@@ -1,13 +1,18 @@
 import { useState } from "react";
 import styled from "styled-components";
+import SectionHeader from '../../../components/styled/SectionHeader';
+import Avatar from "../../../components/styled/Avatar";
+import BackIcon from "../../../components/styled/BackIcon";
+import CircleIconButton from "../../../components/styled/CircleIconButton";
+import Icon from "../../../components/styled/Icon";
+import FollowButton from "../../../components/styled/FollowButton";
 import Button from "../../../components/styled/Button";
 import Chip from "../../../components/styled/Chip";
 import Text from "../../../components/styled/Text";
 import { RECIPE, INITIAL_REVIEWS } from "../data/recipeMock";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { colors, radius} from "../../../components/styled/theme";
+import { colors, radius, font } from "../../../components/styled/theme";
 
-const HEART = "#E5484D";
 
 const Hero = styled.div`
   position: relative;
@@ -20,35 +25,20 @@ const Hero = styled.div`
   }
 `;
 
-const BackLink = styled(Link)`
+// 사진 위 버튼 자리 — 왼쪽 뒤로가기, 오른쪽 북마크
+const HeroActions = styled.div`
   position: absolute;
   top: 15px;
   left: 24px;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: ${colors.white};
-  color: ${colors.dark};
-  font-size: 18px;
-  text-decoration: none;
+  right: 24px;
+  display: flex;
+  justify-content: space-between;
 `;
 
-const BookmarkButton = styled.button`
-  position: absolute;
-  top: 15px;
-  right: 24px;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border: none;
-  border-radius: 50%;
-  background: ${colors.white};
-  font-size: 18px;
+// 북마크 아이콘 색 — 저장하면 진한 색으로 채움
+const BookmarkColor = styled.span`
+  display: flex;
   color: ${({ $saved }) => ($saved ? colors.primary : colors.grey2)};
-  cursor: pointer;
 `;
 
 const Sheet = styled.article`
@@ -68,23 +58,11 @@ const Section = styled.section`
   gap: 12px;
 `;
 
-const Row = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
 const Author = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
 
-  > img {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
   > div {
     flex: 1;
     display: flex;
@@ -94,18 +72,6 @@ const Author = styled.div`
     color: inherit;
     text-decoration: none;
   }
-`;
-
-const FollowButton = styled.button`
-  padding: 6px 14px;
-  border: 1px solid ${colors.primary};
-  border-radius: 14px;
-  background: ${({ $on }) => ($on ? colors.white : colors.accent2)};
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  color: ${colors.primary};
-  cursor: pointer;
 `;
 
 const Stats = styled.div`
@@ -143,12 +109,11 @@ const ActionBar = styled.div`
     border: none;
     background: none;
     font-family: inherit;
-    font-size: 14px;
-    font-weight: 500;
+    ${font('option')}
     cursor: pointer;
   }
   .like {
-    color: ${({ $liked }) => ($liked ? HEART : colors.grey2)};
+    color: ${({ $liked }) => ($liked ? colors.heart : colors.grey2)};
   }
   .save {
     margin-left: auto;
@@ -171,7 +136,7 @@ const OwnedBadge = styled.span`
   padding: 2px 8px;
   border-radius: ${radius.small}px;
   background: ${colors.accent2};
-  font-size: 11px;
+  ${font('hashtag')}
   font-weight: 700;
   color: ${colors.primary};
 `;
@@ -191,7 +156,7 @@ const StepNumber = styled.span`
   height: 28px;
   border-radius: 50%;
   background: ${colors.primary};
-  font-size: 13px;
+  ${font('sub')}
   font-weight: 700;
   color: ${colors.white};
 `;
@@ -202,6 +167,13 @@ const RecipeDetailPage = () => {
   const navigate = useNavigate();
   const { id = RECIPE.id } = useParams();
   const goReviews = () => navigate(`/recipe/${id}/reviews`);
+
+  // 뒤로가기 — 들어온 화면으로 돌아감 (마이 페이지, 검색, 피드 등)
+  // 주소로 바로 들어와서 돌아갈 화면이 없으면 홈으로
+  const backHandler = () => {
+    if (window.history.state?.idx > 0) navigate(-1);
+    else navigate("/", { replace: true }); // 상세 기록을 홈으로 바꿔서 브라우저 뒤로가기로 다시 상세에 오지 않게
+  };
 
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -233,16 +205,16 @@ const RecipeDetailPage = () => {
   return (
     <div>
       <Hero>
-        <BackLink to="/recipe/recommend" aria-label="뒤로">←</BackLink>
-        <BookmarkButton
-          type="button"
-          $saved={saved}
-          aria-pressed={saved}
-          aria-label="저장"
-          onClick={() => setSaved((v) => !v)}
-        >
-          {saved ? "★" : "☆"}
-        </BookmarkButton>
+        <HeroActions>
+          <CircleIconButton label="뒤로가기" onClick={backHandler}>
+            <BackIcon />
+          </CircleIconButton>
+          <CircleIconButton label="저장" pressed={saved} onClick={() => setSaved((v) => !v)}>
+            <BookmarkColor $saved={saved}>
+              <Icon name="bookmark" size={20} filled={saved} />
+            </BookmarkColor>
+          </CircleIconButton>
+        </HeroActions>
       </Hero>
 
       <Sheet>
@@ -250,16 +222,14 @@ const RecipeDetailPage = () => {
           <Text variant="pageTitle" as="h2">{RECIPE.title}</Text>
 
           <Author>
-            <img src={RECIPE.author.avatar} alt="" />
+            <Avatar src={RECIPE.author.avatar} size={32} />
             <div>
               <Text variant="label">
                 <Link to={RECIPE.author.to}>{RECIPE.author.name}</Link>
               </Text>
               <Text variant="caption" color={colors.grey1}>{RECIPE.author.meta}</Text>
             </div>
-            <FollowButton type="button" $on={following} onClick={() => setFollowing((v) => !v)}>
-              {following ? "팔로잉" : "팔로우"}
-            </FollowButton>
+            <FollowButton following={following} onClick={() => setFollowing((v) => !v)} />
           </Author>
 
           <Stats>
@@ -287,10 +257,7 @@ const RecipeDetailPage = () => {
         </Section>
 
         <Section>
-          <Row>
-            <Text variant="sectionTitle" as="h3">재료</Text>
-            <Text variant="caption" color={colors.accent1}>내 냉장고와 비교</Text>
-          </Row>
+          <SectionHeader title="재료" right="내 냉장고와 비교" />
           {RECIPE.ingredients.map((item) => (
             <IngredientRow key={item.name}>
               <Text variant="body">{item.name}</Text>
@@ -303,10 +270,7 @@ const RecipeDetailPage = () => {
         </Section>
 
         <Section>
-          <Row>
-            <Text variant="sectionTitle" as="h3">조리 순서</Text>
-            <Text variant="caption" color={colors.accent1}>{RECIPE.steps.length}단계</Text>
-          </Row>
+          <SectionHeader title="조리 순서" right={`${RECIPE.steps.length}단계`} />
           {RECIPE.steps.map((text, index) => (
             <StepRow key={text}>
               <StepNumber>{index + 1}</StepNumber>
