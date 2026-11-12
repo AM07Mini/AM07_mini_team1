@@ -508,12 +508,47 @@ export default function RecipeWritePage() {
     setSelectedIngredients(updated);
   };
 
-  // 레시피 등록 제출 핸들러
   const handleSubmitRecipe = async () => {
     if (isSubmitting) return;
 
+    if (!mainImageFile && !mainImage) {
+      alert('완성된 요리 사진을 추가해 주세요!');
+      return;
+    }
     if (!title.trim()) {
       alert('요리 제목을 입력해 주세요!');
+      return;
+    }
+    if (!cookingTime) {
+      alert('조리 시간을 입력해 주세요!');
+      return;
+    }
+    if (!servings) {
+      alert('인분 수를 입력해 주세요!');
+      return;
+    }
+    if (!difficulty) {
+      alert('조리 난이도를 선택해 주세요!');
+      return;
+    }
+    if (selectedIngredients.length === 0) {
+      alert('식재료를 최소 1개 이상 추가해 주세요!');
+      return;
+    }
+    if (steps.some(s => !s.text.trim() || s.text.startsWith("예:"))) {
+      alert('모든 조리 순서(STEP) 내용을 입력해 주세요!');
+      return;
+    }
+    if (!selectedFoodType) {
+      alert('요리 종류를 선택해 주세요!');
+      return;
+    }
+    if (!selectedCategory) {
+      alert('카테고리를 선택해 주세요!');
+      return;
+    }
+    if (selectedFlavors.length === 0) {
+      alert('맛을 최소 1개 이상 선택해 주세요!');
       return;
     }
 
@@ -912,9 +947,6 @@ export default function RecipeWritePage() {
             cursor: isSubmitting ? 'not-allowed' : 'pointer' 
           }}
         />
-        <RequiredNote>
-          필수 항목: 사진 · 제목 · 재료 · 레시피 3단계
-        </RequiredNote>
       </SubmitBox>
 
       {/* 식재료 추가 모달 컴포넌트 렌더링 */}
