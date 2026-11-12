@@ -41,9 +41,12 @@ const FollowUserItem = ({ data, pending, toggleHandler }) => (
     <Avatar src={data.profileImageUrl} size={44} name={data.nickname} colorKey={data.id} />
     <TextBox>
       <Nickname>{data.nickname}</Nickname>
-      <Stats>
-        레시피 {formatCount(data.recipeCount ?? 0)} · 팔로워 {formatCount(data.followerCount ?? 0)}
-      </Stats>
+      {/* 서버가 숫자를 안 주면 0으로 꾸며 보여주지 않고 줄을 숨김 */}
+      {data.recipeCount != null && data.followerCount != null && (
+        <Stats>
+          레시피 {formatCount(data.recipeCount)} · 팔로워 {formatCount(data.followerCount)}
+        </Stats>
+      )}
     </TextBox>
     <FollowButton following={data.followedByMe} disabled={pending} onClick={() => toggleHandler(data)} />
   </Wrapper>

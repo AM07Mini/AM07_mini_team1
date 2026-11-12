@@ -275,9 +275,12 @@ const ProfileEditPage = () => {
       if (photoFile) {
         const formData = new FormData();
         formData.append('image', photoFile);
-        await api.post('/users/me/profile-image', formData, {
+        const uploadResponse = await api.post('/users/me/profile-image', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
+        // 서버에 사진이 생겼다고 기록 — 다음 단계가 실패한 뒤 '사진 삭제하기'를 고르면 DELETE가 가도록
+        const uploadedUrl = uploadResponse.data.result?.profileImageUrl ?? photoPreview;
+        setOriginal((prev) => ({ ...prev, profileImageUrl: uploadedUrl }));
         // 다음 단계에서 실패해 다시 저장할 때 같은 사진을 또 올리지 않도록
         setPhotoFile(null);
       } else if (photoRemoved) {

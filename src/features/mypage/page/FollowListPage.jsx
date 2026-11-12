@@ -170,7 +170,13 @@ const FollowListPage = () => {
   // 보여줄 목록 — 검색어가 없으면 전체, 있으면 지금 탭 · 검색어의 서버 결과
   const currentResult =
     searchResult && searchResult.tab === tab && searchResult.keyword === trimmedKeyword ? searchResult : null;
-  const shownUsers = trimmedKeyword ? currentResult?.content ?? [] : lists[tab].content;
+  // 팔로우 버튼 상태는 전체 목록(lists) 쪽이 최신 — 팔로우 요청 중에 시작된 검색의 응답이
+  // 늦게 와서 옛 상태를 보여주지 않도록, 전체 목록에 있는 사람은 그쪽 followedByMe를 씀
+  const withLatestFollow = (user) => {
+    const latest = lists[tab].content.find((item) => item.id === user.id);
+    return latest ? { ...user, followedByMe: latest.followedByMe } : user;
+  };
+  const shownUsers = trimmedKeyword ? (currentResult?.content ?? []).map(withLatestFollow) : lists[tab].content;
 
   const getEmptyMessage = () => {
     if (!trimmedKeyword) return tabInfo[tab].empty;
