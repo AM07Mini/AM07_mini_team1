@@ -128,6 +128,11 @@ export const fetchSearchRecipes = async (keyword, filters, signal, size = 20) =>
       id: recipe.id,
       title: recipe.title,
       image: recipe.thumbnailUrl,
+      hashtags: Array.isArray(recipe.hashtags)
+        ? recipe.hashtags
+            .filter((hashtag) => typeof hashtag === 'string')
+            .map((hashtag) => (hashtag.startsWith('#') ? hashtag : `#${hashtag}`))
+        : [],
       meta:
         formatDifficulty(recipe.difficulty, recipe.cookingMinutes) ||
         '난이도 정보 없음',
