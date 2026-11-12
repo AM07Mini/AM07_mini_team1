@@ -6,11 +6,7 @@ export const feedTabs = [
 
 export { formatDifficulty } from '../../utils/difficulty';
 
-export const formatCount = (n) => {
-  if (n >= 9950) return `${(n / 10000).toFixed(1).replace(/\.0$/, '')}만`;
-  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}천`;
-  return String(n);
-};
+export { formatCount } from '../../utils/format';
 
 export const formatAgo = (minutes) => {
   if (minutes < 1) return '방금 전';
