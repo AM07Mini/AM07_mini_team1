@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import Text from '../../../components/styled/Text';
 import SectionHeader from '../../../components/styled/SectionHeader';
 import { colors } from '../../../components/styled/theme';
 import SearchRecipeItem from '../item/SearchRecipeItem';
@@ -37,9 +38,15 @@ const SearchResultList = ({
   canRelaxFilters = false,
   onSuggestionSelect,
   onReset,
+  selectedConditions = [],
 }) => (
   <Results>
     <SectionHeader title="검색 결과" right={loading ? '검색 중' : `${totalElements}개`} rightRole="status" />
+    {selectedConditions.length > 0 && (
+      <Text variant="caption" color={colors.grey1}>
+        {selectedConditions.join(' · ')}
+      </Text>
+    )}
     <RecipeGrid>
       {error ? (
         <EmptyMessage role="alert">{error}</EmptyMessage>
