@@ -285,9 +285,15 @@ const CookingModePage = () => {
   };
 
   // 메인 타이머 삭제 — 다음 타이머가 메인 자리로 올라감
-  const deleteMainHandler = (timer) => {
-    removeTimer(timer.id);
-    showToast(`${timer.name} 타이머를 지웠어요`);
+  // 버튼이 작아 접기를 누르려다 잘못 누를 수 있으므로 한 번 더 물어봄
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const deleteMainHandler = (timer) => setDeleteTargetId(timer.id);
+  const confirmDeleteMain = () => {
+    const target = timers.find((t) => t.id === deleteTargetId);
+    setDeleteTargetId(null);
+    if (!target) return;
+    removeTimer(target.id);
+    showToast(`${target.name} 타이머를 지웠어요`);
   };
 
   if (loadError) return <StatusMessage message={loadError} />;
@@ -297,6 +303,7 @@ const CookingModePage = () => {
   const isLast = stepIndex === steps.length - 1;
   const stepPhoto = recipe.stepImages[stepIndex + 1] ?? recipe.image;
   const menuTimer = timers.find((t) => t.id === menuTimerId && !t.done);
+  const deleteTarget = timers.find((t) => t.id === deleteTargetId); // 그사이 끝나서 빠졌으면 창이 닫힘
   const finishedTimer = timers.find((t) => t.done); // 먼저 끝난 것부터 하나씩 알림
 
   const nextHandler = () => {
@@ -412,6 +419,15 @@ const CookingModePage = () => {
         }}
         keepTitle="계속 요리하기"
         closeHandler={() => setConfirmKind(null)}
+      />
+      <ConfirmDialog
+        open={deleteTarget !== undefined}
+        title="타이머를 삭제할까요?"
+        description={deleteTarget ? `${deleteTarget.name} 타이머가 꺼지고\n되돌릴 수 없어요.` : ''}
+        dangerTitle="삭제"
+        dangerHandler={confirmDeleteMain}
+        keepTitle="취소"
+        closeHandler={() => setDeleteTargetId(null)}
       />
     </Wrapper>
   );
