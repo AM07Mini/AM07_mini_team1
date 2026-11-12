@@ -5,8 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // - 돌아가는 중에도 시간을 더할 수 있음 (+1분, +2분)
 // - 끝나면 done이 되고, 사용자가 확인을 누르면 목록에서 빠짐 → 다음 타이머가 메인이 됨
 //
-// 타이머 한 개: { id, name, initialMs, totalMs, endAt, pausedRemainingMs, done }
-// - initialMs: 처음 맞춘 시간(초기화하면 여기로), totalMs: +N분까지 더한 전체 시간
+// 타이머 한 개: { id, name, totalMs, endAt, pausedRemainingMs, done } — totalMs는 +N분까지 더한 전체 시간
 // - 도는 중: endAt = 끝나는 시각(ms). 멈춤: endAt = null, pausedRemainingMs = 남은 시간
 // - 끝나는 시각으로 계산하므로 화면이 잠깐 멈추거나 다른 탭에 다녀와도 시간이 밀리지 않음
 
@@ -49,7 +48,7 @@ const useCookingTimers = ({ finishHandler } = {}) => {
     setNow(startedAt);
     setTimers((prev) => [
       ...prev,
-      { id: nextId++, name, initialMs: totalMs, totalMs, endAt: startedAt + totalMs, pausedRemainingMs: totalMs, done: false },
+      { id: nextId++, name, totalMs, endAt: startedAt + totalMs, pausedRemainingMs: totalMs, done: false },
     ]);
   }, []);
 
@@ -81,21 +80,12 @@ const useCookingTimers = ({ finishHandler } = {}) => {
     );
   }, []);
 
-  // 초기화 — 처음 맞춘 시간으로 되돌리고 멈춘 상태로 (▶를 누르면 다시 시작)
-  const resetTimer = useCallback((id) => {
-    setTimers((prev) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, totalMs: t.initialMs, endAt: null, pausedRemainingMs: t.initialMs, done: false } : t,
-      ),
-    );
-  }, []);
-
-  // 끝난 타이머 확인 · 삭제 → 목록에서 빼기
+  // 끝난 타이머 확인 · 삭제 → 목록에서 빼기 (메인을 빼면 다음 타이머가 메인)
   const removeTimer = useCallback((id) => {
     setTimers((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  return { timers, now, addTimer, addTime, togglePause, resetTimer, removeTimer };
+  return { timers, now, addTimer, addTime, togglePause, removeTimer };
 };
 
 export default useCookingTimers;

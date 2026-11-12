@@ -130,7 +130,7 @@ const CookingModePage = () => {
   const lastAddedTimer = useRef(null);
   const [toast, showToast] = useToast(HIGHLIGHT_MS);
 
-  const { timers, now, addTimer, addTime, togglePause, resetTimer, removeTimer } = useCookingTimers({
+  const { timers, now, addTimer, addTime, togglePause, removeTimer } = useCookingTimers({
     finishHandler: alertTimerDone,
   });
 
@@ -187,9 +187,10 @@ const CookingModePage = () => {
     else setMenuTimerId(timer.id);
   };
 
-  const resetHandler = (timerId) => {
-    resetTimer(timerId);
-    showToast('메인 타이머를 처음 시간으로 되돌렸어요');
+  // 메인 타이머 삭제 — 다음 타이머가 메인 자리로 올라감
+  const deleteMainHandler = (timer) => {
+    removeTimer(timer.id);
+    showToast(`${timer.name} 타이머를 지웠어요`);
   };
 
   if (loadError) return <StatusMessage message={loadError} />;
@@ -229,7 +230,7 @@ const CookingModePage = () => {
             lastAdded={lastAdded}
             addTimeHandler={addTimeHandler}
             togglePauseHandler={togglePause}
-            resetHandler={resetHandler}
+            deleteHandler={deleteMainHandler}
             chipHandler={chipHandler}
             newTimerHandler={() => setSheetOpen(true)}
           />

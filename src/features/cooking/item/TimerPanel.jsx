@@ -74,7 +74,7 @@ const Info = styled.div`
   min-width: 0;
 `;
 
-// 오른쪽 위 초기화 버튼 자리만큼 비워 두고, 길면 잘리지 않게 줄바꿈
+// 오른쪽 위 삭제 버튼 자리만큼 비워 두고, 길면 잘리지 않게 줄바꿈
 const Label = styled.p`
   max-width: calc(100% - 50px);
   margin: 0;
@@ -92,8 +92,8 @@ const Clock = styled.p`
   color: ${(props) => (props.$done ? colors.alert : colors.dark)};
 `;
 
-// 패널 오른쪽 위 — 메인 타이머만 처음 시간으로
-const ResetButton = styled.button`
+// 패널 오른쪽 위 — 메인 타이머만 지움 (다음 타이머가 메인이 됨)
+const DeleteButton = styled.button`
   position: absolute;
   top: 8px;
   right: 8px;
@@ -142,7 +142,7 @@ const NewTimerButton = styled.button`
 
 const ADD_STEPS = [1, 2]; // +1분, +2분
 
-// 메인 타이머(큰 링 · 오른쪽 위 초기화) + 나란히 도는 타이머 칩(누르면 일시정지/삭제 메뉴) + "+ 타이머"
+// 메인 타이머(큰 링 · 오른쪽 위 삭제) + 나란히 도는 타이머 칩(누르면 일시정지/삭제 메뉴) + "+ 타이머"
 // main: 첫 번째 타이머, others: 나머지 / lastAdded: 방금 누른 +N분 (잠깐 강조)
 const TimerPanel = ({
   timers,
@@ -150,7 +150,7 @@ const TimerPanel = ({
   lastAdded,
   addTimeHandler,
   togglePauseHandler,
-  resetHandler,
+  deleteHandler,
   chipHandler,
   newTimerHandler,
 }) => {
@@ -161,10 +161,10 @@ const TimerPanel = ({
 
   return (
     <Wrapper aria-label="타이머">
-      <ResetButton type="button" aria-label={`${main.name} 타이머 초기화`} onClick={() => resetHandler(main.id)}>
-        <Icon name="reset" size={14} strokeWidth={2} />
-        초기화
-      </ResetButton>
+      <DeleteButton type="button" aria-label={`${main.name} 타이머 삭제`} onClick={() => deleteHandler(main)}>
+        <Icon name="close" size={14} strokeWidth={2} />
+        삭제
+      </DeleteButton>
       <Main>
         <Ring>
           <svg width={RING_SIZE} height={RING_SIZE} aria-hidden="true">
