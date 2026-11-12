@@ -189,7 +189,7 @@ const RecipeReviewPage = () => {
                     </SummaryTop>
                     <Button
                         title="이 레시피로 요리 시작하기"
-                        onClick={() => navigate("")} // 실제 경로로 변경
+                        onClick={() => navigate(`/recipe/cook/${id}`)}
                     />
                 </Summary>
 

@@ -34,6 +34,23 @@ const paths = {
     </>
   ),
   check: <path d="M5 12.5 9.5 17 19 7" />,
+  // 아래 4개는 피그마 icon/close · icon/timer · icon/camera를 24 칸에 맞춘 것
+  close: <path d="M6 6l12 12M18 6 6 18" />,
+  timer: (
+    <>
+      <circle cx="12" cy="13.5" r="7.5" />
+      <path d="M12 9.5v4l2.5 2M9.5 3h5" />
+    </>
+  ),
+  camera: (
+    <>
+      <path d="M4 8h3l2-3h6l2 3h3v11H4z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </>
+  ),
+  // 타이머 멈춤 · 다시 시작 (채워서 씀)
+  pause: <path d="M8 6h3v12H8zM13 6h3v12h-3z" />,
+  play: <path d="M8 5.5v13l10-6.5z" />,
   // 북마크 — filled로 채우면 저장된 상태
   bookmark: <path d="M6 3h12v18l-6-4.5L6 21z" />,
   // 가운데 플로팅 버튼 — 셰프 모자

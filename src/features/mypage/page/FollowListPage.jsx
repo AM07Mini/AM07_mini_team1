@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../../../api/axios';
+import { followUser, unfollowUser } from '../../../api/followApi';
 import SearchInput from '../../../components/styled/SearchInput';
 import UnderlineTab from '../../../components/styled/UnderlineTab';
 import { PAGE_PADDING } from '../../../components/styled/theme';
@@ -153,10 +154,10 @@ const FollowListPage = () => {
     setPendingIds((prev) => [...prev, user.id]);
     try {
       if (user.followedByMe) {
-        await api.delete(`/follows/${user.id}`);
+        await unfollowUser(user.id);
         setFollowed(user, false);
       } else {
-        await api.post(`/follows/${user.id}`);
+        await followUser(user.id);
         setFollowed(user, true);
       }
     } catch (e) {
