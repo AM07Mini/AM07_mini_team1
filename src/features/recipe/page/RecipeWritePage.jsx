@@ -430,21 +430,19 @@ const [steps, setSteps] = useState([
   };
 
   const handleStepImageUpload = (index, e) => {
-    const file = e.target.files[0];
-    if (file) {      
-      const reader = new FileReader();
-      
-      reader.onloadend = () => {
+      const file = e.target.files[0];
+      if (file) {
         const newSteps = [...steps];
         
-        newSteps[index].image = reader.result; 
         newSteps[index].imageFile = file; 
-        
-        setSteps(newSteps);
-      };
 
-      reader.readAsDataURL(file);
-    }
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          newSteps[index].image = reader.result;
+          setSteps([...newSteps]);
+        };
+        reader.readAsDataURL(file);
+      }
   };
 
   const handleStepTextChange = (index, value) => {
@@ -585,16 +583,32 @@ const [steps, setSteps] = useState([
         "배포확인파": 17
       };
 
-      // 선택된 재료들을 순회하며 정확한 서버 ID 매칭하기
-      const processedIngredients = (selectedIngredients || []).map((item) => {
+      // 1. 선택된 재료들을 순회하며 처리
+      const processedIngredients = [];
+      
+      for (const item of (selectedIngredients || [])) {
         const cleanName = item.name ? item.name.replace(/[\[\]]/g, '').trim() : "";
-        const mappedId = (item.id && item.id < 1000000) ? Number(item.id) : (ingredientIdMap[cleanName] || 0);
+        let mappedId = (item.id && item.id < 1000000) ? Number(item.id) : (ingredientIdMap[cleanName] || 0);
 
-        return {
-          ingredientId: mappedId,
-          quantity: item.quantity || "1개"
-        };
-      }).filter(item => item.ingredientId > 0); // ID가 0인 유령 재료는 걸러내기
+        // 🌟 만약 매핑된 ID가 없다면(0이라면), 서버에 직접 등록 API를 호출해서 새 ID 받아오기!
+        if (mappedId === 0 && cleanName) {
+          try {
+            const res = await createIngredient({ name: cleanName });
+            // 서버 응답 구조에 맞춰 새 id 추출 (예: res.result.id 또는 res.id 등)
+            mappedId = res.result?.id || res.id; 
+          } catch (err) {
+            // 만약 이미 등록된 재료(409)라면, 검색 API 등으로 해당 재료 ID를 다시 조회해오거나 예외 처리
+            console.log("이미 등록된 재료이거나 등록 중 오류 발생:", err);
+          }
+        }
+
+        if (mappedId > 0) {
+          processedIngredients.push({
+            ingredientId: mappedId,
+            quantity: item.quantity || "1개"
+          });
+        }
+      }
 
       // 3. 서버가 요구하는 텍스트 데이터 포장
       const recipePayload = {
@@ -686,10 +700,12 @@ const [steps, setSteps] = useState([
 
   useEffect(() => {
     return () => {
-      if (mainImage) URL.revokeObjectURL(mainImage);
+
       if (steps) {
         steps.forEach(s => {
-          if (s.image) URL.revokeObjectURL(s.image);
+          if (s.image && s.image.startsWith('blob:')) {
+          URL.revokeObjectURL(s.image);
+          }
         });
       }
     };

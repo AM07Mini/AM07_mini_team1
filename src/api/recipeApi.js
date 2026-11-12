@@ -1,7 +1,7 @@
-import axios from './axios';
+import api from './axios';
 
 export const createRecipeText = async (recipeData) => {
-  const response = await axios.post('/recipes', recipeData);
+  const response = await api.post('/recipes', recipeData);
   return response.data.result.id; 
 };
 
@@ -9,7 +9,7 @@ export const uploadThumbnail = async (recipeId, imageFile) => {
   const formData = new FormData();
   formData.append('thumbnail', imageFile);
 
-  const response = await axios.post(`/recipes/${recipeId}/thumbnail`, formData, {
+  const response = await api.post(`/recipes/${recipeId}/thumbnail`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return response.data;
@@ -17,7 +17,7 @@ export const uploadThumbnail = async (recipeId, imageFile) => {
 
 export const searchIngredients = async (keyword) => {
   try {
-    const response = await axios.get('/ingredients', {
+    const response = await api.get('/ingredients', {
       params: { keyword }
     });
     return response.data.result?.content || [];
@@ -29,7 +29,7 @@ export const searchIngredients = async (keyword) => {
 
 export const createIngredient = async (name) => {
   try {
-    const response = await axios.post('/ingredients', { name });
+    const response = await api.post('/ingredients', { name });
     return response.data.result;
   } catch (error) {
     console.error('식재료 등록 API 에러:', error);
@@ -43,8 +43,8 @@ export const uploadStepImage = async (recipeId, stepOrder, imageFile) => {
 
   const token = localStorage.getItem('accessToken');
 
-  const response = await axios.post(
-    `http://43.203.236.120/api/v1/recipes/${recipeId}/step-images?stepOrder=${stepOrder}`,
+  const response = await api.post(
+    `/recipes/${recipeId}/step-images?stepOrder=${stepOrder}`,
     formData,
     {
       headers: {
