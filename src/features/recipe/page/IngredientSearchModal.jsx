@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { searchIngredients, createIngredient } from '../../../api/recipeApi';
 import BackIcon from '../../../components/styled/BackIcon';
@@ -26,10 +26,11 @@ const Sheet = styled.div`
   flex-direction: column;
   width: min(450px, calc(100vw - 32px));
   height: 85vh;
-  overflow: hidden;
+  max-height: 750px;
   border-radius: ${radius.card}px;
   background-color: ${colors.white};
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 `;
 
 const Header = styled.div`
@@ -37,6 +38,7 @@ const Header = styled.div`
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid ${colors.grey4};
+  flex-shrink: 0;
 `;
 
 const BackButton = styled.button`
@@ -57,7 +59,7 @@ const Title = styled.h3`
 const ScrollArea = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 20px 20px 180px;
+  padding: 20px;
 `;
 
 const SearchBox = styled.div`
@@ -139,24 +141,45 @@ const CustomButton = styled.button`
   cursor: pointer;
 `;
 
-// 하단 고정 바 (선택한 재료 목록 및 수량 조절 입력창 포함)
 const Footer = styled.div`
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  padding: 16px 20px;
+  padding: 12px 20px 16px;
   box-sizing: border-box;
   border-top: 1px solid ${colors.grey4};
   background-color: ${colors.white};
+  flex-shrink: 0;
 `;
 
 const SelectedList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 120px;
+  
+  height: ${(props) => props.$height}px;
+  min-height: 60px;
+  max-height: 250px;
   overflow-y: auto;
+  
+  padding: 8px;
+  border: 1px solid ${colors.grey4};
+  border-radius: ${radius.small}px;
+  background-color: ${colors.surface};
+  box-sizing: border-box;
+`;
+
+const ResizeHandleBar = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2px 0 6px 0;
+  cursor: ns-resize;
+
+  &::after {
+    content: '';
+    width: 36px;
+    height: 4px;
+    background-color: ${colors.grey3};
+    border-radius: 2px;
+  }
 `;
 
 const SelectedRow = styled.div`
@@ -198,17 +221,22 @@ const RemoveButton = styled.button`
   cursor: pointer;
 `;
 
-export default function IngredientSearchModal({ isOpen, onClose, onAddIngredients }) {
+export default function IngredientSearchModal({ isOpen, onClose, onAddIngredients, existingIngredients = [] }) {
   const [keyword, setKeyword] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  const [tempSelected, setTempSelected] = useState([]); // 하단에 모아둘 선택된 재료들 [{ id, name, quantity }]
+  const [tempSelected, setTempSelected] = useState([]);
 
   const [isAddingCustom, setIsAddingCustom] = useState(false);
   const [customInput, setCustomInput] = useState('');
 
   const frequentItems = ['달걀', '양파', '대파', '마늘', '간장'];
 
-  // 1. DB 검색 연동 (keyword 파라미터 전달)
+  // 드래그 리사이징 관련 상태
+  const [listHeight, setListHeight] = useState(120);
+  const [isResizing, setIsResizing] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [startHeight, setStartHeight] = useState(120);
+
   const handleSearchChange = async (e) => {
     const query = e.target.value;
     setKeyword(query);
@@ -227,47 +255,40 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
     }
   };
 
-  // 2. 재료 선택/해제 토글 (중복 방지)
-  const handleToggleSelectItem = (item) => {
-    const exists = tempSelected.some((s) => s.name === item.name);
-    if (exists) {
-      setTempSelected(tempSelected.filter((s) => s.name !== item.name));
-    } else {
-      setTempSelected([...tempSelected, { id: item.id || Date.now(), name: item.name, quantity: '1개' }]);
+const handleSelectItem = (item) => {
+    const isTempSelected = tempSelected.some((s) => s.name === item.name);
+    
+    const isAlreadyAdded = existingIngredients.some((ing) => ing.name === item.name);
+
+    if (isTempSelected || isAlreadyAdded) {
+      alert('이미 추가된 재료입니다!');
+      return;
     }
+    setTempSelected([...tempSelected, { id: item.id || Date.now(), name: item.name, quantity: '1개' }]);
   };
 
-  // 3. 하단에서 수량 직접 수정 (예: 1개, 1/2개, 약간 등)
   const handleQuantityChange = (index, newQty) => {
     const updated = [...tempSelected];
     updated[index].quantity = newQty;
     setTempSelected(updated);
   };
 
-  // 4. 목록에 없는 재료 직접 입력
   const handleCreateCustom = async (e) => {
     if (e.key === 'Enter' && customInput.trim() !== '') {
       e.preventDefault();
       const name = customInput.trim();
 
-      // 이미 하단 선택 목록에 있다면 중복 방지
-      if (tempSelected.some((s) => s.name === name)) {
-        alert('이미 선택된 재료입니다.');
+      const isTempSelected = tempSelected.some((s) => s.name === name);
+      const isAlreadyAdded = existingIngredients.some((ing) => ing.name === name);
+
+      if (isTempSelected || isAlreadyAdded) {
+        alert('이미 추가된 재료입니다!');
         return;
       }
 
       setTempSelected([...tempSelected, { id: Date.now(), name, quantity: '1개' }]);
       setCustomInput('');
       setIsAddingCustom(false);
-
-      // 나중에 서버 등록 연동
-      /*
-      try {
-        await createIngredient(name);
-      } catch (error) {
-        console.log('서버 등록은 스킵하거나 백엔드 확인 필요', error);
-      }
-      */
     }
   };
 
@@ -283,6 +304,40 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
     onClose();
   };
 
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    setIsResizing(true);
+    setStartY(e.clientY);
+    setStartHeight(listHeight);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+      
+      const deltaY = startY - e.clientY;
+      const newHeight = startHeight + deltaY;
+
+      if (newHeight >= 60 && newHeight <= 450) {
+        setListHeight(newHeight);
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing, startY, startHeight]);
+
   if (!isOpen) return null;
 
   return (
@@ -296,14 +351,12 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
           <Title>식재료 추가</Title>
         </Header>
 
-        {/* 스크롤 영역 */}
+        {/* 중간 스크롤 영역 */}
         <ScrollArea>
-          {/* 검색바 */}
           <SearchBox>
             <SearchInput value={keyword} changeHandler={handleSearchChange} placeholder="식재료 이름으로 검색" />
           </SearchBox>
 
-          {/* 검색 결과 */}
           {keyword.trim() !== '' && (
             <Section $gap={20}>
               <SectionLabel $bold>검색 결과 {searchResults.length}</SectionLabel>
@@ -318,7 +371,7 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
                         <ResultName>{item.name}</ResultName>
                         <ResultSource>식재료 DB</ResultSource>
                       </div>
-                      <AddButton type="button" $selected={isSelected} onClick={() => handleToggleSelectItem(item)}>
+                      <AddButton type="button" $selected={isSelected} onClick={() => handleSelectItem(item)}>
                         {isSelected ? '✓ 추가됨' : '+ 추가'}
                       </AddButton>
                     </ResultRow>
@@ -328,7 +381,6 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
             </Section>
           )}
 
-          {/* 자주 쓰는 재료 */}
           <Section $gap={24}>
             <SectionLabel $bold>자주 쓰는 재료</SectionLabel>
             <ChipRow>
@@ -340,14 +392,13 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
                     size="medium"
                     title={`+ ${name}`}
                     selected={isSelected}
-                    onClick={() => handleToggleSelectItem({ name })}
+                    onClick={() => handleSelectItem({ name })}
                   />
                 );
               })}
             </ChipRow>
           </Section>
 
-          {/* 직접 입력 */}
           <div>
             <SectionLabel>찾는 재료가 없나요?</SectionLabel>
             {isAddingCustom ? (
@@ -365,15 +416,18 @@ export default function IngredientSearchModal({ isOpen, onClose, onAddIngredient
             )}
           </div>
         </ScrollArea>
-
-        {/* 하단 고정 바 (선택한 재료 목록 및 수량 조절 입력창 포함) */}
+        
+        {/* 하단 고정 바 */}
         <Footer>
           {tempSelected.length > 0 && (
-            <Section $gap={12}>
+            <Section $gap={8}>
               <SectionLabel $bold $dark>
                 선택한 재료 {tempSelected.length}개 (수량을 입력해주세요)
               </SectionLabel>
-              <SelectedList>
+
+              <SelectedList $height={listHeight}>
+                <ResizeHandleBar onMouseDown={handleMouseDown} title="위아래로 끌어서 크기를 조절하세요" />
+
                 {tempSelected.map((item, idx) => (
                   <SelectedRow key={idx}>
                     <SelectedName>{item.name}</SelectedName>

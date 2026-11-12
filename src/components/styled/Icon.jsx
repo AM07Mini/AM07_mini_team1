@@ -51,6 +51,9 @@ const paths = {
   // 타이머 멈춤 · 다시 시작 (채워서 씀)
   pause: <path d="M8 6h3v12H8zM13 6h3v12h-3z" />,
   play: <path d="M8 5.5v13l10-6.5z" />,
+  // 펼치기 · 접기
+  chevronDown: <path d="m6 9 6 6 6-6" />,
+  chevronUp: <path d="m6 15 6-6 6 6" />,
   // 북마크 — filled로 채우면 저장된 상태
   bookmark: <path d="M6 3h12v18l-6-4.5L6 21z" />,
   // 가운데 플로팅 버튼 — 셰프 모자
