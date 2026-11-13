@@ -34,8 +34,9 @@ const FeedPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   // URL 값이 없거나 이상하면 기본값 'following'
-  // hasOwn: ?tab=toString 처럼 객체 기본 속성 이름이 들어와도 통과시키지 않음
-  const tab = Object.hasOwn(fetcherByTab, tabParam) ? tabParam : 'following';
+  // hasOwnProperty: ?tab=toString 처럼 객체 기본 속성 이름이 들어와도 통과시키지 않음
+  // (Object.hasOwn은 Safari 15.3 이하에서 없어서 이 방식 사용)
+  const tab = Object.prototype.hasOwnProperty.call(fetcherByTab, tabParam) ? tabParam : 'following';
   // replace: true → 탭 바꿀 때마다 히스토리가 쌓이지 않게
   const setTab = (value) =>
     setSearchParams(
