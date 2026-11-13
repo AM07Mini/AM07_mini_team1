@@ -9,7 +9,7 @@ const useTrending = () => {
   const timerRef = useRef(null);
   const loadTrending = useCallback((silent = false) => {
     const requestId = ++requestRef.current;
-    getTrendingRecipes()
+    getTrendingRecipes(10)
       .then((result) => {
         if (requestId !== requestRef.current) return;
         setTrending(result.content.map(toTrendingCard));

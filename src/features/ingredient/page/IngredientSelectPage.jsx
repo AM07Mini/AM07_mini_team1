@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import PageIntro from '../../../components/styled/PageIntro';
@@ -9,22 +9,10 @@ import Button from "../../../components/styled/Button";
 import Text from "../../../components/styled/Text";
 import { colors, radius, font } from "../../../components/styled/theme";
 import IngredientList from "../list/IngredientList";
-import { updateMyIngredients } from "../../../api/recipeApi";
+import { searchIngredients, updateMyIngredients } from "../../../api/recipeApi";
 
-const DEFAULT_INGREDIENTS = [
-  { id: 1, name: "계란" },
-  { id: 13, name: "식빵" },
-  { id: 3, name: "아보카도" },
-  { id: 4, name: "토마토" },
-  { id: 5, name: "치즈" },
-  { id: 6, name: "양파" },
-  { id: 7, name: "브로콜리" },
-  { id: 8, name: "감자" },
-  { id: 9, name: "당근" },
-  { id: 10, name: "우유" },
-  { id: 11, name: "닭고기" },
-  { id: 12, name: "쌀" },
-];
+// 서버 재료를 한 번에 불러올 개수 (기본 20개라 재료가 늘면 잘림, 서버 최대 50개)
+const INGREDIENT_PAGE_SIZE = 50;
 
 const Screen = styled.main`
   display: flex;
@@ -63,6 +51,12 @@ const SelectedBox = styled.div`
   gap: 8px;
 `;
 
+const ErrorBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
 const AddButton = styled.button`
   height: 44px;
   border: 1px dashed ${colors.primary};
@@ -74,10 +68,31 @@ const AddButton = styled.button`
 `;
 
 const IngredientSelectPage = () => {
-  const [ingredients, setIngredients] = useState(DEFAULT_INGREDIENTS);
+  const [ingredients, setIngredients] = useState([]);
+  const [loadStatus, setLoadStatus] = useState("loading"); // 'loading' | 'done' | 'error'
+  const [reloadKey, setReloadKey] = useState(0);
   const [selected, setSelected] = useState([]);
   const [query, setQuery] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  // 서버의 식재료 목록 [{ id, name }] 불러오기 — 저장할 때 이 id를 그대로 보냄
+  useEffect(() => {
+    let ignore = false; // 화면을 벗어난 뒤 온 응답은 무시
+    setLoadStatus("loading");
+    searchIngredients("", INGREDIENT_PAGE_SIZE)
+      .then((list) => {
+        if (ignore) return;
+        // 직접 추가한 재료(임시 음수 id)는 다시 불러와도 남겨둠
+        setIngredients((prev) => [...list, ...prev.filter((ingredient) => ingredient.id <= 0)]);
+        setLoadStatus("done");
+      })
+      .catch(() => {
+        if (!ignore) setLoadStatus("error");
+      });
+    return () => {
+      ignore = true;
+    };
+  }, [reloadKey]);
 
   const navigate = useNavigate();
 
@@ -93,7 +108,9 @@ const IngredientSelectPage = () => {
   );
 
   // 새로운 식재료 추가 가능 여부
+  // 서버 목록을 다 불러온 뒤에만 직접 추가 가능 (불러오기 전엔 이미 있는 재료도 없다고 판단하므로)
   const canAdd =
+    loadStatus === "done" &&
     keyword !== "" &&
     !ingredients.some((ingredient) => ingredient.name === keyword);
 
@@ -196,11 +213,28 @@ const IngredientSelectPage = () => {
         />
 
         <ListArea>
-          <IngredientList
-            ingredients={filtered}
-            selected={selected}
-            onToggle={toggle}
-          />
+          {loadStatus === "loading" && (
+            <Text variant="caption" color={colors.grey1}>
+              재료를 불러오는 중이에요…
+            </Text>
+          )}
+          {loadStatus === "error" && (
+            <ErrorBox role="alert">
+              <Text variant="caption" color={colors.grey1}>
+                재료를 불러오지 못했어요.
+              </Text>
+              <AddButton type="button" onClick={() => setReloadKey((key) => key + 1)}>
+                다시 시도
+              </AddButton>
+            </ErrorBox>
+          )}
+          {loadStatus === "done" && (
+            <IngredientList
+              ingredients={filtered}
+              selected={selected}
+              onToggle={toggle}
+            />
+          )}
         </ListArea>
 
         <SelectedBox>

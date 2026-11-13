@@ -21,12 +21,16 @@ const Sheet = styled.div`
   gap: 8px;
   width: 100%;
   max-width: 430px;
+  max-height: calc(100dvh - 48px); // 메뉴가 많으면(예: 달 12개) 안에서 스크롤
+  overflow-y: auto;
+  box-sizing: border-box;
   padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
   border-radius: 24px 24px 0 0;
   background-color: ${colors.white};
 `;
 
 const ActionButton = styled.button`
+  flex-shrink: 0; // 메뉴가 길어 스크롤될 때 버튼이 눌려 찌그러지지 않게
   height: 50px;
   border: none;
   border-radius: ${radius.button}px;
