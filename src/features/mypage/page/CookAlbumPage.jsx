@@ -4,7 +4,6 @@ import styled from 'styled-components';
 import { getMyAlbum, getMyAlbumMonth } from '../../../api/albumApi';
 import api from '../../../api/axios';
 import TopBar from '../../../components/layout/TopBar';
-import ActionSheet from '../../../components/styled/ActionSheet';
 import Button from '../../../components/styled/Button';
 import Icon from '../../../components/styled/Icon';
 import SegmentTab from '../../../components/styled/SegmentTab';
@@ -15,6 +14,7 @@ import { formatDayTitle, toDateKey, toMonthKey } from '../../../utils/calendar';
 import { isAuthError } from '../authError';
 import AlbumDayPhotoItem from '../item/AlbumDayPhotoItem';
 import AlbumShareSheet from '../item/AlbumShareSheet';
+import MonthPickerSheet from '../item/MonthPickerSheet';
 import { createAlbumShareImage, downloadBlob, shouldDownloadFile } from '../albumShareImage';
 import AlbumCalendar from '../list/AlbumCalendar';
 import AlbumPhotoList from '../list/AlbumPhotoList';
@@ -109,7 +109,6 @@ const MonthArrow = styled.button`
 
 // 가운데 "2026년 11월 ⌄" — 누르면 달 고르기
 const MonthButton = styled.button`
-  position: relative;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -128,15 +127,6 @@ const MonthButton = styled.button`
     color: ${colors.grey2};
     transform: translateY(2px);
   }
-`;
-
-// 브라우저 기본 달 고르기 창을 띄우기 위한 숨은 입력
-const HiddenMonthInput = styled.input`
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  opacity: 0;
-  pointer-events: none;
 `;
 
 const MonthSummary = styled.p`
@@ -226,8 +216,7 @@ const CookAlbumPage = () => {
   }, [today]);
   const [shownMonth, setShownMonth] = useState({ year: today.getFullYear(), month: today.getMonth() });
   const [selectedKey, setSelectedKey] = useState(null);
-  const monthInputRef = useRef(null);
-  const [monthListOpen, setMonthListOpen] = useState(false);
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
 
   // 공유 시트
   const [shareOpen, setShareOpen] = useState(false);
@@ -344,33 +333,6 @@ const CookAlbumPage = () => {
   const moveMonth = (step) => {
     const date = new Date(year, month + step, 1);
     changeMonth(date.getFullYear(), date.getMonth());
-  };
-  // 달 고르기 — 브라우저 기본 달 고르기 창을 띄우고, 못 띄우는 브라우저(옛 사파리 · 파이어폭스 PC 등)는
-  // 아래에서 올라오는 최근 12달 목록으로 대신
-  const openMonthPicker = () => {
-    const input = monthInputRef.current;
-    // 달 입력을 지원하지 않는 브라우저는 type이 text로 바뀌어 있음
-    if (input && input.type === 'month' && typeof input.showPicker === 'function') {
-      try {
-        input.showPicker();
-        return;
-      } catch {
-        // 아래 목록으로
-      }
-    }
-    setMonthListOpen(true);
-  };
-  const recentMonths = Array.from({ length: 12 }, (_, index) => {
-    const date = new Date(today.getFullYear(), today.getMonth() - index, 1);
-    return { year: date.getFullYear(), month: date.getMonth() };
-  });
-  const monthPickHandler = (e) => {
-    const [pickedYear, pickedMonth] = e.target.value.split('-').map(Number);
-    if (!pickedYear || !pickedMonth) return;
-    const picked = new Date(pickedYear, pickedMonth - 1, 1);
-    // 오늘 이후 달은 고를 수 없음
-    if (picked > today) return;
-    changeMonth(picked.getFullYear(), picked.getMonth());
   };
 
   const changeView = (value) => {
@@ -513,22 +475,11 @@ const CookAlbumPage = () => {
             <MonthArrow type="button" aria-label="이전 달" onClick={() => moveMonth(-1)}>
               <Icon name="chevronLeft" size={22} strokeWidth={2} />
             </MonthArrow>
-            <MonthButton type="button" aria-label={`${year}년 ${month + 1}월, 눌러서 달 고르기`} onClick={openMonthPicker}>
+            <MonthButton type="button" aria-label={`${year}년 ${month + 1}월, 눌러서 달 고르기`} onClick={() => setMonthPickerOpen(true)}>
               {year}년 {month + 1}월
               <span aria-hidden="true">
                 <Icon name="chevronDown" size={20} strokeWidth={2} />
               </span>
-              <HiddenMonthInput
-                ref={monthInputRef}
-                type="month"
-                // 필수 입력이면 크롬 · 엣지의 달 고르기 창에서 "삭제" 버튼이 빠짐 (달을 비울 일이 없으므로)
-                required
-                tabIndex={-1}
-                aria-hidden="true"
-                value={toMonthKey(year, month)}
-                max={toMonthKey(today.getFullYear(), today.getMonth())}
-                onChange={monthPickHandler}
-              />
             </MonthButton>
             <MonthArrow type="button" aria-label="다음 달" disabled={isCurrentMonth} onClick={() => moveMonth(1)}>
               <Icon name="chevronRight" size={22} strokeWidth={2} />
@@ -606,14 +557,14 @@ const CookAlbumPage = () => {
         photosByDay={photosByDay}
         photoCount={monthPhotoCount}
       />
-      <ActionSheet
-        open={monthListOpen}
-        title="달 고르기"
-        actions={recentMonths.map((item) => ({
-          title: `${item.year}년 ${item.month + 1}월`,
-          onClick: () => changeMonth(item.year, item.month),
-        }))}
-        closeHandler={() => setMonthListOpen(false)}
+      <MonthPickerSheet
+        open={monthPickerOpen}
+        year={year}
+        month={month}
+        maxYear={today.getFullYear()}
+        maxMonth={today.getMonth()}
+        closeHandler={() => setMonthPickerOpen(false)}
+        pickHandler={changeMonth}
       />
       <Toast message={toast} />
     </>

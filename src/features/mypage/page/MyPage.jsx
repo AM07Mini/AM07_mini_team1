@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../../../api/axios';
@@ -27,6 +27,16 @@ const Wrapper = styled.div`
 const ListAnchor = styled.div`
   height: 0;
   margin-bottom: -20px;
+`;
+
+// '내 레시피' 제목 · 탭 · 분류 칩 · 레시피 목록 묶음
+// 레시피가 적어도 제목이 상단바 밑에 붙을 때까지는 항상 스크롤되도록 최소 높이를 줌
+// (화면 높이 − 상단바 64 − 붙었을 때 위 여백 12 − 아래 여백 32 − 하단바 64)
+const ListSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: calc(100dvh - ${TOP_BAR_HEIGHT + 12 + 32 + 64}px);
 `;
 
 // 목록을 이만큼 더 내려야 맨 위로 버튼이 보임
@@ -187,9 +197,27 @@ const MyPage = () => {
   ];
 
   // 탭을 누르면 주소만 바꿈 (replace: 뒤로 가기 기록이 탭마다 쌓이지 않게)
+  // 탭마다 스크롤 위치를 따로 기억 — 두 탭이 화면 스크롤 하나를 같이 쓰므로, 바꾸기 직전 위치를 저장했다가 돌려놓음
+  // - 목록이 아직 상단바 밑에 붙지 않았으면(프로필이 보이는 중) 위치 그대로
+  // - 붙어 있으면 그 탭이 마지막으로 보던 자리, 처음 여는 탭이면 목록 처음
+  const tabScrollRef = useRef({});
+  const pendingScrollRef = useRef(null);
   const tabChangeHandler = (value) => {
+    if (value === tab) return;
+    const listTop = getListTop();
+    const current = window.scrollY;
+    tabScrollRef.current[tab] = current;
+    // (1px 남짓 오차는 붙은 것으로 봄)
+    pendingScrollRef.current =
+      current < listTop - 1 ? current : Math.max(listTop, tabScrollRef.current[value] ?? listTop);
     setSearchParams(value === 'bookmark' ? { tab: 'bookmark' } : {}, { replace: true });
   };
+  // 새 탭 목록이 그려진 직후(화면에 보이기 전)에 위치를 맞춤 — 목록이 짧으면 브라우저가 끝에 맞춰 줌
+  useLayoutEffect(() => {
+    if (pendingScrollRef.current === null) return;
+    window.scrollTo(0, pendingScrollRef.current);
+    pendingScrollRef.current = null;
+  }, [tab]);
 
   // 분류 칩 선택 — 지금 탭의 목록을 categoryId로 다시 불러오기
   const categorySelectHandler = async (id) => {
@@ -226,33 +254,35 @@ const MyPage = () => {
         <ProfileCard profile={profile} editHandler={() => moveUrl('/mypage/edit')} />
 
         <ListAnchor ref={listAnchorRef} />
-        <StickyBox>
-          <Header>
-            <TitleBox>
-              <Title>내 레시피</Title>
-              <Description>기록한 레시피와 북마크한 레시피를 모아봤어요.</Description>
-            </TitleBox>
-            <Button title="+ 기록" variant="small" onClick={() => moveUrl('/recipe/write')} />
-          </Header>
+        <ListSection>
+          <StickyBox>
+            <Header>
+              <TitleBox>
+                <Title>내 레시피</Title>
+                <Description>기록한 레시피와 북마크한 레시피를 모아봤어요.</Description>
+              </TitleBox>
+              <Button title="+ 기록" variant="small" onClick={() => moveUrl('/recipe/write')} />
+            </Header>
 
-          <SegmentTab tabs={tabs} selected={tab} changeHandler={tabChangeHandler} />
-        </StickyBox>
+            <SegmentTab tabs={tabs} selected={tab} changeHandler={tabChangeHandler} />
+          </StickyBox>
 
-        {categories.length > 0 && (
-          <ChipRow>
-            <Chip title="전체" selected={categoryId === null} onClick={() => categorySelectHandler(null)} />
-            {categories.map((item) => (
-              <Chip
-                key={item.id}
-                title={item.name}
-                selected={categoryId === item.id}
-                onClick={() => categorySelectHandler(item.id)}
-              />
-            ))}
-          </ChipRow>
-        )}
+          {categories.length > 0 && (
+            <ChipRow>
+              <Chip title="전체" selected={categoryId === null} onClick={() => categorySelectHandler(null)} />
+              {categories.map((item) => (
+                <Chip
+                  key={item.id}
+                  title={item.name}
+                  selected={categoryId === item.id}
+                  onClick={() => categorySelectHandler(item.id)}
+                />
+              ))}
+            </ChipRow>
+          )}
 
-        <MyRecipeList recipes={shownRecipes} />
+          <MyRecipeList recipes={shownRecipes} />
+        </ListSection>
       </Wrapper>
     );
   };
