@@ -1,5 +1,6 @@
 import { colors } from '../../components/styled/theme';
 import { getMonthInfo, toDateKey, WEEKDAYS } from '../../utils/calendar';
+import { SITE_NAME } from '../../utils/site';
 
 // 요리 앨범 공유 카드를 1080×1350(4:5) PNG로 그리기 — 서버 없이 브라우저 그림판(canvas)으로
 // 화면의 카드 미리보기(264×330, AlbumShareCard)와 같은 자리 · 크기를 그대로 키워서 그림
@@ -111,9 +112,9 @@ export const createAlbumShareImage = async ({ nickname, year, month, isCurrentMo
   ctx.fillStyle = colors.white;
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
 
-  // 로고 칩 — "Recipely"
+  // 로고 칩 — 사이트 이름
   setFont(ctx, 9, 700);
-  const logoText = 'Recipely';
+  const logoText = SITE_NAME;
   const logoWidth = ctx.measureText(logoText).width + 16;
   ctx.fillStyle = colors.mint;
   roundRect(ctx, PADDING, PADDING, logoWidth, 19, 6);

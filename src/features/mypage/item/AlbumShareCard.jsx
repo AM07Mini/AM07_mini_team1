@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { colors } from '../../../components/styled/theme';
 import { getMonthInfo, toDateKey, WEEKDAYS } from '../../../utils/calendar';
+import { SITE_NAME } from '../../../utils/site';
 import { getShareCellSize } from '../albumShareImage';
 
 // 공유용 카드 미리보기 — 4:5 (저장할 때는 1080×1350)
@@ -120,7 +121,7 @@ const AlbumShareCard = ({ nickname, year, month, isCurrentMonth, photosByDay, ph
 
   return (
     <Card aria-label={`${owner}${month + 1}월 요리 달력 카드 미리보기`}>
-      <Logo>Recipely</Logo>
+      <Logo>{SITE_NAME}</Logo>
       <Title>
         {owner}
         {month + 1}월

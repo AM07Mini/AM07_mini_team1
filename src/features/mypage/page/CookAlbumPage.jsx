@@ -11,6 +11,7 @@ import StatusMessage from '../../../components/styled/StatusMessage';
 import Toast, { useToast } from '../../../components/styled/Toast';
 import { colors, font, PAGE_PADDING } from '../../../components/styled/theme';
 import { formatDayTitle, toDateKey, toMonthKey } from '../../../utils/calendar';
+import { SITE_FILE_NAME } from '../../../utils/site';
 import { isAuthError } from '../authError';
 import AlbumDayPhotoItem from '../item/AlbumDayPhotoItem';
 import AlbumShareSheet from '../item/AlbumShareSheet';
@@ -405,7 +406,7 @@ const CookAlbumPage = () => {
   else if (monthLoading) saveBlockedReason = '사진 불러오는 중…';
   else if (nicknameStatus === 'loading') saveBlockedReason = '준비하는 중…';
 
-  // 공유 카드 → 1080×1350 PNG로 내려받기 (파일 이름: recipely-2026-11.png)
+  // 공유 카드 → 1080×1350 PNG로 내려받기 (파일 이름: 일조의-레시피-2026-11.png)
   const saveImage = async () => {
     if (saving || saveBlockedReason) return;
     saveRunRef.current += 1;
@@ -423,7 +424,7 @@ const CookAlbumPage = () => {
       if (run !== saveRunRef.current) return; // 그사이 시트를 닫았거나 화면을 떠남
       const missingNotice = `사진 ${missingCount}장을 불러오지 못해 빈 칸으로 그렸어요`;
       if (shouldDownloadFile()) {
-        downloadBlob(blob, `recipely-${toMonthKey(year, month)}.png`);
+        downloadBlob(blob, `${SITE_FILE_NAME}-${toMonthKey(year, month)}.png`);
         showToast(missingCount > 0 ? missingNotice : '이미지를 저장했어요');
       } else {
         setPreviewUrl(URL.createObjectURL(blob));
