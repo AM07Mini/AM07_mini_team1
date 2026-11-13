@@ -3,6 +3,7 @@ import { getCategories } from '../../../api/categoryApi';
 import { formatDifficulty } from '../../../utils/difficulty';
 
 const CATALOG_REQUEST_TIMEOUT_MS = 10_000;
+const SEARCH_REQUEST_TIMEOUT_MS = 10_000;
 const CATEGORY_ID_GROUPS = {
   30: [20, 7],
 };
@@ -40,6 +41,7 @@ const fetchSearchPage = async (params, signal) => {
     params,
     paramsSerializer: { indexes: null },
     signal,
+    timeout: SEARCH_REQUEST_TIMEOUT_MS,
   });
 
   if (!data?.isSuccess) {
