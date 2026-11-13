@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { colors, font } from './theme';
 import Icon from './Icon';
-import useModalLayer from './useModalLayer';
+import useModalLayer, { useBackdropDismiss } from './useModalLayer';
 
 // 화면 전체를 어둡게 덮는 배경 — 누르면 닫힘
 const Overlay = styled.div`
@@ -68,12 +68,13 @@ const CloseButton = styled.button`
 // 사용: <BottomSheet open={open} title="타이머 추가" closeHandler={() => setOpen(false)}>...</BottomSheet>
 const BottomSheet = ({ open, title, closeHandler, children }) => {
   const sheetRef = useModalLayer(open, closeHandler);
+  const backdrop = useBackdropDismiss(closeHandler);
 
   if (!open) return null;
 
   return createPortal(
-    <Overlay onClick={closeHandler}>
-      <Sheet ref={sheetRef} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+    <Overlay {...backdrop}>
+      <Sheet ref={sheetRef} role="dialog" aria-modal="true" aria-label={title}>
         <Handle />
         <Header>
           <Title>{title}</Title>

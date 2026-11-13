@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { colors, radius, font } from './theme';
-import useModalLayer from './useModalLayer';
+import useModalLayer, { useBackdropDismiss } from './useModalLayer';
 
 const Overlay = styled.div`
   position: fixed;
@@ -81,12 +81,13 @@ const KeepButton = styled(DialogButton)`
 //         dangerTitle="그만하기" dangerHandler={exit} keepTitle="계속 요리하기" closeHandler={() => setOpen(false)} />
 const ConfirmDialog = ({ open, title, description, dangerTitle, dangerHandler, keepTitle, closeHandler, dangerOnRight = false }) => {
   const boxRef = useModalLayer(open, closeHandler);
+  const backdrop = useBackdropDismiss(closeHandler);
 
   if (!open) return null;
 
   return createPortal(
-    <Overlay onClick={closeHandler}>
-      <Box ref={boxRef} role="alertdialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+    <Overlay {...backdrop}>
+      <Box ref={boxRef} role="alertdialog" aria-modal="true" aria-label={title}>
         <Title>{title}</Title>
         {description && <Description>{description}</Description>}
         <Buttons>

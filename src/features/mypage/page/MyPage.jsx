@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../../../api/axios';
 import { getCategories } from '../../../api/categoryApi';
+import BackToTopButton from '../../../components/styled/BackToTopButton';
 import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import SegmentTab from '../../../components/styled/SegmentTab';
@@ -20,6 +21,26 @@ const Wrapper = styled.div`
   gap: 20px;
   padding: 14px ${PAGE_PADDING}px 32px;
 `;
+
+// '내 레시피' 제목 + 탭이 원래 놓이는 자리 표시 — 목록 맨 위로 버튼이 돌아갈 위치를 재는 용도
+// (높이 0, Wrapper의 간격 20px을 음수 margin으로 상쇄해서 화면 모양은 그대로)
+const ListAnchor = styled.div`
+  height: 0;
+  margin-bottom: -20px;
+`;
+
+// '내 레시피' 제목 · 탭 · 분류 칩 · 레시피 목록 묶음
+// 레시피가 적어도 제목이 상단바 밑에 붙을 때까지는 항상 스크롤되도록 최소 높이를 줌
+// (화면 높이 − 상단바 64 − 붙었을 때 위 여백 12 − 아래 여백 32 − 하단바 64)
+const ListSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: calc(100dvh - ${TOP_BAR_HEIGHT + 12 + 32 + 64}px);
+`;
+
+// 목록을 이만큼 더 내려야 맨 위로 버튼이 보임
+const BACK_TO_TOP_OFFSET = 400;
 
 // '내 레시피' 제목 + 탭 — 스크롤하다 상단바 바로 밑에 닿으면 멈춰 있고 아래 레시피만 움직임
 // 위아래 여백(12px)은 음수 margin으로 상쇄해서 멈추기 전 모습은 그대로,
@@ -92,6 +113,33 @@ const MyPage = () => {
   // 분류 요청 번호 — 칩을 빠르게 바꿀 때 마지막 요청의 응답만 반영하기 위함
   const filterRequestRef = useRef(0);
 
+  // 레시피 목록 맨 위로 — 프로필 카드는 그대로 두고, '내 레시피' 제목 · 탭이 상단바 밑에 붙는 위치로
+  // StickyBox는 위아래 여백 12px을 음수 margin으로 당겨 놓았으므로 그만큼 더 뺌
+  const listAnchorRef = useRef(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const getListTop = () => {
+    const anchor = listAnchorRef.current;
+    if (!anchor) return 0;
+    return Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - TOP_BAR_HEIGHT - 12);
+  };
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      if (!listAnchorRef.current) return;
+      setShowBackToTop(window.scrollY > getListTop() + BACK_TO_TOP_OFFSET);
+    };
+    const scrollHandler = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    window.addEventListener('scroll', scrollHandler, { passive: true });
+    update();
+    return () => {
+      window.removeEventListener('scroll', scrollHandler);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
+
   useEffect(() => {
     loadData();
     loadCategories();
@@ -149,9 +197,32 @@ const MyPage = () => {
   ];
 
   // 탭을 누르면 주소만 바꿈 (replace: 뒤로 가기 기록이 탭마다 쌓이지 않게)
+  // 탭마다 스크롤 위치를 따로 기억 — 두 탭이 화면 스크롤 하나를 같이 쓰므로, 바꾸기 직전 위치를 저장했다가 돌려놓음
+  // - 목록이 아직 상단바 밑에 붙지 않았으면(프로필이 보이는 중) 위치 그대로
+  // - 붙어 있으면 그 탭이 마지막으로 보던 자리, 처음 여는 탭이면 목록 처음
+  const tabScrollRef = useRef({});
+  const pendingScrollRef = useRef(null);
   const tabChangeHandler = (value) => {
+    if (value === tab) return;
+    const listTop = getListTop();
+    const current = window.scrollY;
+    tabScrollRef.current[tab] = current;
+    // (1px 남짓 오차는 붙은 것으로 봄)
+    pendingScrollRef.current =
+      current < listTop - 1 ? current : Math.max(listTop, tabScrollRef.current[value] ?? listTop);
+    // 분류도 같은 순간에 '전체'로 — 새 탭의 전체 목록이 그려진 뒤에 위치를 맞추도록
+    // (따로 풀면 짧은 분류 목록일 때 위치를 맞춰 버려 저장한 자리가 깎임)
+    filterRequestRef.current += 1;
+    setCategoryId(null);
+    setFilteredRecipes(null);
     setSearchParams(value === 'bookmark' ? { tab: 'bookmark' } : {}, { replace: true });
   };
+  // 새 탭 목록이 그려진 직후(화면에 보이기 전)에 위치를 맞춤 — 목록이 짧으면 브라우저가 끝에 맞춰 줌
+  useLayoutEffect(() => {
+    if (pendingScrollRef.current === null) return;
+    window.scrollTo(0, pendingScrollRef.current);
+    pendingScrollRef.current = null;
+  }, [tab]);
 
   // 분류 칩 선택 — 지금 탭의 목록을 categoryId로 다시 불러오기
   const categorySelectHandler = async (id) => {
@@ -187,33 +258,36 @@ const MyPage = () => {
       <Wrapper>
         <ProfileCard profile={profile} editHandler={() => moveUrl('/mypage/edit')} />
 
-        <StickyBox>
-          <Header>
-            <TitleBox>
-              <Title>내 레시피</Title>
-              <Description>기록한 레시피와 북마크한 레시피를 모아봤어요.</Description>
-            </TitleBox>
-            <Button title="+ 기록" variant="small" onClick={() => moveUrl('/recipe/write')} />
-          </Header>
+        <ListAnchor ref={listAnchorRef} />
+        <ListSection>
+          <StickyBox>
+            <Header>
+              <TitleBox>
+                <Title>내 레시피</Title>
+                <Description>기록한 레시피와 북마크한 레시피를 모아봤어요.</Description>
+              </TitleBox>
+              <Button title="+ 기록" variant="small" onClick={() => moveUrl('/recipe/write')} />
+            </Header>
 
-          <SegmentTab tabs={tabs} selected={tab} changeHandler={tabChangeHandler} />
-        </StickyBox>
+            <SegmentTab tabs={tabs} selected={tab} changeHandler={tabChangeHandler} />
+          </StickyBox>
 
-        {categories.length > 0 && (
-          <ChipRow>
-            <Chip title="전체" selected={categoryId === null} onClick={() => categorySelectHandler(null)} />
-            {categories.map((item) => (
-              <Chip
-                key={item.id}
-                title={item.name}
-                selected={categoryId === item.id}
-                onClick={() => categorySelectHandler(item.id)}
-              />
-            ))}
-          </ChipRow>
-        )}
+          {categories.length > 0 && (
+            <ChipRow>
+              <Chip title="전체" selected={categoryId === null} onClick={() => categorySelectHandler(null)} />
+              {categories.map((item) => (
+                <Chip
+                  key={item.id}
+                  title={item.name}
+                  selected={categoryId === item.id}
+                  onClick={() => categorySelectHandler(item.id)}
+                />
+              ))}
+            </ChipRow>
+          )}
 
-        <MyRecipeList recipes={shownRecipes} />
+          <MyRecipeList recipes={shownRecipes} />
+        </ListSection>
       </Wrapper>
     );
   };
@@ -222,6 +296,12 @@ const MyPage = () => {
     <>
       <TopBar title="마이 페이지" />
       {renderContent()}
+      {showBackToTop && (
+        <BackToTopButton
+          label="레시피 목록 맨 위로"
+          clickHandler={() => window.scrollTo({ top: getListTop(), behavior: 'smooth' })}
+        />
+      )}
     </>
   );
 };

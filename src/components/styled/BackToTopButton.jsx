@@ -29,8 +29,12 @@ const StyledButton = styled.button`
 // 맨 위로 버튼 — 누르면 화면 맨 위로 부드럽게 스크롤
 // 언제 보일지는 쓰는 화면에서 정함 (피그마: 긴 목록에서 위쪽 영역이 화면 밖으로 사라지면 표시)
 // 사용: {showBackToTop && <BackToTopButton />}
-const BackToTopButton = () => (
-  <StyledButton type="button" aria-label="맨 위로" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+// 화면 맨 위가 아니라 목록 처음으로 보내려면 clickHandler와 label을 줌
+//   예: <BackToTopButton label="레시피 목록 맨 위로" clickHandler={() => window.scrollTo({ top: listTop, behavior: 'smooth' })} />
+const scrollToPageTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+const BackToTopButton = ({ label = '맨 위로', clickHandler = scrollToPageTop }) => (
+  <StyledButton type="button" aria-label={label} onClick={clickHandler}>
     <img src="/icons/arrow-up.svg" alt="" width="22" height="22" />
   </StyledButton>
 );

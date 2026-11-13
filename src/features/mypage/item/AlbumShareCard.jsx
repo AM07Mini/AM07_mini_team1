@@ -1,6 +1,7 @@
 import styled from 'styled-components';
 import { colors } from '../../../components/styled/theme';
 import { getMonthInfo, toDateKey, WEEKDAYS } from '../../../utils/calendar';
+import { SITE_LOGO, SITE_NAME, SITE_TAGLINE } from '../../../utils/site';
 import { getShareCellSize } from '../albumShareImage';
 
 // 공유용 카드 미리보기 — 4:5 (저장할 때는 1080×1350)
@@ -18,18 +19,24 @@ const Card = styled.div`
   flex-direction: column;
 `;
 
-const Logo = styled.span`
-  align-self: flex-start;
-  padding: 3px 8px;
-  border-radius: 6px;
-  background-color: ${colors.mint};
-  font-size: 9px;
+// 로고 — 아이콘 18px + 사이트 이름 (카드 위 여백 17 중 2px을 당겨 피그마처럼 15에서 시작)
+const Logo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: -2px;
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: -0.2px;
   color: ${colors.primary};
+
+  img {
+    display: block;
+  }
 `;
 
 const Title = styled.p`
-  margin: 7px 0 0;
+  margin: 8px 0 0;
   overflow: hidden;
   font-size: 18px;
   font-weight: 700;
@@ -120,7 +127,10 @@ const AlbumShareCard = ({ nickname, year, month, isCurrentMonth, photosByDay, ph
 
   return (
     <Card aria-label={`${owner}${month + 1}월 요리 달력 카드 미리보기`}>
-      <Logo>Recipely</Logo>
+      <Logo>
+        <img src={SITE_LOGO} alt="" width="18" height="18" />
+        {SITE_NAME}
+      </Logo>
       <Title>
         {owner}
         {month + 1}월
@@ -151,7 +161,7 @@ const AlbumShareCard = ({ nickname, year, month, isCurrentMonth, photosByDay, ph
         })}
       </Grid>
       <Footer>
-        {year}.{String(month + 1).padStart(2, '0')}  ·  냉장고 속 재료로 요리 찾기
+        {year}.{String(month + 1).padStart(2, '0')}  ·  {SITE_TAGLINE}
       </Footer>
     </Card>
   );
