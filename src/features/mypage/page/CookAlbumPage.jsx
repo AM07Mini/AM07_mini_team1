@@ -4,12 +4,13 @@ import styled from 'styled-components';
 import { getMyAlbum, getMyAlbumMonth } from '../../../api/albumApi';
 import api from '../../../api/axios';
 import TopBar from '../../../components/layout/TopBar';
+import BackToTopButton from '../../../components/styled/BackToTopButton';
 import Button from '../../../components/styled/Button';
 import Icon from '../../../components/styled/Icon';
 import SegmentTab from '../../../components/styled/SegmentTab';
 import StatusMessage from '../../../components/styled/StatusMessage';
 import Toast, { useToast } from '../../../components/styled/Toast';
-import { colors, font, PAGE_PADDING } from '../../../components/styled/theme';
+import { colors, font, PAGE_PADDING, TOP_BAR_HEIGHT } from '../../../components/styled/theme';
 import { formatDayTitle, toDateKey, toMonthKey } from '../../../utils/calendar';
 import { SITE_FILE_NAME } from '../../../utils/site';
 import { isAuthError } from '../authError';
@@ -144,12 +145,22 @@ const Divider = styled.div`
   background-color: ${colors.surface};
 `;
 
+// 고른 날짜 · 장 수 — 스크롤하다 상단바 바로 밑에 닿으면 멈춰 있고 아래 사진 목록만 움직임
+// 위 여백 12px은 음수 margin으로 상쇄해서 멈추기 전 모습은 그대로, 좌우는 화면 끝까지 흰 바탕
 const DayHeader = styled.div`
+  position: sticky;
+  top: ${TOP_BAR_HEIGHT}px;
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin: -12px -${PAGE_PADDING}px 0;
+  padding: 12px ${PAGE_PADDING}px;
+  background-color: ${colors.white};
 `;
+
+// 이만큼 내려가면 맨 위로 버튼이 보임
+const BACK_TO_TOP_OFFSET = 400;
 
 const DayTitle = styled.h2`
   margin: 0;
@@ -229,6 +240,25 @@ const CookAlbumPage = () => {
   const saveRunRef = useRef(0);
   const [nickname, setNickname] = useState('');
   const [toast, showToast] = useToast();
+
+  // 맨 위로 버튼 — 두 보기 모두, 어느 정도 내려가면 표시 (누르면 화면 맨 위 · 탭이 보이는 곳으로)
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      setShowBackToTop(window.scrollY > BACK_TO_TOP_OFFSET);
+    };
+    const scrollHandler = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    window.addEventListener('scroll', scrollHandler, { passive: true });
+    update();
+    return () => {
+      window.removeEventListener('scroll', scrollHandler);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
 
   const loadPage = useCallback(async (page) => {
     if (loadingRef.current) return;
@@ -579,6 +609,7 @@ const CookAlbumPage = () => {
         closeHandler={() => setMonthPickerOpen(false)}
         pickHandler={changeMonth}
       />
+      {showBackToTop && <BackToTopButton />}
       <Toast message={toast} />
     </>
   );
