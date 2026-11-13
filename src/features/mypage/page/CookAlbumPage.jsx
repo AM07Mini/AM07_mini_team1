@@ -122,10 +122,11 @@ const MonthButton = styled.button`
   color: ${colors.dark};
   cursor: pointer;
 
-  // 아래 화살표 — 달 고르기가 열린다는 표시
+  // 아래 화살표 — 달 고르기가 열린다는 표시 (글자 아랫선에 맞게 살짝 내림)
   > span {
     display: flex;
     color: ${colors.grey2};
+    transform: translateY(2px);
   }
 `;
 
