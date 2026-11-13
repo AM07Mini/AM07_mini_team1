@@ -9,7 +9,9 @@ import { Notice, NoticeAction } from '../feedStyles';
 import usePagedList from '../hooks/usePagedList';
 import { countMissing } from '../myIngredients';
 import useMyIngredients from '../hooks/useMyIngredients';
+import useBackToTop from '../hooks/useBackToTop';
 import UnderlineTab from '../../../components/styled/UnderlineTab';
+import BackToTopButton from '../../../components/styled/BackToTopButton';
 import IngredientFilter from '../item/IngredientFilter';
 import LikePeriodSelect from '../item/LikePeriodSelect';
 import LoadMoreFooter from '../item/LoadMoreFooter';
@@ -49,6 +51,10 @@ const CaptionAction = styled.button`
 const List = styled.div`
   display: flex;
   flex-direction: column;
+
+  & > :first-child {
+    padding-top: 4px;
+  }
 `;
 
 const sortTabs = [
@@ -61,27 +67,17 @@ const likePeriods = [
   { value: 'TOTAL', short: '종합', title: '종합 좋아요순', description: '지금까지 받은 전체 좋아요' },
 ];
 
-const captionBySort = {
-  WEEKLY: '최근 7일 기준 · 좋아요가 가장 많이 늘어난 레시피예요.',
-  TOTAL: '전체 기간 기준 · 좋아요를 가장 많이 받은 레시피예요.',
-  LATEST: '방금 올라온 레시피예요.',
-};
-
 const errorMessage = (err) => err?.response?.data?.message ?? '레시피를 불러오지 못했어요.';
 
-// URL 값이 허용된 옵션이 아니면(직접 주소를 고친 경우 등) 기본값 사용
 const pickParam = (value, options, fallback) =>
   options.some((option) => option.value === value) ? value : fallback;
 
 const TrendingPage = () => {
-  // 탭·기간·"내 재료로만"을 URL 쿼리에 저장 → 레시피 상세에서 뒤로가기 해도 같은 화면으로 돌아옴
-  // 예) /feed/trending?tab=POPULAR&period=WEEKLY&mine=1
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = pickParam(searchParams.get('tab'), sortTabs, 'POPULAR');
   const period = pickParam(searchParams.get('period'), likePeriods, 'WEEKLY');
   const onlyMineChecked = searchParams.get('mine') === '1';
 
-  // replace: true → 토글할 때마다 히스토리가 쌓이지 않게 (뒤로가기 한 번에 이전 페이지로)
   const updateParam = (key, value) =>
     setSearchParams(
       (prev) => {
@@ -103,7 +99,6 @@ const TrendingPage = () => {
     reload: reloadMyIngredients,
   } = useMyIngredients();
   const hasMyIngredients = myIngredients.length > 0;
-  // 로그아웃 등으로 재료가 없어지면 토글이 켜져 있어도 거르지 않음
   const onlyMine = onlyMineChecked && hasMyIngredients;
 
   const fetchPage = useCallback(
@@ -167,6 +162,12 @@ const TrendingPage = () => {
     );
   };
 
+  const showBackToTop = useBackToTop();
+  const showIngredientNotice =
+    myIngredientStatus === 'needLogin' ||
+    (myIngredientStatus === 'done' && !hasMyIngredients) ||
+    myIngredientStatus === 'error';
+
   return (
     <>
       <TopBar title="유행하는 레시피" showBack />
@@ -176,21 +177,23 @@ const TrendingPage = () => {
           {ranked && <LikePeriodSelect options={likePeriods} selected={period} changeHandler={setPeriod} />}
           <IngredientFilter on={onlyMine} disabled={!hasMyIngredients} onChange={setOnlyMine} />
         </Controls>
-        <Caption>
-          {captionBySort[sort]}
-          {myIngredientStatus === 'needLogin' && ' 로그인하면 "내 재료로만"을 쓸 수 있어요.'}
-          {myIngredientStatus === 'done' && !hasMyIngredients && ' 재료를 등록하면 "내 재료로만"을 쓸 수 있어요.'}
-          {myIngredientStatus === 'error' && (
-            <>
-              {' 내 재료를 불러오지 못했어요. '}
-              <CaptionAction type="button" onClick={reloadMyIngredients}>
-                다시 시도
-              </CaptionAction>
-            </>
-          )}
-        </Caption>
+        {showIngredientNotice && (
+          <Caption>
+            {myIngredientStatus === 'needLogin' && '로그인하면 "내 재료로만"을 쓸 수 있어요.'}
+            {myIngredientStatus === 'done' && !hasMyIngredients && '재료를 등록하면 "내 재료로만"을 쓸 수 있어요.'}
+            {myIngredientStatus === 'error' && (
+              <>
+                {'내 재료를 불러오지 못했어요. '}
+                <CaptionAction type="button" onClick={reloadMyIngredients}>
+                  다시 시도
+                </CaptionAction>
+              </>
+            )}
+          </Caption>
+        )}
         {renderList()}
       </Wrapper>
+      {showBackToTop && <BackToTopButton />}
     </>
   );
 };
