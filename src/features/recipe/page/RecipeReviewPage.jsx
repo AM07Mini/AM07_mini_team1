@@ -10,7 +10,7 @@ import Text from "../../../components/styled/Text";
 import RecipeCommentItem from "../item/RecipeCommentItem";
 import { toDetail } from "../data/recipDetailMapeer";
 import { toReview, toReply } from "../data/reviewMapper";
-import { colors, radius, shadows, PAGE_PADDING, font } from "../../../components/styled/theme";
+import { colors, radius, shadows, PAGE_PADDING, font, TOP_BAR_HEIGHT } from "../../../components/styled/theme";
 import {
     createReview, getReviews, getReplies, createReply, deleteReview, deleteReply,
     likeReview, unlikeReview,
@@ -24,10 +24,20 @@ const Screen = styled.main`
   padding: ${PAGE_PADDING}px;
 `;
 
-const Summary = styled.div`
-position: sticky;
-  top: 64px;
+// 맨 위 레시피 카드 자리 — 상단바 바로 밑에 처음부터 붙어 움직이지 않음
+// 화면 끝까지 흰 바탕을 깔아 아래 후기가 카드 옆 · 둥근 모서리 틈으로 비치지 않고 이 밑으로만 지나감
+// (화면 위 여백 24px은 음수 margin으로 당기고 padding으로 다시 줘서 처음 모습은 그대로,
+//  아래 12px 흰 띠 뒤 간격은 음수 margin으로 맞춰 카드와 후기 사이 24px 유지)
+const SummaryArea = styled.div`
+  position: sticky;
+  top: ${TOP_BAR_HEIGHT}px;
   z-index: 5;
+  margin: -${PAGE_PADDING}px -${PAGE_PADDING}px -12px;
+  padding: ${PAGE_PADDING}px ${PAGE_PADDING}px 12px;
+  background-color: ${colors.white};
+`;
+
+const Summary = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -403,10 +413,13 @@ const RecipeReviewPage = () => {
         <div>
             <TopBar title="레시피 후기" showBack={true} />
             <Screen
+  // 아래 여백 = 입력창 높이 + 가운데 버튼이 튀어나온 만큼 + 화면 여백
+  // (하단바 64px은 화면 흐름 안에 이미 자리를 차지하므로 더하지 않음 — 더하면 마지막 후기 뒤로 64px이 더 내려감)
   style={{
-    paddingBottom: `calc(${commentBarHeight + BOTTOM_BAR_HEIGHT + CENTER_BUTTON_OVERHANG + PAGE_PADDING}px + env(safe-area-inset-bottom, 0px))`,
+    paddingBottom: `calc(${commentBarHeight + CENTER_BUTTON_OVERHANG + PAGE_PADDING}px + env(safe-area-inset-bottom, 0px))`,
   }}
 >
+                <SummaryArea>
                 <Summary>
                     <SummaryTop>
                         {recipe?.image && <img src={recipe.image} alt="" />}
@@ -421,6 +434,7 @@ const RecipeReviewPage = () => {
                     </SummaryTop>
                     <Button title="이 레시피로 요리 시작하기" onClick={() => navigate(`/recipe/cook/${id}`)} />
                 </Summary>
+                </SummaryArea>
 
                 <Section>
                     <SectionHeader title={`레시피 후기 ${total}`} right="최신순" />
