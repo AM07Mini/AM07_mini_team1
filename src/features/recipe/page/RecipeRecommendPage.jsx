@@ -36,6 +36,14 @@ const SummaryBox = styled.div`
   background: ${colors.grey4};
 `;
 
+const StickyButtonArea = styled.div`
+  position: sticky;
+  top: 64px;
+  z-index: 5;
+  padding: 8px 0;
+  background: ${colors.white};
+`;
+
 const RecipeRecommendPage = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -152,7 +160,9 @@ const RecipeRecommendPage = () => {
         <Text variant="sub" color={colors.grey1}>
           재료를 바꾸면 새로운 요리를 찾을 수 있어요.
         </Text>
-        <Button title="재료 다시 선택하기" onClick={() => navigate("/")} />
+        <StickyButtonArea>
+          <Button title="재료 다시 선택하기" onClick={() => navigate("/")} />
+        </StickyButtonArea>
 
         <SectionHeader title="추천 요리" right={`${recipes.length}가지`} />
 
