@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { colors, font } from './theme';
 import Icon from './Icon';
-import useModalLayer from './useModalLayer';
+import useModalLayer, { useBackdropDismiss } from './useModalLayer';
 
 // 화면 전체를 어둡게 덮는 배경 — 누르면 닫힘
 const Overlay = styled.div`
@@ -61,12 +61,13 @@ const CloseButton = styled.button`
 // 사용: <CenterModal open={open} title="달 고르기" closeHandler={() => setOpen(false)}>...</CenterModal>
 const CenterModal = ({ open, title, closeHandler, children }) => {
   const boxRef = useModalLayer(open, closeHandler);
+  const backdrop = useBackdropDismiss(closeHandler);
 
   if (!open) return null;
 
   return createPortal(
-    <Overlay onClick={closeHandler}>
-      <Box ref={boxRef} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+    <Overlay {...backdrop}>
+      <Box ref={boxRef} role="dialog" aria-modal="true" aria-label={title}>
         <Header>
           <Title>{title}</Title>
           <CloseButton type="button" aria-label="닫기" onClick={closeHandler}>

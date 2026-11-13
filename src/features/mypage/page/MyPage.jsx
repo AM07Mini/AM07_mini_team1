@@ -210,6 +210,11 @@ const MyPage = () => {
     // (1px 남짓 오차는 붙은 것으로 봄)
     pendingScrollRef.current =
       current < listTop - 1 ? current : Math.max(listTop, tabScrollRef.current[value] ?? listTop);
+    // 분류도 같은 순간에 '전체'로 — 새 탭의 전체 목록이 그려진 뒤에 위치를 맞추도록
+    // (따로 풀면 짧은 분류 목록일 때 위치를 맞춰 버려 저장한 자리가 깎임)
+    filterRequestRef.current += 1;
+    setCategoryId(null);
+    setFilteredRecipes(null);
     setSearchParams(value === 'bookmark' ? { tab: 'bookmark' } : {}, { replace: true });
   };
   // 새 탭 목록이 그려진 직후(화면에 보이기 전)에 위치를 맞춤 — 목록이 짧으면 브라우저가 끝에 맞춰 줌

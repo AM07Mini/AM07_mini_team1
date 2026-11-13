@@ -190,7 +190,8 @@ const CookAlbumPage = () => {
   const [photos, setPhotos] = useState([]);
   const [nextPage, setNextPage] = useState(0); // 다 불러왔으면 null
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // { message, needLogin } — 첫 페이지 실패
+  const [error, setError] = useState(null); // { message, needLogin } — 로그인이 필요할 때 (두 보기 모두 가림)
+  const [photosError, setPhotosError] = useState(null); // 사진 모아보기 첫 페이지 실패 — 그 보기에만 표시
   const [moreFailed, setMoreFailed] = useState(false); // 다음 페이지 실패
   const loadingRef = useRef(false);
   const controllerRef = useRef(null);
@@ -248,7 +249,7 @@ const CookAlbumPage = () => {
       console.error(e);
       if (page > 0) setMoreFailed(true);
       else if (isAuthError(e)) setError({ message: '로그인이 필요해요.', needLogin: true });
-      else setError({ message: e.response?.data?.message ?? '요리 앨범을 불러오지 못했어요.' });
+      else setPhotosError(e.response?.data?.message ?? '요리 앨범을 불러오지 못했어요.');
     } finally {
       if (!controller.signal.aborted) {
         loadingRef.current = false;
@@ -257,13 +258,22 @@ const CookAlbumPage = () => {
     }
   }, []);
 
+  // 사진 모아보기 목록은 그 보기를 처음 열 때 받음 — 달력으로 바로 들어오면 받지 않아서,
+  // 이 목록이 실패해도 달력은 영향이 없음
+  const photosStartedRef = useRef(false);
   useEffect(() => {
+    if (view !== 'photos' || photosStartedRef.current) return;
+    photosStartedRef.current = true;
     loadPage(0);
-    return () => {
+  }, [view, loadPage]);
+  useEffect(
+    () => () => {
       controllerRef.current?.abort();
       loadingRef.current = false;
-    };
-  }, [loadPage]);
+      photosStartedRef.current = false; // 화면을 떠났다 오면 처음부터 다시 받음
+    },
+    [],
+  );
 
   // 사진 모아보기 — 맨 아래가 화면에 보이면 다음 페이지 (실패했으면 "다시 불러오기"를 눌러야 함)
   useEffect(() => {
@@ -430,6 +440,8 @@ const CookAlbumPage = () => {
   let content;
   if (error) {
     content = <StatusMessage message={error.message} needLogin={error.needLogin} />;
+  } else if (view === 'photos' && photosError) {
+    content = <StatusMessage message={photosError} />;
   } else if (loading && photos.length === 0 && view === 'photos') {
     content = <StatusMessage message="불러오는 중이에요…" />;
   } else if (view === 'photos' && photos.length === 0) {
