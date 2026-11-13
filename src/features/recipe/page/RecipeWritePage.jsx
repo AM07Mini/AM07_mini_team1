@@ -428,7 +428,7 @@ export default function RecipeWritePage() {
   const [mainImageFile, setMainImageFile] = useState(null); 
 
   // 맛 · 키워드 관련 State
-  const [flavorTags] = useState(["매운맛", "간장맛", "#맛", "단맛", "고소한 맛"]);
+  const [flavorTags] = useState(["매운맛", "간장맛", "짠맛", "단맛", "고소한 맛"]);
   const [selectedFlavors, setSelectedFlavors] = useState([]);
   const [isAddingFlavor, setIsAddingFlavor] = useState(false);
   const [customFlavorInput, setCustomFlavorInput] = useState("");
