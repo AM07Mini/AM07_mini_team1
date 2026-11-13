@@ -52,7 +52,6 @@ const List = styled.div`
   display: flex;
   flex-direction: column;
 
-  /* 첫 번째 게시물을 조금 위로 — 각 행의 위 여백 14px 중 첫 행만 4px로 줄임 */
   & > :first-child {
     padding-top: 4px;
   }
@@ -70,19 +69,15 @@ const likePeriods = [
 
 const errorMessage = (err) => err?.response?.data?.message ?? '레시피를 불러오지 못했어요.';
 
-// URL 값이 허용된 옵션이 아니면(직접 주소를 고친 경우 등) 기본값 사용
 const pickParam = (value, options, fallback) =>
   options.some((option) => option.value === value) ? value : fallback;
 
 const TrendingPage = () => {
-  // 탭·기간·"내 재료로만"을 URL 쿼리에 저장 → 레시피 상세에서 뒤로가기 해도 같은 화면으로 돌아옴
-  // 예) /feed/trending?tab=POPULAR&period=WEEKLY&mine=1
   const [searchParams, setSearchParams] = useSearchParams();
   const tab = pickParam(searchParams.get('tab'), sortTabs, 'POPULAR');
   const period = pickParam(searchParams.get('period'), likePeriods, 'WEEKLY');
   const onlyMineChecked = searchParams.get('mine') === '1';
 
-  // replace: true → 토글할 때마다 히스토리가 쌓이지 않게 (뒤로가기 한 번에 이전 페이지로)
   const updateParam = (key, value) =>
     setSearchParams(
       (prev) => {
@@ -104,7 +99,6 @@ const TrendingPage = () => {
     reload: reloadMyIngredients,
   } = useMyIngredients();
   const hasMyIngredients = myIngredients.length > 0;
-  // 로그아웃 등으로 재료가 없어지면 토글이 켜져 있어도 거르지 않음
   const onlyMine = onlyMineChecked && hasMyIngredients;
 
   const fetchPage = useCallback(
@@ -183,7 +177,6 @@ const TrendingPage = () => {
           {ranked && <LikePeriodSelect options={likePeriods} selected={period} changeHandler={setPeriod} />}
           <IngredientFilter on={onlyMine} disabled={!hasMyIngredients} onChange={setOnlyMine} />
         </Controls>
-        {/* 설명 문구 없음 — 내 재료 안내가 있을 때만 줄을 그림 (두 탭 조건이 같아서 첫 게시물 위치도 같음) */}
         {showIngredientNotice && (
           <Caption>
             {myIngredientStatus === 'needLogin' && '로그인하면 "내 재료로만"을 쓸 수 있어요.'}
