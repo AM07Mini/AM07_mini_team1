@@ -34,7 +34,8 @@ const FeedPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   // URL 값이 없거나 이상하면 기본값 'following'
-  const tab = fetcherByTab[tabParam] ? tabParam : 'following';
+  // hasOwn: ?tab=toString 처럼 객체 기본 속성 이름이 들어와도 통과시키지 않음
+  const tab = Object.hasOwn(fetcherByTab, tabParam) ? tabParam : 'following';
   // replace: true → 탭 바꿀 때마다 히스토리가 쌓이지 않게
   const setTab = (value) =>
     setSearchParams(
