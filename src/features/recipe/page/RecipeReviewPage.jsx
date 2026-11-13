@@ -25,6 +25,9 @@ const Screen = styled.main`
 `;
 
 const Summary = styled.div`
+position: sticky;
+  top: 64px;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -89,15 +92,38 @@ const LikePill = styled.button`
   &:disabled { opacity: 0.6; cursor: not-allowed; }
 `;
 
+const BOTTOM_BAR_HEIGHT = 64;
+const CENTER_BUTTON_OVERHANG = 23;
+
 const CommentBar = styled.form`
-  position: sticky;
-  bottom: 0;
+  position: fixed;
+  z-index: ;
+  left: 50%;
+  
+  bottom: calc(
+    ${BOTTOM_BAR_HEIGHT}px + ${CENTER_BUTTON_OVERHANG}px
+    + env(safe-area-inset-bottom, 0px)
+  );
+  transform: translateX(-50%);
+  width: min(100%, 430px);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 12px ${PAGE_PADDING}px ${PAGE_PADDING / 2}px;
   background: ${colors.white};
   box-shadow: ${shadows.bottomBar};
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: calc(${CENTER_BUTTON_OVERHANG}px + env(safe-area-inset-bottom, 0px));
+    background: ${colors.white};
+    pointer-events: none;
+  }
 
   .field {
     display: flex;
@@ -161,6 +187,7 @@ const RecipeReviewPage = () => {
     const { id } = useParams(); // 레시피 id
     const { user } = useAuth();
     const inputRef = useRef(null);
+    const commentBarRef = useRef(null);
 
     // 상단 요약 + 레시피 좋아요
     const [recipe, setRecipe] = useState(null);
@@ -181,6 +208,7 @@ const RecipeReviewPage = () => {
     const [submitError, setSubmitError] = useState("");
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
+    const [commentBarHeight, setCommentBarHeight] = useState(0);
 
     const patchReview = useCallback(
         (reviewId, patch) =>
@@ -359,10 +387,26 @@ const RecipeReviewPage = () => {
         }
     };
 
+    useEffect(() => {
+        const bar = commentBarRef.current;
+        if (!bar) return undefined;
+
+        const measure = () => setCommentBarHeight(bar.getBoundingClientRect().height);
+        measure();
+
+        const observer = new ResizeObserver(measure);
+        observer.observe(bar);
+        return () => observer.disconnect();
+    }, []);
+
     return (
         <div>
             <TopBar title="레시피 후기" showBack={true} />
-            <Screen>
+            <Screen
+  style={{
+    paddingBottom: `calc(${commentBarHeight + BOTTOM_BAR_HEIGHT + CENTER_BUTTON_OVERHANG + PAGE_PADDING}px + env(safe-area-inset-bottom, 0px))`,
+  }}
+>
                 <Summary>
                     <SummaryTop>
                         {recipe?.image && <img src={recipe.image} alt="" />}
@@ -420,7 +464,7 @@ const RecipeReviewPage = () => {
                 </Section>
             </Screen>
 
-            <CommentBar onSubmit={submitComment}>
+            <CommentBar onSubmit={submitComment} ref={commentBarRef}>
                 {submitError && (
                     <Text variant="caption" color={colors.heart} role="alert">{submitError}</Text>
                 )}
