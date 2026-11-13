@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import { PAGE_PADDING } from '../../../components/styled/theme';
@@ -29,7 +30,21 @@ const fetcherByTab = {
 
 
 const FeedPage = () => {
-  const [tab, setTab] = useState('following');
+  // 탭을 URL 쿼리에 저장 → 다른 화면 갔다가 뒤로가기 해도 같은 탭 유지 (예: /feed?tab=popular)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  // URL 값이 없거나 이상하면 기본값 'following'
+  const tab = fetcherByTab[tabParam] ? tabParam : 'following';
+  // replace: true → 탭 바꿀 때마다 히스토리가 쌓이지 않게
+  const setTab = (value) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', value);
+        return next;
+      },
+      { replace: true },
+    );
   const { isLoggedIn, user } = useAuth();
   // 비로그인인데 팔로잉 탭이면 호출하지 않음 (401)
   const needLogin = tab === 'following' && !isLoggedIn;
