@@ -719,6 +719,17 @@ export default function RecipeWritePage() {
     };
   }, [steps]);
 
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isModalOpen]);
+
   return (
     <>
     <TopBar title="레시피 기록" showBack />
