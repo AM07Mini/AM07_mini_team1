@@ -365,7 +365,11 @@ const SearchPage = () => {
           if (controller.signal.aborted) return;
 
           const recipeIds = new Set(recipes.map((recipe) => recipe.id));
-          const newRecipes = result.recipes.filter((recipe) => !recipeIds.has(recipe.id));
+          const newRecipes = result.recipes.filter((recipe) => {
+            if (recipeIds.has(recipe.id)) return false;
+            recipeIds.add(recipe.id);
+            return true;
+          });
           const nextRecipes = [...recipes, ...newRecipes];
           setRecipes(nextRecipes);
           setHasMore(result.recipes.length === 20 && nextRecipes.length < result.totalElements);
