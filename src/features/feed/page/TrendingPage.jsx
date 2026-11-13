@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import { colors, PAGE_PADDING, font } from '../../../components/styled/theme';
@@ -67,12 +68,35 @@ const captionBySort = {
 };
 
 const errorMessage = (err) => err?.response?.data?.message ?? '레시피를 불러오지 못했어요.';
+
+// URL 값이 허용된 옵션이 아니면(직접 주소를 고친 경우 등) 기본값 사용
+const pickParam = (value, options, fallback) =>
+  options.some((option) => option.value === value) ? value : fallback;
+
 const TrendingPage = () => {
-  const [tab, setTab] = useState('POPULAR');
-  const [period, setPeriod] = useState('WEEKLY');
+  // 탭·기간·"내 재료로만"을 URL 쿼리에 저장 → 레시피 상세에서 뒤로가기 해도 같은 화면으로 돌아옴
+  // 예) /feed/trending?tab=POPULAR&period=WEEKLY&mine=1
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = pickParam(searchParams.get('tab'), sortTabs, 'POPULAR');
+  const period = pickParam(searchParams.get('period'), likePeriods, 'WEEKLY');
+  const onlyMineChecked = searchParams.get('mine') === '1';
+
+  // replace: true → 토글할 때마다 히스토리가 쌓이지 않게 (뒤로가기 한 번에 이전 페이지로)
+  const updateParam = (key, value) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set(key, value);
+        return next;
+      },
+      { replace: true },
+    );
+  const setTab = (value) => updateParam('tab', value);
+  const setPeriod = (value) => updateParam('period', value);
+  const setOnlyMine = (checked) => updateParam('mine', checked ? '1' : '0');
+
   const sort = tab === 'LATEST' ? 'LATEST' : period;
   const ranked = tab === 'POPULAR';
-  const [onlyMineChecked, setOnlyMine] = useState(false);
   const {
     names: myIngredients,
     status: myIngredientStatus,
