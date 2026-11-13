@@ -1,7 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../../../utils/context/AuthContext";
+import styled from "styled-components";
 
 import Button from "../../../components/styled/Button";
 import ConfirmDialog from "../../../components/styled/ConfirmDialog";
@@ -39,6 +39,25 @@ import {
   Section,
   StateBox,
 } from "./RecipeReadStyles";
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100dvh; 
+  min-height: 0;
+`;
+
+const ScrollArea = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+`;
+
+const ActionArea = styled.div`
+  flex-shrink: 0;
+  padding: 12px 24px;
+  background: white;
+`;
 
 const RecipeReadPage = () => {
   const navigate = useNavigate();
@@ -263,69 +282,74 @@ const RecipeReadPage = () => {
 
 
   return (
-    <div>
-      {/* 레시피 대표 이미지 */}
-      <RecipeHero
-        recipe={recipe}
-        isMine={isMine}
-        pendingDelete={pendingDelete}
-        onBack={() => navigate(-1)}
-        onDelete={handleDelete}
-      />
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        title="레시피를 삭제할까요?"
-        description="삭제하면 받은 후기와 좋아요도 함께 사라지고 되돌릴 수 없어요."
-        dangerTitle="삭제"
-        dangerHandler={confirmDelete}
-        keepTitle="취소"
-        closeHandler={() => setDeleteDialogOpen(false)}
-        dangerOnRight
-      />
-
-      <Sheet>
-        {/* 레시피 기본 정보 */}
-        <Section>
-          <RecipeInfo
-            recipe={recipe}
-            following={following}
-            pendingFollow={pendingFollow}
-            onFollow={handleFollow}
-          />
-
-          {/* 좋아요 / 후기 / 저장 */}
-          <RecipeActionBar
-            liked={liked}
-            saved={saved}
-            likeCount={likeCount}
-            saveCount={saveCount}
-            reviewCount={recipe.reviewCount}
-            pendingLike={pendingLike}
-            pendingSave={pendingSave}
-            actionError={actionError}
-            onLike={handleLike}
-            onSave={handleSave}
-            onReviews={goReviews}
-          />
-        </Section>
-
-        {/* 재료 목록 */}
-        <RecipeIngredientList
-          ingredients={recipe.ingredients}
+    <PageWrapper>
+      <ScrollArea>
+        {/* 레시피 대표 이미지 */}
+        <RecipeHero
+          recipe={recipe}
+          isMine={isMine}
+          pendingDelete={pendingDelete}
+          onBack={() => navigate(-1)}
+          onDelete={handleDelete}
+        />
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          title="레시피를 삭제할까요?"
+          description="삭제하면 받은 후기와 좋아요도 함께 사라지고 되돌릴 수 없어요."
+          dangerTitle="삭제"
+          dangerHandler={confirmDelete}
+          keepTitle="취소"
+          closeHandler={() => setDeleteDialogOpen(false)}
+          dangerOnRight
         />
 
-        {/* 조리 순서 */}
-        <RecipeReadStepList
-          steps={recipe.steps}
-        />
+        <Sheet>
+          {/* 레시피 기본 정보 */}
+          <Section>
+            <RecipeInfo
+              recipe={recipe}
+              following={following}
+              pendingFollow={pendingFollow}
+              onFollow={handleFollow}
+            />
 
-        {/* 요리 시작하기 */}
+            {/* 좋아요 / 후기 / 저장 */}
+            <RecipeActionBar
+              liked={liked}
+              saved={saved}
+              likeCount={likeCount}
+              saveCount={saveCount}
+              reviewCount={recipe.reviewCount}
+              pendingLike={pendingLike}
+              pendingSave={pendingSave}
+              actionError={actionError}
+              onLike={handleLike}
+              onSave={handleSave}
+              onReviews={goReviews}
+            />
+          </Section>
+
+          {/* 재료 목록 */}
+          <RecipeIngredientList
+            ingredients={recipe.ingredients}
+          />
+
+          {/* 조리 순서 */}
+          <RecipeReadStepList
+            steps={recipe.steps}
+          />
+
+        </Sheet>
+      </ScrollArea>
+
+      <ActionArea>
+        {/* 요리 시작하기 버튼 */}
         <Button
           title="이 레시피로 요리 시작하기"
           onClick={() => navigate(`/recipe/cook/${id}`, { state: { fromDetail: true } })}
         />
-      </Sheet>
-    </div>
+      </ActionArea>
+    </PageWrapper>
   );
 };
 
