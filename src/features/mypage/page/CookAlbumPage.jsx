@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
-import { getMyAlbum } from '../../../api/albumApi';
+import { getMyAlbum, getMyAlbumMonth } from '../../../api/albumApi';
 import api from '../../../api/axios';
 import TopBar from '../../../components/layout/TopBar';
 import ActionSheet from '../../../components/styled/ActionSheet';
@@ -289,25 +289,42 @@ const CookAlbumPage = () => {
     return () => observer.disconnect();
   }, [view, nextPage, moreFailed, loadPage, photos.length]);
 
-  // 달력 — 사진은 최신순으로 오므로, 보는 달의 1일보다 오래된 사진이 나올 때까지 이어 불러옴
+  // 달력 — 보는 달의 사진을 달별 조회로 한 번에 (한 번 받은 달은 이 화면에 있는 동안 기억)
+  // monthData: { "2026-11": { status: 'loading' | 'done' | 'error', photos: [...] } }
   const { year, month } = shownMonth;
-  const oldestLoaded = photos.length > 0 ? new Date(photos[photos.length - 1].createdAt) : null;
-  const monthNeedsMore = nextPage !== null && (!oldestLoaded || oldestLoaded >= new Date(year, month, 1));
+  const monthKey = toMonthKey(year, month);
+  const [monthData, setMonthData] = useState({});
+  const [monthRetry, setMonthRetry] = useState(0); // "다시 불러오기"를 누를 때마다 올림
+  const monthStatus = monthData[monthKey]?.status;
   useEffect(() => {
-    if (view === 'calendar' && monthNeedsMore && !moreFailed && !error && !loading) loadPage(nextPage);
-  }, [view, monthNeedsMore, moreFailed, error, loading, nextPage, loadPage]);
+    if (view !== 'calendar' || monthStatus === 'done') return undefined;
+    const controller = new AbortController();
+    setMonthData((prev) => ({ ...prev, [monthKey]: { status: 'loading', photos: [] } }));
+    getMyAlbumMonth(year, month + 1, controller.signal)
+      .then((list) => setMonthData((prev) => ({ ...prev, [monthKey]: { status: 'done', photos: list } })))
+      .catch((e) => {
+        if (e.name === 'CanceledError') return;
+        console.error(e);
+        if (isAuthError(e)) setError({ message: '로그인이 필요해요.', needLogin: true });
+        setMonthData((prev) => ({ ...prev, [monthKey]: { status: 'error', photos: [] } }));
+      });
+    // 다른 달로 넘기면 받던 요청은 취소 (다시 오면 새로 받음)
+    return () => controller.abort();
+    // monthStatus는 일부러 빼서, 받는 중 상태로 바뀔 때 다시 요청하지 않게 함
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, monthKey, monthRetry]);
+  const monthLoading = view === 'calendar' && monthStatus !== 'done' && monthStatus !== 'error';
+  const monthLoadFailed = monthStatus === 'error';
 
-  // 보는 달의 사진을 날짜별로 (각 날짜 안은 최신순)
+  // 보는 달의 사진을 날짜별로 — 서버는 날짜순(오래된 것부터)으로 주므로, 각 날짜 안은 최신순으로 뒤집음
   const photosByDay = useMemo(() => {
     const byDay = {};
-    photos.forEach((photo) => {
-      const date = new Date(photo.createdAt);
-      if (!isSameMonth(date, year, month)) return;
-      const key = toDateKey(date);
-      (byDay[key] ??= []).push(photo);
+    (monthData[monthKey]?.photos ?? []).forEach((photo) => {
+      const key = toDateKey(new Date(photo.createdAt));
+      (byDay[key] ??= []).unshift(photo);
     });
     return byDay;
-  }, [photos, year, month]);
+  }, [monthData, monthKey]);
   const monthPhotoCount = Object.values(photosByDay).reduce((sum, list) => sum + list.length, 0);
 
   const isCurrentMonth = isSameMonth(today, year, month);
@@ -411,10 +428,8 @@ const CookAlbumPage = () => {
 
   // 아직 저장하면 안 되는 이유 — 달 사진을 다 받기 전이면 카드가 비어 보이므로 기다림
   let saveBlockedReason = null;
-  // (예전에 다른 페이지 받기에 실패했어도, 지금 보는 달을 다 받았으면 막지 않음)
-  const monthLoadFailed = monthNeedsMore && moreFailed;
-  if (monthLoadFailed) saveBlockedReason = '사진을 다 불러오지 못했어요';
-  else if (monthNeedsMore) saveBlockedReason = '사진 불러오는 중…';
+  if (monthLoadFailed) saveBlockedReason = '사진을 불러오지 못했어요';
+  else if (monthLoading) saveBlockedReason = '사진 불러오는 중…';
   else if (nicknameStatus === 'loading') saveBlockedReason = '준비하는 중…';
 
   // 공유 카드 → 1080×1350 PNG로 내려받기 (파일 이름: recipely-2026-11.png)
@@ -489,7 +504,7 @@ const CookAlbumPage = () => {
     );
   } else {
     let summary = `${isCurrentMonth ? '이번 달' : `${month + 1}월`} 완성 사진 ${monthPhotoCount}장`;
-    if (monthNeedsMore && !moreFailed) summary = '사진을 불러오는 중이에요…';
+    if (monthLoading) summary = '사진을 불러오는 중이에요…';
     content = (
       <>
         <Section>
@@ -516,8 +531,8 @@ const CookAlbumPage = () => {
           <MonthSummary aria-live="polite">
             {monthLoadFailed ? (
               <>
-                사진을 더 불러오지 못했어요.{' '}
-                <RetryButton type="button" onClick={() => loadPage(nextPage)}>
+                이 달 사진을 불러오지 못했어요.{' '}
+                <RetryButton type="button" onClick={() => setMonthRetry((n) => n + 1)}>
                   다시 불러오기
                 </RetryButton>
               </>
