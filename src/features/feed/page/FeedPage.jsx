@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import { PAGE_PADDING } from '../../../components/styled/theme';
@@ -29,7 +30,23 @@ const fetcherByTab = {
 
 
 const FeedPage = () => {
-  const [tab, setTab] = useState('following');
+  // 탭을 URL 쿼리에 저장 → 다른 화면 갔다가 뒤로가기 해도 같은 탭 유지 (예: /feed?tab=popular)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  // URL 값이 없거나 이상하면 기본값 'following'
+  // hasOwnProperty: ?tab=toString 처럼 객체 기본 속성 이름이 들어와도 통과시키지 않음
+  // (Object.hasOwn은 Safari 15.3 이하에서 없어서 이 방식 사용)
+  const tab = Object.prototype.hasOwnProperty.call(fetcherByTab, tabParam) ? tabParam : 'following';
+  // replace: true → 탭 바꿀 때마다 히스토리가 쌓이지 않게
+  const setTab = (value) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', value);
+        return next;
+      },
+      { replace: true },
+    );
   const { isLoggedIn, user } = useAuth();
   // 비로그인인데 팔로잉 탭이면 호출하지 않음 (401)
   const needLogin = tab === 'following' && !isLoggedIn;
