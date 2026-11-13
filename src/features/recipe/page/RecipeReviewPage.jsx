@@ -187,6 +187,7 @@ const RecipeReviewPage = () => {
     const { id } = useParams(); // 레시피 id
     const { user } = useAuth();
     const inputRef = useRef(null);
+    const commentBarRef = useRef(null);
 
     // 상단 요약 + 레시피 좋아요
     const [recipe, setRecipe] = useState(null);
@@ -207,6 +208,7 @@ const RecipeReviewPage = () => {
     const [submitError, setSubmitError] = useState("");
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleting, setDeleting] = useState(false);
+    const [commentBarHeight, setCommentBarHeight] = useState(0);
 
     const patchReview = useCallback(
         (reviewId, patch) =>
@@ -385,10 +387,26 @@ const RecipeReviewPage = () => {
         }
     };
 
+    useEffect(() => {
+        const bar = commentBarRef.current;
+        if (!bar) return undefined;
+
+        const measure = () => setCommentBarHeight(bar.getBoundingClientRect().height);
+        measure();
+
+        const observer = new ResizeObserver(measure);
+        observer.observe(bar);
+        return () => observer.disconnect();
+    }, []);
+
     return (
         <div>
             <TopBar title="레시피 후기" showBack={true} />
-            <Screen>
+            <Screen
+  style={{
+    paddingBottom: `calc(${commentBarHeight + BOTTOM_BAR_HEIGHT + CENTER_BUTTON_OVERHANG + PAGE_PADDING}px + env(safe-area-inset-bottom, 0px))`,
+  }}
+>
                 <Summary>
                     <SummaryTop>
                         {recipe?.image && <img src={recipe.image} alt="" />}
@@ -446,7 +464,7 @@ const RecipeReviewPage = () => {
                 </Section>
             </Screen>
 
-            <CommentBar onSubmit={submitComment}>
+            <CommentBar onSubmit={submitComment} ref={commentBarRef}>
                 {submitError && (
                     <Text variant="caption" color={colors.heart} role="alert">{submitError}</Text>
                 )}
