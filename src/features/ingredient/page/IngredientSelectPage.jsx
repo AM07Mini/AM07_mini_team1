@@ -9,7 +9,7 @@ import Button from "../../../components/styled/Button";
 import Text from "../../../components/styled/Text";
 import { colors, radius, font } from "../../../components/styled/theme";
 import IngredientList from "../list/IngredientList";
-import { searchIngredients, updateMyIngredients } from "../../../api/recipeApi";
+import { searchIngredients, updateMyIngredients, createIngredient } from "../../../api/recipeApi";
 
 // 서버 재료를 한 번에 불러올 개수 (기본 20개라 재료가 늘면 잘림, 서버 최대 50개)
 const INGREDIENT_PAGE_SIZE = 50;
@@ -75,6 +75,7 @@ const IngredientSelectPage = () => {
   const [selected, setSelected] = useState([]);
   const [query, setQuery] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 
   // 서버의 식재료 목록 [{ id, name }] 불러오기 — 저장할 때 이 id를 그대로 보냄
   useEffect(() => {
@@ -130,18 +131,25 @@ const IngredientSelectPage = () => {
   };
 
   // 식재료 직접 추가
-  const addCustom = () => {
-    if (!canAdd) return;
+  const addCustom = async () => {
+    if (!canAdd || isAdding) return;
 
-    // TODO: createIngredient(keyword) API를 통해 실제 ID 받아오기
-    const newItem = {
-      id: -Date.now(),
-      name: keyword,
-    };
+    const name = keyword;
+    setIsAdding(true);
 
-    setIngredients((prev) => [...prev, newItem]);
-    setSelected((prev) => [...prev, newItem.id]);
-    setQuery("");
+    try {
+      const created = await createIngredient(name);
+      if (!created?.id) throw new Error("등록된 재료 ID를 받지 못했습니다.");
+
+      const item = { id: created.id, name: created.name ?? name };
+      setIngredients((prev) => [...prev, item]);
+      setSelected((prev) => [...prev, item.id]);
+      setQuery("");
+    } catch (error) {
+      alert(error.response?.data?.message ?? error.message ?? "식재료 등록에 실패했습니다.");
+    } finally {
+      setIsAdding(false);
+    }
   };
 
   // 선택한 식재료 서버 저장 후 추천 페이지 이동
