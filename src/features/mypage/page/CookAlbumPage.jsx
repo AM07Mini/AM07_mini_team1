@@ -107,7 +107,7 @@ const MonthArrow = styled.button`
   }
 `;
 
-// 가운데 "2026년 11월 ▾" — 누르면 달 고르기
+// 가운데 "2026년 11월 ⌄" — 누르면 달 고르기
 const MonthButton = styled.button`
   position: relative;
   display: flex;
@@ -122,9 +122,9 @@ const MonthButton = styled.button`
   color: ${colors.dark};
   cursor: pointer;
 
-  span {
-    font-size: 12px;
-    font-weight: 400;
+  // 아래 화살표 — 달 고르기가 열린다는 표시
+  > span {
+    display: flex;
     color: ${colors.grey2};
   }
 `;
@@ -513,7 +513,10 @@ const CookAlbumPage = () => {
               <Icon name="chevronLeft" size={22} strokeWidth={2} />
             </MonthArrow>
             <MonthButton type="button" aria-label={`${year}년 ${month + 1}월, 눌러서 달 고르기`} onClick={openMonthPicker}>
-              {year}년 {month + 1}월<span aria-hidden="true">▾</span>
+              {year}년 {month + 1}월
+              <span aria-hidden="true">
+                <Icon name="chevronDown" size={20} strokeWidth={2} />
+              </span>
               <HiddenMonthInput
                 ref={monthInputRef}
                 type="month"
