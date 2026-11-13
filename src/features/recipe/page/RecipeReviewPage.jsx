@@ -93,7 +93,7 @@ const LikePill = styled.button`
 `;
 
 const BOTTOM_BAR_HEIGHT = 64;
-const CENTER_BUTTON_OVERHANG = 32;
+const CENTER_BUTTON_OVERHANG = 23;
 
 const CommentBar = styled.form`
   position: fixed;
