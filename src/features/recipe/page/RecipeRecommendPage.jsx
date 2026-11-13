@@ -5,11 +5,11 @@ import SectionHeader from '../../../components/styled/SectionHeader';
 import TopBar from "../../../components/layout/TopBar";
 import Button from "../../../components/styled/Button";
 import Text from "../../../components/styled/Text";
-import Chip from "../../../components/styled/Chip";
 import RecipeList from "../list/RecipeList";
 import { colors } from "../../../components/styled/theme";
 import { getRecommendedRecipes } from "../../../api/recommendApi";
 import { useEffect, useState } from "react";
+import BackToTopButton from "../../../components/styled/BackToTopButton";
 
 const toCardData = ({ recipe }) => ({
   id: recipe.id,
@@ -34,12 +34,6 @@ const SummaryBox = styled.div`
   padding: 14px 16px;
   border-radius: 16px;
   background: ${colors.grey4};
-`;
-
-const Row = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 `;
 
 const RecipeRecommendPage = () => {
@@ -126,6 +120,16 @@ const RecipeRecommendPage = () => {
     }
   };
 
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const updateVisibility = () => setShowBackToTop(window.scrollY > 300);
+
+    updateVisibility();
+    window.addEventListener("scroll", updateVisibility, { passive: true });
+    return () => window.removeEventListener("scroll", updateVisibility);
+  }, []);
+
   return (
     <div>
       <TopBar title="요리 추천" />
@@ -145,12 +149,12 @@ const RecipeRecommendPage = () => {
           </Text>
         </SummaryBox>
 
-        <SectionHeader title="추천 요리" right={`${recipes.length}가지`} />
+        <Text variant="sub" color={colors.grey1}>
+          재료를 바꾸면 새로운 요리를 찾을 수 있어요.
+        </Text>
+        <Button title="재료 다시 선택하기" onClick={() => navigate("/")} />
 
-        <Row>
-          <Chip title="추가 재료 없이" selected />
-          <Text variant="sub" color={colors.grey1}>기본 양념은 제외해요</Text>
-        </Row>
+        <SectionHeader title="추천 요리" right={`${recipes.length}가지`} />
 
         {!loading && !error && recipes.length > 0 && <RecipeList recipes={recipes} />}
         {hasNext && (
@@ -163,12 +167,9 @@ const RecipeRecommendPage = () => {
         )}
         {loadMoreError && <Text variant="caption" color={colors.heart} role="alert">{loadMoreError}</Text>}
 
-        <Text variant="sub" color={colors.grey1}>
-          재료를 바꾸면 새로운 요리를 찾을 수 있어요.
-        </Text>
 
-        <Button title="재료 다시 선택하기" onClick={() => navigate("/")} />
       </Screen>
+      {showBackToTop && <BackToTopButton />}
     </div>
   );
 };
