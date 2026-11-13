@@ -16,6 +16,7 @@ const INGREDIENT_PAGE_SIZE = 50;
 
 const Screen = styled.main`
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 20px;
   padding: 24px;
@@ -28,7 +29,7 @@ const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100dvh;
+  height: calc(100vh - 64px);
   min-height: 0;
   overflow: hidden;
 `;
