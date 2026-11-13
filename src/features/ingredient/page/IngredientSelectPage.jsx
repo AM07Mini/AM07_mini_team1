@@ -4,7 +4,7 @@ import styled from "styled-components";
 import PageIntro from '../../../components/styled/PageIntro';
 import SectionHeader from '../../../components/styled/SectionHeader';
 import SearchInput from "../../../components/styled/SearchInput";
-import TopBar from "../../../components/layout/TopBar";
+import BrandTopBar from "../../../components/layout/BrandTopBar";
 import Button from "../../../components/styled/Button";
 import Text from "../../../components/styled/Text";
 import { colors, radius, font } from "../../../components/styled/theme";
@@ -183,7 +183,7 @@ const IngredientSelectPage = () => {
 
   return (
     <PageWrapper>
-      <TopBar title="홈" />
+      <BrandTopBar />
 
       <Screen>
         <PageIntro
