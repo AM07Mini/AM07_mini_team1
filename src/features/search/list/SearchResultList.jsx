@@ -8,7 +8,10 @@ import SearchEmptyState from './SearchEmptyState';
 const Results = styled.section`
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
+  margin: 0 -24px -28px;
+  padding: 16px 24px 28px;
+  background: ${colors.surface};
 `;
 
 const RecipeGrid = styled.div`
@@ -27,10 +30,46 @@ const EmptyMessage = styled.p`
   text-align: center;
 `;
 
+const LoadMoreTrigger = styled.div`
+  grid-column: 1 / -1;
+  min-height: 1px;
+`;
+
+const LoadMoreMessage = styled.p`
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 8px 0;
+  color: ${colors.grey1};
+  text-align: center;
+`;
+
+const LoadMoreFailure = styled.div`
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+`;
+
+const RetryButton = styled.button`
+  padding: 8px 16px;
+  border: 1px solid ${colors.grey3};
+  border-radius: 12px;
+  background: ${colors.white};
+  color: ${colors.dark};
+  font: inherit;
+  cursor: pointer;
+`;
+
 const SearchResultList = ({
   recipes,
-  totalElements,
+  resultCountLabel,
   loading,
+  loadingMore,
+  hasMore,
+  loadMoreRef,
+  loadMoreError,
+  onRetryLoadMore,
   error,
   suggestions = [],
   suggestionsLoading = false,
@@ -41,7 +80,11 @@ const SearchResultList = ({
   selectedConditions = [],
 }) => (
   <Results>
-    <SectionHeader title="검색 결과" right={loading ? '검색 중' : `${totalElements}개`} rightRole="status" />
+    <SectionHeader
+      title="검색 결과"
+      right={loading ? '검색 중' : resultCountLabel}
+      rightRole="status"
+    />
     {selectedConditions.length > 0 && (
       <Text variant="caption" color={colors.grey1}>
         {selectedConditions.join(' · ')}
@@ -53,16 +96,46 @@ const SearchResultList = ({
       ) : loading ? (
         <EmptyMessage role="status">레시피를 검색하고 있어요.</EmptyMessage>
       ) : recipes.length > 0 ? (
-        recipes.map((recipe) => <SearchRecipeItem key={recipe.id} recipe={recipe} />)
+        <>
+          {recipes.map((recipe) => (
+            <SearchRecipeItem key={recipe.id} recipe={recipe} />
+          ))}
+          {loadingMore && (
+            <LoadMoreMessage role="status">레시피를 더 불러오는 중입니다.</LoadMoreMessage>
+          )}
+          {loadMoreError && (
+            <LoadMoreFailure>
+              <LoadMoreMessage role="alert">{loadMoreError}</LoadMoreMessage>
+              <RetryButton type="button" onClick={onRetryLoadMore}>
+                다시 시도
+              </RetryButton>
+            </LoadMoreFailure>
+          )}
+          {hasMore && <LoadMoreTrigger ref={loadMoreRef} aria-hidden="true" />}
+        </>
       ) : (
-        <SearchEmptyState
-          suggestions={suggestions}
-          suggestionsLoading={suggestionsLoading}
-          suggestionsError={suggestionsError}
-          canRelaxFilters={canRelaxFilters}
-          onSuggestionSelect={onSuggestionSelect}
-          onReset={onReset}
-        />
+        loadMoreError ? (
+          <LoadMoreFailure>
+            <EmptyMessage role="alert">{loadMoreError}</EmptyMessage>
+            <RetryButton type="button" onClick={onRetryLoadMore}>
+              다시 시도
+            </RetryButton>
+          </LoadMoreFailure>
+        ) : hasMore ? (
+          <>
+            <EmptyMessage role="status">검색 결과를 더 확인하고 있어요.</EmptyMessage>
+            <LoadMoreTrigger ref={loadMoreRef} aria-hidden="true" />
+          </>
+        ) : (
+          <SearchEmptyState
+            suggestions={suggestions}
+            suggestionsLoading={suggestionsLoading}
+            suggestionsError={suggestionsError}
+            canRelaxFilters={canRelaxFilters}
+            onSuggestionSelect={onSuggestionSelect}
+            onReset={onReset}
+          />
+        )
       )}
     </RecipeGrid>
   </Results>

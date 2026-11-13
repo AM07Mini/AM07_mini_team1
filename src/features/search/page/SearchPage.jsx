@@ -79,6 +79,9 @@ const SearchPage = () => {
   const topBarRef = useRef(null);
   const filterListRef = useRef(null);
   const resultsRef = useRef(null);
+  const loadMoreRef = useRef(null);
+  const nextPageRef = useRef(1);
+  const loadingMoreRef = useRef(false);
   const mainRef = useRef(null);
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState(searchFilters);
@@ -103,11 +106,29 @@ const SearchPage = () => {
   const [recipes, setRecipes] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState('');
   const [error, setError] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const normalizedQuery = query.trim();
+  const hashtagSearch = normalizedQuery.startsWith('#');
+  const searchTerm = normalizedQuery.replace(/^#+\s*/, '').toLocaleLowerCase();
+  const visibleRecipes = !searchTerm
+    ? recipes
+    : recipes.filter((recipe) =>
+        hashtagSearch
+          ? recipe.hashtags.some((hashtag) =>
+              hashtag.replace(/^#+/, '').toLocaleLowerCase().startsWith(searchTerm),
+            )
+          : recipe.title.toLocaleLowerCase().includes(searchTerm),
+      );
+  const resultCountLabel = normalizedQuery
+    ? `${visibleRecipes.length}${hasMore || loadingMore || loadMoreError ? '개 이상' : '개'}`
+    : `${totalElements}개`;
 
   useEffect(() => {
     const updateButtonVisibility = () => {
@@ -245,9 +266,19 @@ const SearchPage = () => {
     });
   };
 
+  const retryLoadMore = () => {
+    setLoadMoreError('');
+    setHasMore(true);
+  };
+
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
+    setHasMore(false);
+    setLoadingMore(false);
+    setLoadMoreError('');
+    loadingMoreRef.current = false;
+    nextPageRef.current = 1;
     setSuggestionsLoading(false);
     setError('');
 
@@ -256,6 +287,7 @@ const SearchPage = () => {
         const result = await fetchSearchRecipes(query, selected, controller.signal);
         setRecipes(result.recipes);
         setTotalElements(result.totalElements);
+        setHasMore(result.recipes.length < result.totalElements);
         if (!controller.signal.aborted) setLoading(false);
 
         const canRelaxFilters = Object.values(selected).some((values) => values.length > 0);
@@ -308,6 +340,63 @@ const SearchPage = () => {
     };
   }, [filters, query, selected]);
 
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasMore || loading || loadingMore) return undefined;
+
+    const controller = new AbortController();
+    const observer = new IntersectionObserver(
+      async ([entry]) => {
+        if (!entry.isIntersecting || loadingMoreRef.current) return;
+
+        loadingMoreRef.current = true;
+        setLoadingMore(true);
+        setLoadMoreError('');
+        const page = nextPageRef.current;
+
+        try {
+          const result = await fetchSearchRecipes(
+            query,
+            selected,
+            controller.signal,
+            20,
+            page,
+          );
+          if (controller.signal.aborted) return;
+
+          const recipeIds = new Set(recipes.map((recipe) => recipe.id));
+          const newRecipes = result.recipes.filter((recipe) => !recipeIds.has(recipe.id));
+          const nextRecipes = [...recipes, ...newRecipes];
+          setRecipes(nextRecipes);
+          setHasMore(result.recipes.length === 20 && nextRecipes.length < result.totalElements);
+          setTotalElements(result.totalElements);
+          nextPageRef.current = page + 1;
+        } catch (requestError) {
+          if (!controller.signal.aborted) {
+            setLoadMoreError(
+              requestError?.response?.data?.message ||
+                requestError?.message ||
+                '레시피를 더 불러오지 못했습니다.',
+            );
+            setHasMore(false);
+          }
+        } finally {
+          if (!controller.signal.aborted) {
+            loadingMoreRef.current = false;
+            setLoadingMore(false);
+          }
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    observer.observe(target);
+
+    return () => {
+      controller.abort();
+      observer.disconnect();
+    };
+  }, [hasMore, loading, query, selected, recipes]);
+
   const selectedConditions = filters.flatMap((filter) =>
     (selected[filter.key] || []).map(
       (value) => filter.items.find((item) => item.value === value)?.label ?? String(value),
@@ -323,7 +412,7 @@ const SearchPage = () => {
           <SearchInput
             value={query}
             changeHandler={(event) => setQuery(event.target.value)}
-            placeholder="레시피 이름, 해시태그로 검색 (예: #자취요리)"
+            placeholder="레시피명 또는 #키워드로 검색"
           />
           {hashtagInputActive && (
             <HashtagSuggestions role="listbox" aria-label="해시태그 키워드">
@@ -363,9 +452,14 @@ const SearchPage = () => {
         </div>
         <div ref={resultsRef}>
           <SearchResultList
-            recipes={recipes}
-            totalElements={totalElements}
+            recipes={visibleRecipes}
+            resultCountLabel={resultCountLabel}
             loading={loading}
+            loadingMore={loadingMore}
+            hasMore={hasMore}
+            loadMoreRef={loadMoreRef}
+            loadMoreError={loadMoreError}
+            onRetryLoadMore={retryLoadMore}
             error={error}
             suggestions={suggestions}
             suggestionsLoading={suggestionsLoading}
