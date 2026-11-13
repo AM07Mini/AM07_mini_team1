@@ -14,7 +14,7 @@ import { formatDayTitle, toDateKey, toMonthKey } from '../../../utils/calendar';
 import { isAuthError } from '../authError';
 import AlbumDayPhotoItem from '../item/AlbumDayPhotoItem';
 import AlbumShareSheet from '../item/AlbumShareSheet';
-import MonthPickerSheet from '../item/MonthPickerSheet';
+import MonthPickerModal from '../item/MonthPickerModal';
 import { createAlbumShareImage, downloadBlob, shouldDownloadFile } from '../albumShareImage';
 import AlbumCalendar from '../list/AlbumCalendar';
 import AlbumPhotoList from '../list/AlbumPhotoList';
@@ -557,7 +557,7 @@ const CookAlbumPage = () => {
         photosByDay={photosByDay}
         photoCount={monthPhotoCount}
       />
-      <MonthPickerSheet
+      <MonthPickerModal
         open={monthPickerOpen}
         year={year}
         month={month}

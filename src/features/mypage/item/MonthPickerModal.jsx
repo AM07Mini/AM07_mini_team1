@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import styled from 'styled-components';
-import BottomSheet from '../../../components/styled/BottomSheet';
+import CenterModal from '../../../components/styled/CenterModal';
 import Icon from '../../../components/styled/Icon';
 import { colors, font, radius } from '../../../components/styled/theme';
 
@@ -56,7 +56,7 @@ const MonthButton = styled.button`
   }
 `;
 
-// 시트 안쪽 — 열 때마다 새로 그려서, 보고 있는 달의 연도부터 시작
+// 창 안쪽 — 열 때마다 새로 그려서, 보고 있는 달의 연도부터 시작
 const MonthGrid = ({ year, month, maxYear, maxMonth, pickHandler }) => {
   const [shownYear, setShownYear] = useState(year);
 
@@ -99,10 +99,10 @@ const MonthGrid = ({ year, month, maxYear, maxMonth, pickHandler }) => {
   );
 };
 
-// 달 고르기 — 위쪽에서 연도를 넘기고 아래에서 달을 고름 (오늘 이후 달은 못 고름)
+// 달 고르기 — 화면 가운데 창, 위쪽에서 연도를 넘기고 아래에서 달을 고름 (오늘 이후 달은 못 고름)
 // month · maxMonth는 0부터 (11월 = 10)
-const MonthPickerSheet = ({ open, year, month, maxYear, maxMonth, closeHandler, pickHandler }) => (
-  <BottomSheet open={open} title="달 고르기" closeHandler={closeHandler}>
+const MonthPickerModal = ({ open, year, month, maxYear, maxMonth, closeHandler, pickHandler }) => (
+  <CenterModal open={open} title="달 고르기" closeHandler={closeHandler}>
     {open && (
       <MonthGrid
         year={year}
@@ -115,7 +115,7 @@ const MonthPickerSheet = ({ open, year, month, maxYear, maxMonth, closeHandler, 
         }}
       />
     )}
-  </BottomSheet>
+  </CenterModal>
 );
 
-export default MonthPickerSheet;
+export default MonthPickerModal;
