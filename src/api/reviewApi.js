@@ -18,6 +18,9 @@ export const getReviews = (recipeId, { page = 0, size = 20 } = {}, signal) =>
     .get(`/recipes/${recipeId}/reviews`, { params: { page, size }, signal })
     .then((res) => res.data.result);
 
+export const deleteReview = (recipeId, reviewId) =>
+  api.delete(`/recipes/${recipeId}/reviews/${reviewId}`);
+
 // 답글
 export const getReplies = (recipeId, reviewId, { page = 0, size = 50 } = {}, signal) =>
   api

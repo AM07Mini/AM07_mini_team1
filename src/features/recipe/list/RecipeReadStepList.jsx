@@ -1,7 +1,7 @@
 import Text from "../../../components/styled/Text";
 import { colors } from "../../../components/styled/theme";
 import { Section, Row } from "../page/RecipeReadStyles";
-import RecipeReadStepItem from "../item/RecipeReadStepItem";
+import RecipeStepItem from "../item/RecipeStepItem";
 
 //조리 순서 전체 목록
 
@@ -18,12 +18,8 @@ const RecipeReadStepList = ({ steps }) => {
         </Text>
       </Row>
 
-      {steps.map((text, index) => (
-        <RecipeReadStepItem
-          key={`${index}-${text}`}
-          number={index + 1}
-          text={text}
-        />
+      {steps.map((step) => (
+        <RecipeStepItem key={step.order} data={step} />
       ))}
     </Section>
   );

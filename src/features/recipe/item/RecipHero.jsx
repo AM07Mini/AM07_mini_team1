@@ -31,20 +31,20 @@ const BackButton = styled.button`
   cursor: pointer;
 `;
 
-const BookmarkButton = styled.button`
+const DeleteButton = styled.button`
   position: absolute;
   top: 15px;
   right: 24px;
-  display: grid;
-  place-items: center;
-  width: 40px;
+  min-width: 52px;
   height: 40px;
+  padding: 0 12px;
   border: none;
-  border-radius: 50%;
+  border-radius: 20px;
   background: ${colors.white};
-  font-size: 18px;
-  color: ${({ $saved }) =>
-    $saved ? colors.primary : colors.grey2};
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: ${colors.danger};
   cursor: pointer;
 
   &:disabled {
@@ -55,10 +55,10 @@ const BookmarkButton = styled.button`
 
 const RecipeHero = ({
   recipe,
-  saved,
-  pendingSave,
+  isMine,
+  pendingDelete,
   onBack,
-  onSave,
+  onDelete,
 }) => {
   return (
     <Hero>
@@ -74,16 +74,16 @@ const RecipeHero = ({
         ←
       </BackButton>
 
-      <BookmarkButton
-        type="button"
-        $saved={saved}
-        aria-pressed={saved}
-        aria-label="저장"
-        disabled={pendingSave}
-        onClick={onSave}
-      >
-        {saved ? "★" : "☆"}
-      </BookmarkButton>
+      {isMine && (
+        <DeleteButton
+          type="button"
+          aria-label="레시피 삭제"
+          disabled={pendingDelete}
+          onClick={onDelete}
+        >
+          삭제
+        </DeleteButton>
+      )}
     </Hero>
   );
 };
