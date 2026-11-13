@@ -1,6 +1,6 @@
 import { colors } from '../../components/styled/theme';
 import { getMonthInfo, toDateKey, WEEKDAYS } from '../../utils/calendar';
-import { SITE_NAME } from '../../utils/site';
+import { SITE_LOGO, SITE_NAME, SITE_TAGLINE } from '../../utils/site';
 
 // 요리 앨범 공유 카드를 1080×1350(4:5) PNG로 그리기 — 서버 없이 브라우저 그림판(canvas)으로
 // 화면의 카드 미리보기(264×330, AlbumShareCard)와 같은 자리 · 크기를 그대로 키워서 그림
@@ -90,6 +90,8 @@ export const createAlbumShareImage = async ({ nickname, year, month, isCurrentMo
   await document.fonts?.ready;
 
   const { firstWeekday, days } = getMonthInfo(year, month);
+  // 로고 아이콘은 우리 사이트 파일이라 그대로 불러옴
+  const logoImage = await loadImage(SITE_LOGO);
   let missingCount = 0;
   const dayPhotos = await Promise.all(
     Array.from({ length: days }, async (_, index) => {
@@ -112,15 +114,15 @@ export const createAlbumShareImage = async ({ nickname, year, month, isCurrentMo
   ctx.fillStyle = colors.white;
   ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
 
-  // 로고 칩 — 사이트 이름
-  setFont(ctx, 9, 700);
-  const logoText = SITE_NAME;
-  const logoWidth = ctx.measureText(logoText).width + 16;
-  ctx.fillStyle = colors.mint;
-  roundRect(ctx, PADDING, PADDING, logoWidth, 19, 6);
-  ctx.fill();
+  // 로고 — 아이콘(18px, 위 15) + 사이트 이름 10px (아이콘을 못 불러오면 이름만)
+  const LOGO_TOP = 15;
+  const LOGO_SIZE = 18.02;
+  if (logoImage) ctx.drawImage(logoImage, PADDING, LOGO_TOP, LOGO_SIZE, LOGO_SIZE);
+  setFont(ctx, 10, 700);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '-0.2px';
   ctx.fillStyle = colors.primary;
-  ctx.fillText(logoText, PADDING + 8, PADDING + 4.5);
+  ctx.fillText(SITE_NAME, logoImage ? PADDING + LOGO_SIZE + 5 : PADDING, LOGO_TOP + 2.5);
+  if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
 
   // 제목 · 부제목
   const owner = nickname ? `${nickname}의 ` : '';
@@ -168,7 +170,7 @@ export const createAlbumShareImage = async ({ nickname, year, month, isCurrentMo
   ctx.textAlign = 'left';
   setFont(ctx, 9, 400);
   ctx.fillStyle = colors.grey2;
-  ctx.fillText(`${year}.${String(month + 1).padStart(2, '0')}  ·  냉장고 속 재료로 요리 찾기`, PADDING, 300);
+  ctx.fillText(`${year}.${String(month + 1).padStart(2, '0')}  ·  ${SITE_TAGLINE}`, PADDING, 300);
 
   // 다른 사이트 사진이 막혀 그림판이 "오염"되면 여기서 SecurityError가 남
   return new Promise((resolve, reject) => {
