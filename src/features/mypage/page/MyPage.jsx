@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import api from '../../../api/axios';
 import { getCategories } from '../../../api/categoryApi';
+import BackToTopButton from '../../../components/styled/BackToTopButton';
 import Button from '../../../components/styled/Button';
 import Chip from '../../../components/styled/Chip';
 import SegmentTab from '../../../components/styled/SegmentTab';
@@ -20,6 +21,16 @@ const Wrapper = styled.div`
   gap: 20px;
   padding: 14px ${PAGE_PADDING}px 32px;
 `;
+
+// '내 레시피' 제목 + 탭이 원래 놓이는 자리 표시 — 목록 맨 위로 버튼이 돌아갈 위치를 재는 용도
+// (높이 0, Wrapper의 간격 20px을 음수 margin으로 상쇄해서 화면 모양은 그대로)
+const ListAnchor = styled.div`
+  height: 0;
+  margin-bottom: -20px;
+`;
+
+// 목록을 이만큼 더 내려야 맨 위로 버튼이 보임
+const BACK_TO_TOP_OFFSET = 400;
 
 // '내 레시피' 제목 + 탭 — 스크롤하다 상단바 바로 밑에 닿으면 멈춰 있고 아래 레시피만 움직임
 // 위아래 여백(12px)은 음수 margin으로 상쇄해서 멈추기 전 모습은 그대로,
@@ -91,6 +102,33 @@ const MyPage = () => {
   const [filteredRecipes, setFilteredRecipes] = useState(null); // 분류를 골랐을 때 서버에서 거른 목록
   // 분류 요청 번호 — 칩을 빠르게 바꿀 때 마지막 요청의 응답만 반영하기 위함
   const filterRequestRef = useRef(0);
+
+  // 레시피 목록 맨 위로 — 프로필 카드는 그대로 두고, '내 레시피' 제목 · 탭이 상단바 밑에 붙는 위치로
+  // StickyBox는 위아래 여백 12px을 음수 margin으로 당겨 놓았으므로 그만큼 더 뺌
+  const listAnchorRef = useRef(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const getListTop = () => {
+    const anchor = listAnchorRef.current;
+    if (!anchor) return 0;
+    return Math.max(0, window.scrollY + anchor.getBoundingClientRect().top - TOP_BAR_HEIGHT - 12);
+  };
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      if (!listAnchorRef.current) return;
+      setShowBackToTop(window.scrollY > getListTop() + BACK_TO_TOP_OFFSET);
+    };
+    const scrollHandler = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    window.addEventListener('scroll', scrollHandler, { passive: true });
+    update();
+    return () => {
+      window.removeEventListener('scroll', scrollHandler);
+      cancelAnimationFrame(frame);
+    };
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -187,6 +225,7 @@ const MyPage = () => {
       <Wrapper>
         <ProfileCard profile={profile} editHandler={() => moveUrl('/mypage/edit')} />
 
+        <ListAnchor ref={listAnchorRef} />
         <StickyBox>
           <Header>
             <TitleBox>
@@ -222,6 +261,12 @@ const MyPage = () => {
     <>
       <TopBar title="마이 페이지" />
       {renderContent()}
+      {showBackToTop && (
+        <BackToTopButton
+          label="레시피 목록 맨 위로"
+          clickHandler={() => window.scrollTo({ top: getListTop(), behavior: 'smooth' })}
+        />
+      )}
     </>
   );
 };
