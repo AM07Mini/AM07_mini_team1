@@ -45,7 +45,7 @@ const LoadMoreMessage = styled.p`
 
 const SearchResultList = ({
   recipes,
-  totalElements,
+  resultCountLabel,
   loading,
   loadingMore,
   hasMore,
@@ -61,7 +61,11 @@ const SearchResultList = ({
   selectedConditions = [],
 }) => (
   <Results>
-    <SectionHeader title="검색 결과" right={loading ? '검색 중' : `${totalElements}개`} rightRole="status" />
+    <SectionHeader
+      title="검색 결과"
+      right={loading ? '검색 중' : resultCountLabel}
+      rightRole="status"
+    />
     {selectedConditions.length > 0 && (
       <Text variant="caption" color={colors.grey1}>
         {selectedConditions.join(' · ')}
@@ -84,14 +88,21 @@ const SearchResultList = ({
           {hasMore && <LoadMoreTrigger ref={loadMoreRef} aria-hidden="true" />}
         </>
       ) : (
-        <SearchEmptyState
-          suggestions={suggestions}
-          suggestionsLoading={suggestionsLoading}
-          suggestionsError={suggestionsError}
-          canRelaxFilters={canRelaxFilters}
-          onSuggestionSelect={onSuggestionSelect}
-          onReset={onReset}
-        />
+        hasMore ? (
+          <>
+            <EmptyMessage role="status">검색 결과를 더 확인하고 있어요.</EmptyMessage>
+            <LoadMoreTrigger ref={loadMoreRef} aria-hidden="true" />
+          </>
+        ) : (
+          <SearchEmptyState
+            suggestions={suggestions}
+            suggestionsLoading={suggestionsLoading}
+            suggestionsError={suggestionsError}
+            canRelaxFilters={canRelaxFilters}
+            onSuggestionSelect={onSuggestionSelect}
+            onReset={onReset}
+          />
+        )
       )}
     </RecipeGrid>
   </Results>

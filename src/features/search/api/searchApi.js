@@ -179,7 +179,7 @@ export const fetchSearchRecipes = async (keyword, filters, signal, size = 20, pa
     page,
     size,
   };
-  const normalizedKeyword = keyword.trim();
+  const normalizedKeyword = keyword.trim().replace(/^#+\s*/, '');
 
   if (normalizedKeyword) params.keyword = normalizedKeyword;
   if (filters.flavorIds.length) params.flavorIds = filters.flavorIds;

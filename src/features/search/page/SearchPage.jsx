@@ -114,6 +114,21 @@ const SearchPage = () => {
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [suggestionsError, setSuggestionsError] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const normalizedQuery = query.trim();
+  const hashtagSearch = normalizedQuery.startsWith('#');
+  const searchTerm = normalizedQuery.replace(/^#+\s*/, '').toLocaleLowerCase();
+  const visibleRecipes = !searchTerm
+    ? recipes
+    : recipes.filter((recipe) =>
+        hashtagSearch
+          ? recipe.hashtags.some((hashtag) =>
+              hashtag.replace(/^#+/, '').toLocaleLowerCase().startsWith(searchTerm),
+            )
+          : recipe.title.toLocaleLowerCase().includes(searchTerm),
+      );
+  const resultCountLabel = normalizedQuery
+    ? `${visibleRecipes.length}${hasMore || loadingMore || loadMoreError ? '개 이상' : '개'}`
+    : `${totalElements}개`;
 
   useEffect(() => {
     const updateButtonVisibility = () => {
@@ -392,7 +407,7 @@ const SearchPage = () => {
           <SearchInput
             value={query}
             changeHandler={(event) => setQuery(event.target.value)}
-            placeholder="레시피 이름, 해시태그로 검색 (예: #자취요리)"
+            placeholder="레시피명 또는 #키워드로 검색"
           />
           {hashtagInputActive && (
             <HashtagSuggestions role="listbox" aria-label="해시태그 키워드">
@@ -432,8 +447,8 @@ const SearchPage = () => {
         </div>
         <div ref={resultsRef}>
           <SearchResultList
-            recipes={recipes}
-            totalElements={totalElements}
+            recipes={visibleRecipes}
+            resultCountLabel={resultCountLabel}
             loading={loading}
             loadingMore={loadingMore}
             hasMore={hasMore}
