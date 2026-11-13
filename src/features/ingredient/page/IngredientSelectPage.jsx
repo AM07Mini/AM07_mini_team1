@@ -29,7 +29,7 @@ const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: calc(100vh - 64px);
+  height: calc(100dvh - 64px);
   min-height: 0;
   overflow: hidden;
 `;
