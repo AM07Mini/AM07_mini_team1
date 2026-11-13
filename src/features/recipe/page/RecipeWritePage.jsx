@@ -22,6 +22,7 @@ const Wrapper = styled.main`
   display: flex;
   flex-direction: column;
   gap: 32px;
+  padding-bottom: 85px;
 `;
 
 const Section = styled.div`
@@ -327,14 +328,18 @@ const ToggleDesc = styled.p`
 `;
 
 const SubmitBox = styled.div`
-  margin-top: 16px;
-`;
-
-const RequiredNote = styled.p`
-  margin: 12px 0 0;
-  ${font('caption')}
-  color: ${colors.grey2};
-  text-align: center;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 10px 24px 16px 24px;
+  background-color: ${colors.white};
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
+  z-index: 10;
 `;
 
 const UnitBox = styled.div`
@@ -423,7 +428,7 @@ export default function RecipeWritePage() {
   const [mainImageFile, setMainImageFile] = useState(null); 
 
   // 맛 · 키워드 관련 State
-  const [flavorTags] = useState(["#매운맛", "#간장맛", "#짠맛", "#단맛", "#고소한 맛"]);
+  const [flavorTags] = useState(["매운맛", "간장맛", "짠맛", "단맛", "고소한 맛"]);
   const [selectedFlavors, setSelectedFlavors] = useState([]);
   const [isAddingFlavor, setIsAddingFlavor] = useState(false);
   const [customFlavorInput, setCustomFlavorInput] = useState("");
@@ -574,10 +579,28 @@ export default function RecipeWritePage() {
       };
 
       const ingredientIdMap = {
-        "계란": 1, "달걀": 1, "밥": 2, "대파": 3, "양파": 4, "당근": 5, "파": 6, "두부": 7, 
-        "어묵": 8, "만두": 9, "고추": 10, "소면": 11, "우동사리": 12, "식빵": 13, "설탕": 14, 
-        "우유": 15, "코코아가루": 16, "배포확인파": 17
-      };
+              "계란": 1,
+              "달걀": 1,
+              "밥": 2,
+              "대파": 3,
+              "양파": 4,
+              "당근": 5,
+              "파": 6,
+              "두부": 7,
+              "어묵": 8,
+              "만두": 9,
+              "고추": 10,
+              "소면": 11,
+              "우동사리": 12,
+              "식빵": 13,
+              "설탕": 14,
+              "우유": 15,
+              "코코아가루": 16,
+              "식용유": 21,
+              "마늘": 22,
+              "간장": 19,
+              "마시멜로": 20
+       };
 
       const processedIngredients = [];
 
@@ -915,14 +938,35 @@ export default function RecipeWritePage() {
             {isAddingFlavor ? (
               <FlavorInput
                 autoFocus
-                value={customFlavorInput}
-                onChange={(e) => setCustomFlavorInput(e.target.value)}
-                onKeyDown={handleAddCustomKeyword}
-                placeholder="키워드 입력 후 엔터 (예: #자취요리)"
+                value={customFlavorInput.startsWith('#') ? customFlavorInput : `#${customFlavorInput}`}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (!val.startsWith('#')) {
+                    setCustomFlavorInput(`#${val}`);
+                  } else {
+                    setCustomFlavorInput(val);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const newTag = customFlavorInput.replace('#', '').trim();
+                    if (newTag && !customKeywords.includes(newTag)) {
+                      setCustomKeywords([...customKeywords, newTag]);
+                    }
+                    setCustomFlavorInput('');
+                    setIsAddingFlavor(false);
+                  }
+                }}
+                placeholder="#키워드 입력 후 엔터"
               />
             ) : (
-              <Chip size="medium" dashed title="+ 추가" onClick={() => setIsAddingFlavor(true)} />
+              <Chip size="medium" dashed title="+ 추가" onClick={() => {
+                setIsAddingFlavor(true);
+                setCustomFlavorInput('#');
+              }} />
             )}
+
           </ChipGroup>
         </Section>
       </Section>
