@@ -13,7 +13,7 @@
 | <img src="https://github.com/Daanyong.png" width="100"> | <img src="https://github.com/hhaeeull.png" width="100"> | <img src="https://github.com/KaHeyon.png" width="100"> | <img src="https://github.com/Lemon0610.png" width="100"> | <img src="https://github.com/seokjoon-oh.png" width="100"> | <img src="https://github.com/yskim6559.png" width="100"> |
 |:---:|:---:|:---:|:---:|:---:|:---:|
 | [@Daanyong](https://github.com/Daanyong) | [@hhaeeull](https://github.com/hhaeeull) | [@KaHeyon](https://github.com/KaHeyon) | [@Lemon0610](https://github.com/Lemon0610) | [@seokjoon-oh](https://github.com/seokjoon-oh) | [@yskim6559](https://github.com/yskim6559) |
-| 팀원 | 팀원 | 팀원 | 팀원 | 팀원 | 팀원 |
+| 레시피 추가 | 조건 검색 | 홈, 레시피 상세, 후기 | 요리모드, 마이페이지, 요리앨범 | 로그인/회원가입 | 피드 |
 
 ---
 
