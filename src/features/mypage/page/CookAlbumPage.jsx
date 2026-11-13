@@ -521,6 +521,8 @@ const CookAlbumPage = () => {
               <HiddenMonthInput
                 ref={monthInputRef}
                 type="month"
+                // 필수 입력이면 크롬 · 엣지의 달 고르기 창에서 "삭제" 버튼이 빠짐 (달을 비울 일이 없으므로)
+                required
                 tabIndex={-1}
                 aria-hidden="true"
                 value={toMonthKey(year, month)}
