@@ -305,7 +305,10 @@ const CookingModePage = () => {
   if (loadError) return <StatusMessage message={loadError} />;
   if (!recipe) return <StatusMessage message="레시피를 불러오는 중이에요..." />;
 
-  const steps = recipe.steps.length > 0 ? recipe.steps : ['조리 순서가 아직 없어요. 레시피를 보며 요리해 주세요.'];
+  const steps =
+    recipe.steps.length > 0
+      ? recipe.steps
+      : [{ order: 1, text: '조리 순서가 아직 없어요. 레시피를 보며 요리해 주세요.', image: null }];
   const isLast = stepIndex === steps.length - 1;
   const stepPhoto = recipe.stepImages[stepIndex + 1] ?? recipe.image;
   const menuTimer = timers.find((t) => t.id === menuTimerId && !t.done);
@@ -351,8 +354,11 @@ const CookingModePage = () => {
       <Body ref={bodyRef} onScroll={updateMoreBelow} tabIndex={0} aria-label={`STEP ${stepIndex + 1} 설명`}>
         {/* 이 단계의 사진 — 없으면 레시피 대표 사진 (단계별 재료는 API에 없어서 표시하지 않음) */}
         {stepPhoto && <StepPhoto key={stepPhoto} src={stepPhoto} alt="" onLoad={updateMoreBelow} />}
-        <Instruction $style={instructionStyle(steps[stepIndex], timers.length > 0)} aria-live="polite">
-          {steps[stepIndex]}
+        <Instruction
+          $style={instructionStyle(steps[stepIndex].text, timers.length > 0)}
+          aria-live="polite"
+        >
+          {steps[stepIndex].text}
         </Instruction>
       </Body>
       <Footer $moreBelow={moreBelow}>
@@ -392,12 +398,12 @@ const CookingModePage = () => {
         actions={
           menuTimer
             ? [
-                {
-                  title: menuTimer.endAt === null ? '다시 시작' : '일시정지',
-                  onClick: () => togglePause(menuTimer.id),
-                },
-                { title: '삭제', danger: true, onClick: () => removeTimer(menuTimer.id) },
-              ]
+              {
+                title: menuTimer.endAt === null ? '다시 시작' : '일시정지',
+                onClick: () => togglePause(menuTimer.id),
+              },
+              { title: '삭제', danger: true, onClick: () => removeTimer(menuTimer.id) },
+            ]
             : []
         }
         closeHandler={() => setMenuTimerId(null)}

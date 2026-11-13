@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import TopBar from '../../../components/layout/TopBar';
 import { PAGE_PADDING } from '../../../components/styled/theme';
@@ -10,7 +11,9 @@ import useFeedActions from '../hooks/useFeedActions';
 import useFollow from '../hooks/useFollow';
 import usePagedList from '../hooks/usePagedList';
 import useTrending from '../hooks/useTrending';
+import useBackToTop from '../hooks/useBackToTop';
 import UnderlineTab from '../../../components/styled/UnderlineTab';
+import BackToTopButton from '../../../components/styled/BackToTopButton';
 import FeedSection from '../section/FeedSection';
 import TrendingSection from '../section/TrendingSection';
 
@@ -29,12 +32,21 @@ const fetcherByTab = {
 
 
 const FeedPage = () => {
-  const [tab, setTab] = useState('following');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const tab = Object.prototype.hasOwnProperty.call(fetcherByTab, tabParam) ? tabParam : 'following';
+  const setTab = (value) =>
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.set('tab', value);
+        return next;
+      },
+      { replace: true },
+    );
   const { isLoggedIn, user } = useAuth();
-  // 비로그인인데 팔로잉 탭이면 호출하지 않음 (401)
   const needLogin = tab === 'following' && !isLoggedIn;
 
-  // 탭이 바뀌면 함수가 바뀌어서 첫 페이지부터 다시 불러옴
   const fetchPage = useCallback(
     (page) =>
       fetcherByTab[tab](page).then((result) => ({
@@ -56,7 +68,6 @@ const FeedPage = () => {
     follow,
   });
 
-  // 화면에 그릴 카드 — 팔로우 상태와 "내 글인지"를 붙임 (내 글이면 팔로우 버튼 숨김)
   const myId = user?.userId;
   const viewFeeds = list.items.map((item) => ({
     ...item,
@@ -64,6 +75,8 @@ const FeedPage = () => {
     followDisabled: follow.followStatus === 'loading',
     isMine: myId != null && item.authorId === myId,
   }));
+
+  const showBackToTop = useBackToTop();
 
   return (
     <>
@@ -73,6 +86,7 @@ const FeedPage = () => {
         <TrendingSection recipes={trending.trending} status={trending.status} />
         <FeedSection tab={tab} needLogin={needLogin} list={list} feeds={viewFeeds} {...actions} />
       </Wrapper>
+      {showBackToTop && <BackToTopButton />}
     </>
   );
 };

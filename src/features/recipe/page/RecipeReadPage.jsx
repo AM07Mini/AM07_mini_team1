@@ -1,13 +1,16 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useAuth } from "../../../utils/context/AuthContext";
+import styled from "styled-components";
 
 import Button from "../../../components/styled/Button";
+import ConfirmDialog from "../../../components/styled/ConfirmDialog";
 import Text from "../../../components/styled/Text";
 import { colors } from "../../../components/styled/theme";
 
 import {
   getRecipeDetail,
+  deleteRecipe,
   likeRecipe,
   unlikeRecipe,
   bookmarkRecipe,
@@ -37,9 +40,29 @@ import {
   StateBox,
 } from "./RecipeReadStyles";
 
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100dvh; 
+  min-height: 0;
+`;
+
+const ScrollArea = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+`;
+
+const ActionArea = styled.div`
+  flex-shrink: 0;
+  padding: 12px 24px;
+  background: white;
+`;
+
 const RecipeReadPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const { user } = useAuth();
 
   // 레시피 정보
   const [recipe, setRecipe] = useState(null);
@@ -55,11 +78,14 @@ const RecipeReadPage = () => {
   const [pendingLike, setPendingLike] = useState(false);
   const [pendingSave, setPendingSave] = useState(false);
   const [pendingFollow, setPendingFollow] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // 액션 에러
   const [actionError, setActionError] = useState("");
 
   const authorId = recipe?.author.id;
+  const isMine = user?.userId != null && authorId != null && String(user.userId) === String(authorId);
 
   // 후기 페이지 이동
   const goReviews = () => {
@@ -165,6 +191,26 @@ const RecipeReadPage = () => {
     }
   };
 
+  const handleDelete = () => {
+    if (!pendingDelete) setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (pendingDelete) return;
+    setPendingDelete(true);
+    setActionError("");
+    try {
+      await deleteRecipe(id);
+      setDeleteDialogOpen(false);
+      navigate("/mypage");
+    } catch (e) {
+      setActionError(e.response?.data?.message ?? "레시피 삭제에 실패했어요.");
+      setDeleteDialogOpen(false);
+    } finally {
+      setPendingDelete(false);
+    }
+  };
+
   // 팔로우 처리
   const handleFollow = async () => {
     if (pendingFollow || !authorId) return;
@@ -231,58 +277,79 @@ const RecipeReadPage = () => {
     recipe.likes +
     (liked === recipe.liked ? 0 : liked ? 1 : -1);
 
+    //저장 수 계산
+    const saveCount = recipe.saves + (saved === recipe.saved ? 0 : saved ? 1 : -1);
+
+
   return (
-    <div>
-      {/* 레시피 대표 이미지 */}
-      <RecipeHero
-        recipe={recipe}
-        saved={saved}
-        pendingSave={pendingSave}
-        onBack={() => navigate(-1)}
-        onSave={handleSave}
-      />
-
-      <Sheet>
-        {/* 레시피 기본 정보 */}
-        <Section>
-          <RecipeInfo
-            recipe={recipe}
-            following={following}
-            pendingFollow={pendingFollow}
-            onFollow={handleFollow}
-          />
-
-          {/* 좋아요 / 후기 / 저장 */}
-          <RecipeActionBar
-            liked={liked}
-            saved={saved}
-            likeCount={likeCount}
-            pendingLike={pendingLike}
-            pendingSave={pendingSave}
-            actionError={actionError}
-            onLike={handleLike}
-            onSave={handleSave}
-            onReviews={goReviews}
-          />
-        </Section>
-
-        {/* 재료 목록 */}
-        <RecipeIngredientList
-          ingredients={recipe.ingredients}
+    <PageWrapper>
+      <ScrollArea>
+        {/* 레시피 대표 이미지 */}
+        <RecipeHero
+          recipe={recipe}
+          isMine={isMine}
+          pendingDelete={pendingDelete}
+          onBack={() => navigate(-1)}
+          onDelete={handleDelete}
+        />
+        <ConfirmDialog
+          open={deleteDialogOpen}
+          title="레시피를 삭제할까요?"
+          description="삭제하면 받은 후기와 좋아요도 함께 사라지고 되돌릴 수 없어요."
+          dangerTitle="삭제"
+          dangerHandler={confirmDelete}
+          keepTitle="취소"
+          closeHandler={() => setDeleteDialogOpen(false)}
+          dangerOnRight
         />
 
-        {/* 조리 순서 */}
-        <RecipeReadStepList
-          steps={recipe.steps}
-        />
+        <Sheet>
+          {/* 레시피 기본 정보 */}
+          <Section>
+            <RecipeInfo
+              recipe={recipe}
+              following={following}
+              pendingFollow={pendingFollow}
+              onFollow={handleFollow}
+            />
 
-        {/* 요리 시작하기 */}
+            {/* 좋아요 / 후기 / 저장 */}
+            <RecipeActionBar
+              liked={liked}
+              saved={saved}
+              likeCount={likeCount}
+              saveCount={saveCount}
+              reviewCount={recipe.reviewCount}
+              pendingLike={pendingLike}
+              pendingSave={pendingSave}
+              actionError={actionError}
+              onLike={handleLike}
+              onSave={handleSave}
+              onReviews={goReviews}
+            />
+          </Section>
+
+          {/* 재료 목록 */}
+          <RecipeIngredientList
+            ingredients={recipe.ingredients}
+          />
+
+          {/* 조리 순서 */}
+          <RecipeReadStepList
+            steps={recipe.steps}
+          />
+
+        </Sheet>
+      </ScrollArea>
+
+      <ActionArea>
+        {/* 요리 시작하기 버튼 */}
         <Button
           title="이 레시피로 요리 시작하기"
           onClick={() => navigate(`/recipe/cook/${id}`, { state: { fromDetail: true } })}
         />
-      </Sheet>
-    </div>
+      </ActionArea>
+    </PageWrapper>
   );
 };
 

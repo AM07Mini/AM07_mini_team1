@@ -4,7 +4,7 @@ import styled from "styled-components";
 import PageIntro from '../../../components/styled/PageIntro';
 import SectionHeader from '../../../components/styled/SectionHeader';
 import SearchInput from "../../../components/styled/SearchInput";
-import TopBar from "../../../components/layout/TopBar";
+import BrandTopBar from "../../../components/layout/BrandTopBar";
 import Button from "../../../components/styled/Button";
 import Text from "../../../components/styled/Text";
 import { colors, radius, font } from "../../../components/styled/theme";
@@ -16,6 +16,7 @@ const INGREDIENT_PAGE_SIZE = 50;
 
 const Screen = styled.main`
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 20px;
   padding: 24px;
@@ -28,7 +29,7 @@ const PageWrapper = styled.div`
   display: flex;
   flex-direction: column;
   width: 100%;
-  height: 100dvh;
+  height: calc(100dvh - 64px);
   min-height: 0;
   overflow: hidden;
 `;
@@ -182,7 +183,7 @@ const IngredientSelectPage = () => {
 
   return (
     <PageWrapper>
-      <TopBar title="홈" />
+      <BrandTopBar />
 
       <Screen>
         <PageIntro

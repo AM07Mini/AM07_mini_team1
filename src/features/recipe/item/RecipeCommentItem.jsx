@@ -72,8 +72,13 @@ const ReplyRow = styled.div`
   gap: 8px;
 `;
 
+const ReplyActions = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
 // data: toReview 결과
-const RecipeCommentItem = ({ data, active, onLike, onReplyClick, onToggleReplies, onDeleteReply }) => {
+const RecipeCommentItem = ({ data, active, isMine, onLike, onReplyClick, onToggleReplies, onDeleteReview, onDeleteReply }) => {
   const count = data.replies ? data.replies.length : data.replyCount;
   const showToggle = count === null || count > 0;
 
@@ -100,6 +105,11 @@ const RecipeCommentItem = ({ data, active, onLike, onReplyClick, onToggleReplies
               {data.repliesOpen ? "답글 접기" : count ? `답글 ${count}개 보기` : "답글 보기"}
             </ActionButton>
           )}
+          {isMine && (
+            <ActionButton type="button" onClick={() => onDeleteReview(data.id)}>
+              삭제
+            </ActionButton>
+          )}
         </Actions>
 
         {data.repliesOpen && data.replies && data.replies.length > 0 && (
@@ -114,9 +124,11 @@ const RecipeCommentItem = ({ data, active, onLike, onReplyClick, onToggleReplies
                   </Head>
                   <Text variant="sub" color={colors.dark}>{reply.text}</Text>
                   {reply.mine && (
-                    <ActionButton type="button" $color={colors.grey2} onClick={() => onDeleteReply(data.id, reply.id)}>
-                      삭제
-                    </ActionButton>
+                    <ReplyActions>
+                      <ActionButton type="button" $color={colors.grey2} onClick={() => onDeleteReply(data.id, reply.id)}>
+                        삭제
+                      </ActionButton>
+                    </ReplyActions>
                   )}
                 </Body>
               </ReplyRow>

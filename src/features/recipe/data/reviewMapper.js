@@ -9,6 +9,7 @@ export const timeAgo = (iso) => {
 };
 export const toReview = (r) => ({
   id: r.id,
+  authorId: r.authorId,
   avatar: r.authorProfileImageUrl ?? "",
   name: r.authorNickname,
   when: timeAgo(r.createdAt),

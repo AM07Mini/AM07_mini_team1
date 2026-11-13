@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
+import { useAuth } from "../../../utils/context/AuthContext";
 import SectionHeader from "../../../components/styled/SectionHeader";
 import TopBar from "../../../components/layout/TopBar";
 import Button from "../../../components/styled/Button";
+import ConfirmDialog from "../../../components/styled/ConfirmDialog";
 import Text from "../../../components/styled/Text";
 import RecipeCommentItem from "../item/RecipeCommentItem";
 import { toDetail } from "../data/recipDetailMapeer";
 import { toReview, toReply } from "../data/reviewMapper";
-import { colors, radius, shadows, PAGE_PADDING, font } from "../../../components/styled/theme";
+import { colors, radius, shadows, PAGE_PADDING, font, TOP_BAR_HEIGHT } from "../../../components/styled/theme";
 import {
-    createReview, getReviews, getReplies, createReply, deleteReply,
+    createReview, getReviews, getReplies, createReply, deleteReview, deleteReply,
     likeReview, unlikeReview,
 } from "../../../api/reviewApi";
 import { getRecipeDetail, likeRecipe, unlikeRecipe } from "../../../api/recipeDetailApi";
@@ -20,6 +22,19 @@ const Screen = styled.main`
   flex-direction: column;
   gap: 24px;
   padding: ${PAGE_PADDING}px;
+`;
+
+// 맨 위 레시피 카드 자리 — 상단바 바로 밑에 처음부터 붙어 움직이지 않음
+// 화면 끝까지 흰 바탕을 깔아 아래 후기가 카드 옆 · 둥근 모서리 틈으로 비치지 않고 이 밑으로만 지나감
+// (화면 위 여백 24px은 음수 margin으로 당기고 padding으로 다시 줘서 처음 모습은 그대로,
+//  아래 12px 흰 띠 뒤 간격은 음수 margin으로 맞춰 카드와 후기 사이 24px 유지)
+const SummaryArea = styled.div`
+  position: sticky;
+  top: ${TOP_BAR_HEIGHT}px;
+  z-index: 5;
+  margin: -${PAGE_PADDING}px -${PAGE_PADDING}px -12px;
+  padding: ${PAGE_PADDING}px ${PAGE_PADDING}px 12px;
+  background-color: ${colors.white};
 `;
 
 const Summary = styled.div`
@@ -87,15 +102,38 @@ const LikePill = styled.button`
   &:disabled { opacity: 0.6; cursor: not-allowed; }
 `;
 
+const BOTTOM_BAR_HEIGHT = 64;
+const CENTER_BUTTON_OVERHANG = 23;
+
 const CommentBar = styled.form`
-  position: sticky;
-  bottom: 0;
+  position: fixed;
+  z-index: ;
+  left: 50%;
+  
+  bottom: calc(
+    ${BOTTOM_BAR_HEIGHT}px + ${CENTER_BUTTON_OVERHANG}px
+    + env(safe-area-inset-bottom, 0px)
+  );
+  transform: translateX(-50%);
+  width: min(100%, 430px);
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 6px;
   padding: 12px ${PAGE_PADDING}px ${PAGE_PADDING / 2}px;
   background: ${colors.white};
   box-shadow: ${shadows.bottomBar};
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: calc(${CENTER_BUTTON_OVERHANG}px + env(safe-area-inset-bottom, 0px));
+    background: ${colors.white};
+    pointer-events: none;
+  }
 
   .field {
     display: flex;
@@ -157,7 +195,9 @@ const errorMessage = (e, fallback) => e.response?.data?.message ?? fallback;
 const RecipeReviewPage = () => {
     const navigate = useNavigate();
     const { id } = useParams(); // 레시피 id
+    const { user } = useAuth();
     const inputRef = useRef(null);
+    const commentBarRef = useRef(null);
 
     // 상단 요약 + 레시피 좋아요
     const [recipe, setRecipe] = useState(null);
@@ -176,6 +216,9 @@ const RecipeReviewPage = () => {
     const [replyTarget, setReplyTarget] = useState(null); // { id, name }
     const [submitting, setSubmitting] = useState(false);
     const [submitError, setSubmitError] = useState("");
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+    const [commentBarHeight, setCommentBarHeight] = useState(0);
 
     const patchReview = useCallback(
         (reviewId, patch) =>
@@ -269,7 +312,13 @@ const RecipeReviewPage = () => {
         try {
             const result = await getReplies(id, reviewId);
             const list = Array.isArray(result) ? result : result?.content ?? [];
-            patchReview(reviewId, { replies: list.map(toReply), replyCount: list.length });
+            patchReview(reviewId, {
+                replies: list.map((reply) => ({
+                    ...toReply(reply),
+                    mine: user?.userId != null && String(reply.authorId) === String(user.userId),
+                })),
+                replyCount: list.length,
+            });
         } catch (e) {
             setSubmitError(errorMessage(e, "답글을 불러오지 못했어요."));
         }
@@ -287,17 +336,38 @@ const RecipeReviewPage = () => {
         inputRef.current?.focus();
     };
 
-    const removeReply = async (reviewId, replyId) => {
-        if (!window.confirm("답글을 삭제할까요?")) return;
+    const removeReply = (reviewId, replyId) => {
+        setDeleteTarget({ type: "reply", reviewId, replyId });
+    };
+
+    const removeReview = (reviewId) => {
+        setDeleteTarget({ type: "review", reviewId });
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteTarget || deleting) return;
+        const target = deleteTarget;
+        setDeleting(true);
         setSubmitError("");
         try {
-            await deleteReply(id, reviewId, replyId);
-            patchReview(reviewId, (r) => ({
-                replies: (r.replies ?? []).filter((x) => x.id !== replyId),
-                replyCount: Math.max(0, (r.replyCount ?? 1) - 1),
-            }));
+            if (target.type === "review") {
+                await deleteReview(id, target.reviewId);
+                setReviews((prev) => prev.filter((review) => review.id !== target.reviewId));
+                setTotal((prev) => Math.max(0, prev - 1));
+                if (replyTarget?.id === target.reviewId) setReplyTarget(null);
+            } else {
+                await deleteReply(id, target.reviewId, target.replyId);
+                patchReview(target.reviewId, (r) => ({
+                    replies: (r.replies ?? []).filter((reply) => reply.id !== target.replyId),
+                    replyCount: Math.max(0, (r.replyCount ?? 1) - 1),
+                }));
+            }
+            setDeleteTarget(null);
         } catch (e) {
-            setSubmitError(errorMessage(e, "답글 삭제에 실패했어요."));
+            setSubmitError(errorMessage(e, target.type === "review" ? "후기 삭제에 실패했어요." : "답글 삭제에 실패했어요."));
+            setDeleteTarget(null);
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -327,10 +397,29 @@ const RecipeReviewPage = () => {
         }
     };
 
+    useEffect(() => {
+        const bar = commentBarRef.current;
+        if (!bar) return undefined;
+
+        const measure = () => setCommentBarHeight(bar.getBoundingClientRect().height);
+        measure();
+
+        const observer = new ResizeObserver(measure);
+        observer.observe(bar);
+        return () => observer.disconnect();
+    }, []);
+
     return (
         <div>
             <TopBar title="레시피 후기" showBack={true} />
-            <Screen>
+            <Screen
+  // 아래 여백 = 입력창 높이 + 가운데 버튼이 튀어나온 만큼 + 화면 여백
+  // (하단바 64px은 화면 흐름 안에 이미 자리를 차지하므로 더하지 않음 — 더하면 마지막 후기 뒤로 64px이 더 내려감)
+  style={{
+    paddingBottom: `calc(${commentBarHeight + CENTER_BUTTON_OVERHANG + PAGE_PADDING}px + env(safe-area-inset-bottom, 0px))`,
+  }}
+>
+                <SummaryArea>
                 <Summary>
                     <SummaryTop>
                         {recipe?.image && <img src={recipe.image} alt="" />}
@@ -345,6 +434,7 @@ const RecipeReviewPage = () => {
                     </SummaryTop>
                     <Button title="이 레시피로 요리 시작하기" onClick={() => navigate(`/recipe/cook/${id}`)} />
                 </Summary>
+                </SummaryArea>
 
                 <Section>
                     <SectionHeader title={`레시피 후기 ${total}`} right="최신순" />
@@ -377,16 +467,18 @@ const RecipeReviewPage = () => {
                             key={review.id}
                             data={review}
                             active={replyTarget?.id === review.id}
+                            isMine={user?.userId != null && String(review.authorId) === String(user.userId)}
                             onLike={toggleReviewLike}
                             onReplyClick={startReply}
                             onToggleReplies={toggleReplies}
+                            onDeleteReview={removeReview}
                             onDeleteReply={removeReply}
                         />
                     ))}
                 </Section>
             </Screen>
 
-            <CommentBar onSubmit={submitComment}>
+            <CommentBar onSubmit={submitComment} ref={commentBarRef}>
                 {submitError && (
                     <Text variant="caption" color={colors.heart} role="alert">{submitError}</Text>
                 )}
@@ -406,6 +498,16 @@ const RecipeReviewPage = () => {
                     <button type="submit" disabled={comment.trim() === "" || submitting}>등록</button>
                 </div>
             </CommentBar>
+            <ConfirmDialog
+                open={Boolean(deleteTarget)}
+                title={deleteTarget?.type === "review" ? "후기를 삭제할까요?" : "답글을 삭제할까요?"}
+                description="삭제한 내용은 복구할 수 없어요."
+                dangerTitle="삭제"
+                dangerHandler={confirmDelete}
+                keepTitle="취소"
+                closeHandler={() => setDeleteTarget(null)}
+                dangerOnRight
+            />
         </div>
     );
 };

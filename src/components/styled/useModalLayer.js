@@ -71,4 +71,27 @@ const useModalLayer = (open, closeHandler) => {
   return layerRef;
 };
 
+// 바깥(어두운 곳)을 눌러 닫기 — 누르기 시작한 곳과 뗀 곳이 모두 바깥일 때만 닫음
+// (창 안에서 글자를 드래그하다 바깥에서 손을 떼도 닫히지 않게, 닫히자마자 뒤 화면이 눌리지도 않게)
+// 사용: const backdrop = useBackdropDismiss(closeHandler); <Overlay {...backdrop}>
+// 누른 곳 · 뗀 곳을 따로 기록 — 바깥을 누르고 창 안에서 떼면 브라우저가 클릭을 둘의 공통 부모(바깥)에 보내므로
+// 클릭이 바깥에서 났다는 것만으로는 판단할 수 없음. 닫기는 클릭 때 해서 뒤 화면이 눌리지 않게 함
+export const useBackdropDismiss = (closeHandler) => {
+  const pressedOnBackdrop = useRef(false);
+  const releasedOnBackdrop = useRef(false);
+  return {
+    onMouseDown: (e) => {
+      pressedOnBackdrop.current = e.target === e.currentTarget;
+    },
+    onMouseUp: (e) => {
+      releasedOnBackdrop.current = e.target === e.currentTarget;
+    },
+    onClick: (e) => {
+      if (pressedOnBackdrop.current && releasedOnBackdrop.current && e.target === e.currentTarget) closeHandler();
+      pressedOnBackdrop.current = false;
+      releasedOnBackdrop.current = false;
+    },
+  };
+};
+
 export default useModalLayer;

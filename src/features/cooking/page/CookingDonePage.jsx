@@ -239,7 +239,7 @@ const CookingDonePage = () => {
             <Icon name="check" size={32} strokeWidth={3.5} />
           </span>
         </DoneMark>
-        <Title>완성했어요! 🎉</Title>
+        <Title>완성했어요!</Title>
         <Description>
           {recipeTitle ? `${josa(recipeTitle, '을/를')} 만들었어요.` : '레시피대로 요리를 끝냈어요.'}
           <br />

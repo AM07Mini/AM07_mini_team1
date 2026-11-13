@@ -1,7 +1,7 @@
 import { createPortal } from 'react-dom';
 import styled from 'styled-components';
 import { colors, radius, font } from './theme';
-import useModalLayer, { setBackgroundInert } from './useModalLayer';
+import useModalLayer, { setBackgroundInert, useBackdropDismiss } from './useModalLayer';
 
 // 화면 전체를 어둡게 덮는 배경 — 누르면 닫힘
 const Overlay = styled.div`
@@ -60,14 +60,15 @@ const CancelButton = styled(ActionButton)`
 // 사용: <ActionSheet open={menuOpen} title="프로필 사진" actions={actions} closeHandler={() => setMenuOpen(false)} />
 const ActionSheet = ({ open, title, actions, closeHandler }) => {
   const sheetRef = useModalLayer(open, closeHandler);
+  const backdrop = useBackdropDismiss(closeHandler);
 
   if (!open) return null;
 
   // body에 바로 그려서 뒤쪽 화면(#root)을 inert로 막아도 메뉴는 그대로 동작
   return createPortal(
-    <Overlay onClick={closeHandler}>
+    <Overlay {...backdrop}>
       {/* 판 안쪽을 눌렀을 때는 닫히지 않게 */}
-      <Sheet ref={sheetRef} role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+      <Sheet ref={sheetRef} role="dialog" aria-modal="true" aria-label={title}>
         {actions.map((action) => (
           <ActionButton
             key={action.title}
