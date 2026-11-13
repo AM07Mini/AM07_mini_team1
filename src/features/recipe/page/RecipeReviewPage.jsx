@@ -413,8 +413,10 @@ const RecipeReviewPage = () => {
         <div>
             <TopBar title="레시피 후기" showBack={true} />
             <Screen
+  // 아래 여백 = 입력창 높이 + 가운데 버튼이 튀어나온 만큼 + 화면 여백
+  // (하단바 64px은 화면 흐름 안에 이미 자리를 차지하므로 더하지 않음 — 더하면 마지막 후기 뒤로 64px이 더 내려감)
   style={{
-    paddingBottom: `calc(${commentBarHeight + BOTTOM_BAR_HEIGHT + CENTER_BUTTON_OVERHANG + PAGE_PADDING}px + env(safe-area-inset-bottom, 0px))`,
+    paddingBottom: `calc(${commentBarHeight + CENTER_BUTTON_OVERHANG + PAGE_PADDING}px + env(safe-area-inset-bottom, 0px))`,
   }}
 >
                 <SummaryArea>
