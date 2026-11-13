@@ -9,7 +9,9 @@ import { Notice, NoticeAction } from '../feedStyles';
 import usePagedList from '../hooks/usePagedList';
 import { countMissing } from '../myIngredients';
 import useMyIngredients from '../hooks/useMyIngredients';
+import useBackToTop from '../hooks/useBackToTop';
 import UnderlineTab from '../../../components/styled/UnderlineTab';
+import BackToTopButton from '../../../components/styled/BackToTopButton';
 import IngredientFilter from '../item/IngredientFilter';
 import LikePeriodSelect from '../item/LikePeriodSelect';
 import LoadMoreFooter from '../item/LoadMoreFooter';
@@ -49,6 +51,11 @@ const CaptionAction = styled.button`
 const List = styled.div`
   display: flex;
   flex-direction: column;
+
+  /* 첫 번째 게시물을 조금 위로 — 각 행의 위 여백 14px 중 첫 행만 4px로 줄임 */
+  & > :first-child {
+    padding-top: 4px;
+  }
 `;
 
 const sortTabs = [
@@ -60,12 +67,6 @@ const likePeriods = [
   { value: 'WEEKLY', short: '이번 주', title: '이번 주 좋아요순', description: '최근 7일 동안 늘어난 좋아요' },
   { value: 'TOTAL', short: '종합', title: '종합 좋아요순', description: '지금까지 받은 전체 좋아요' },
 ];
-
-const captionBySort = {
-  WEEKLY: '최근 7일 기준 · 좋아요가 가장 많이 늘어난 레시피예요.',
-  TOTAL: '전체 기간 기준 · 좋아요를 가장 많이 받은 레시피예요.',
-  LATEST: '방금 올라온 레시피예요.',
-};
 
 const errorMessage = (err) => err?.response?.data?.message ?? '레시피를 불러오지 못했어요.';
 
@@ -167,6 +168,12 @@ const TrendingPage = () => {
     );
   };
 
+  const showBackToTop = useBackToTop();
+  const showIngredientNotice =
+    myIngredientStatus === 'needLogin' ||
+    (myIngredientStatus === 'done' && !hasMyIngredients) ||
+    myIngredientStatus === 'error';
+
   return (
     <>
       <TopBar title="유행하는 레시피" showBack />
@@ -176,21 +183,24 @@ const TrendingPage = () => {
           {ranked && <LikePeriodSelect options={likePeriods} selected={period} changeHandler={setPeriod} />}
           <IngredientFilter on={onlyMine} disabled={!hasMyIngredients} onChange={setOnlyMine} />
         </Controls>
-        <Caption>
-          {captionBySort[sort]}
-          {myIngredientStatus === 'needLogin' && ' 로그인하면 "내 재료로만"을 쓸 수 있어요.'}
-          {myIngredientStatus === 'done' && !hasMyIngredients && ' 재료를 등록하면 "내 재료로만"을 쓸 수 있어요.'}
-          {myIngredientStatus === 'error' && (
-            <>
-              {' 내 재료를 불러오지 못했어요. '}
-              <CaptionAction type="button" onClick={reloadMyIngredients}>
-                다시 시도
-              </CaptionAction>
-            </>
-          )}
-        </Caption>
+        {/* 설명 문구 없음 — 내 재료 안내가 있을 때만 줄을 그림 (두 탭 조건이 같아서 첫 게시물 위치도 같음) */}
+        {showIngredientNotice && (
+          <Caption>
+            {myIngredientStatus === 'needLogin' && '로그인하면 "내 재료로만"을 쓸 수 있어요.'}
+            {myIngredientStatus === 'done' && !hasMyIngredients && '재료를 등록하면 "내 재료로만"을 쓸 수 있어요.'}
+            {myIngredientStatus === 'error' && (
+              <>
+                {'내 재료를 불러오지 못했어요. '}
+                <CaptionAction type="button" onClick={reloadMyIngredients}>
+                  다시 시도
+                </CaptionAction>
+              </>
+            )}
+          </Caption>
+        )}
         {renderList()}
       </Wrapper>
+      {showBackToTop && <BackToTopButton />}
     </>
   );
 };

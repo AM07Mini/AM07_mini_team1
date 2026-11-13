@@ -11,7 +11,9 @@ import useFeedActions from '../hooks/useFeedActions';
 import useFollow from '../hooks/useFollow';
 import usePagedList from '../hooks/usePagedList';
 import useTrending from '../hooks/useTrending';
+import useBackToTop from '../hooks/useBackToTop';
 import UnderlineTab from '../../../components/styled/UnderlineTab';
+import BackToTopButton from '../../../components/styled/BackToTopButton';
 import FeedSection from '../section/FeedSection';
 import TrendingSection from '../section/TrendingSection';
 
@@ -82,6 +84,8 @@ const FeedPage = () => {
     isMine: myId != null && item.authorId === myId,
   }));
 
+  const showBackToTop = useBackToTop();
+
   return (
     <>
       <TopBar title="피드" />
@@ -90,6 +94,7 @@ const FeedPage = () => {
         <TrendingSection recipes={trending.trending} status={trending.status} />
         <FeedSection tab={tab} needLogin={needLogin} list={list} feeds={viewFeeds} {...actions} />
       </Wrapper>
+      {showBackToTop && <BackToTopButton />}
     </>
   );
 };
