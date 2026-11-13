@@ -30,10 +30,27 @@ const EmptyMessage = styled.p`
   text-align: center;
 `;
 
+const LoadMoreTrigger = styled.div`
+  grid-column: 1 / -1;
+  min-height: 1px;
+`;
+
+const LoadMoreMessage = styled.p`
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 8px 0;
+  color: ${colors.grey1};
+  text-align: center;
+`;
+
 const SearchResultList = ({
   recipes,
   totalElements,
   loading,
+  loadingMore,
+  hasMore,
+  loadMoreRef,
+  loadMoreError,
   error,
   suggestions = [],
   suggestionsLoading = false,
@@ -56,7 +73,16 @@ const SearchResultList = ({
       ) : loading ? (
         <EmptyMessage role="status">레시피를 검색하고 있어요.</EmptyMessage>
       ) : recipes.length > 0 ? (
-        recipes.map((recipe) => <SearchRecipeItem key={recipe.id} recipe={recipe} />)
+        <>
+          {recipes.map((recipe) => (
+            <SearchRecipeItem key={recipe.id} recipe={recipe} />
+          ))}
+          {loadingMore && (
+            <LoadMoreMessage role="status">레시피를 더 불러오는 중입니다.</LoadMoreMessage>
+          )}
+          {loadMoreError && <LoadMoreMessage role="alert">{loadMoreError}</LoadMoreMessage>}
+          {hasMore && <LoadMoreTrigger ref={loadMoreRef} aria-hidden="true" />}
+        </>
       ) : (
         <SearchEmptyState
           suggestions={suggestions}

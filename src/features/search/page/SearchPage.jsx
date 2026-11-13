@@ -79,6 +79,9 @@ const SearchPage = () => {
   const topBarRef = useRef(null);
   const filterListRef = useRef(null);
   const resultsRef = useRef(null);
+  const loadMoreRef = useRef(null);
+  const nextPageRef = useRef(1);
+  const loadingMoreRef = useRef(false);
   const mainRef = useRef(null);
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState(searchFilters);
@@ -103,6 +106,9 @@ const SearchPage = () => {
   const [recipes, setRecipes] = useState([]);
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState('');
   const [error, setError] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [suggestionsLoading, setSuggestionsLoading] = useState(false);
@@ -248,6 +254,11 @@ const SearchPage = () => {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
+    setHasMore(false);
+    setLoadingMore(false);
+    setLoadMoreError('');
+    loadingMoreRef.current = false;
+    nextPageRef.current = 1;
     setSuggestionsLoading(false);
     setError('');
 
@@ -256,6 +267,7 @@ const SearchPage = () => {
         const result = await fetchSearchRecipes(query, selected, controller.signal);
         setRecipes(result.recipes);
         setTotalElements(result.totalElements);
+        setHasMore(result.recipes.length < result.totalElements);
         if (!controller.signal.aborted) setLoading(false);
 
         const canRelaxFilters = Object.values(selected).some((values) => values.length > 0);
@@ -307,6 +319,63 @@ const SearchPage = () => {
       controller.abort();
     };
   }, [filters, query, selected]);
+
+  useEffect(() => {
+    const target = loadMoreRef.current;
+    if (!target || !hasMore || loading || loadingMore) return undefined;
+
+    const controller = new AbortController();
+    const observer = new IntersectionObserver(
+      async ([entry]) => {
+        if (!entry.isIntersecting || loadingMoreRef.current) return;
+
+        loadingMoreRef.current = true;
+        setLoadingMore(true);
+        setLoadMoreError('');
+        const page = nextPageRef.current;
+
+        try {
+          const result = await fetchSearchRecipes(
+            query,
+            selected,
+            controller.signal,
+            20,
+            page,
+          );
+          if (controller.signal.aborted) return;
+
+          const recipeIds = new Set(recipes.map((recipe) => recipe.id));
+          const newRecipes = result.recipes.filter((recipe) => !recipeIds.has(recipe.id));
+          const nextRecipes = [...recipes, ...newRecipes];
+          setRecipes(nextRecipes);
+          setHasMore(nextRecipes.length < result.totalElements);
+          setTotalElements(result.totalElements);
+          nextPageRef.current = page + 1;
+        } catch (requestError) {
+          if (!controller.signal.aborted) {
+            setLoadMoreError(
+              requestError?.response?.data?.message ||
+                requestError?.message ||
+                '레시피를 더 불러오지 못했습니다.',
+            );
+            setHasMore(false);
+          }
+        } finally {
+          if (!controller.signal.aborted) {
+            loadingMoreRef.current = false;
+            setLoadingMore(false);
+          }
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    observer.observe(target);
+
+    return () => {
+      controller.abort();
+      observer.disconnect();
+    };
+  }, [hasMore, loading, query, selected, recipes]);
 
   const selectedConditions = filters.flatMap((filter) =>
     (selected[filter.key] || []).map(
@@ -366,6 +435,10 @@ const SearchPage = () => {
             recipes={recipes}
             totalElements={totalElements}
             loading={loading}
+            loadingMore={loadingMore}
+            hasMore={hasMore}
+            loadMoreRef={loadMoreRef}
+            loadMoreError={loadMoreError}
             error={error}
             suggestions={suggestions}
             suggestionsLoading={suggestionsLoading}
