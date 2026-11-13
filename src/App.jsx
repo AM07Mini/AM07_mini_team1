@@ -1,0 +1,148 @@
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import styled from 'styled-components';
+import BottomBar from './components/layout/BottomBar';
+import ScrollToTop from './components/layout/ScrollToTop';
+import { colors } from './components/styled/theme';
+import { AuthProvider, useAuth } from './utils/context/AuthContext';
+
+// user
+import SignInPage from './features/user/page/SignInPage';
+import SignUpPage from './features/user/page/SignUpPage';
+import SignUpCompletePage from './features/user/page/SignUpCompletePage';
+import RecoveryPage from './features/user/page/RecoveryPage';
+import ResetPasswordPage from './features/user/page/ResetPasswordPage';
+import PasswordResetCompletePage from './features/user/page/PasswordResetCompletePage';
+
+// ingredient
+import IngredientSelectPage from './features/ingredient/page/IngredientSelectPage';
+
+// recipe
+import RecipeRecommendPage from './features/recipe/page/RecipeRecommendPage';
+import RecipeReadPage from './features/recipe/page/RecipeReadPage';
+import RecipeWritePage from './features/recipe/page/RecipeWritePage';
+import RecipeReviewPage from './features/recipe/page/RecipeReviewPage';
+
+// search
+import SearchPage from './features/search/page/SearchPage';
+
+// mypage
+import MyPage from './features/mypage/page/MyPage';
+import ProfileEditPage from './features/mypage/page/ProfileEditPage';
+import PasswordChangePage from './features/mypage/page/PasswordChangePage';
+import FollowListPage from './features/mypage/page/FollowListPage';
+import CookAlbumPage from './features/mypage/page/CookAlbumPage';
+
+// cooking
+import CookingModePage from './features/cooking/page/CookingModePage';
+import CookingDonePage from './features/cooking/page/CookingDonePage';
+
+// feed
+import FeedPage from './features/feed/page/FeedPage';
+import TrendingPage from './features/feed/page/TrendingPage';
+
+// dev
+import DesignSystemPage from './features/dev/page/DesignSystemPage';
+
+const MobileFrame = styled.div`
+  max-width: 430px;
+  min-height: 100vh;
+  margin: 0 auto;
+  background-color: ${colors.white};
+  position: relative;
+  display: flex;
+  flex-direction: column;
+`;
+
+const Content = styled.main`
+  flex: 1;
+`;
+
+const HomeRoute = () => {
+  const { isLoggedIn } = useAuth();
+
+  if (!isLoggedIn) {
+    return <Navigate to="/signin" replace />;
+  }
+
+  return <IngredientSelectPage />;
+};
+
+const App = () => (
+  <AuthProvider>
+    <BrowserRouter>
+      <ScrollToTop />
+      <MobileFrame>
+        <Content>
+          <Routes>
+            {/* user */}
+            <Route path="/signin" element={<SignInPage />} />
+            <Route path="/signup" element={<SignUpPage />} />
+            <Route path="/signup/complete" element={<SignUpCompletePage />} />
+
+            {/* 계정 찾기 */}
+            <Route
+              path="/find-account"
+              element={
+                <RecoveryPage
+                  key="find-login-id"
+                  purpose="FIND_LOGIN_ID"
+                />
+              }
+            />
+            <Route
+              path="/forgot-password"
+              element={
+                <RecoveryPage
+                  key="reset-password"
+                  purpose="RESET_PASSWORD"
+                />
+              }
+            />
+
+            <Route
+              path="/reset-password"
+              element={<ResetPasswordPage />}
+            />
+            <Route
+              path="/password-reset/complete"
+              element={<PasswordResetCompletePage />}
+            />
+
+            {/* ingredient */}
+            <Route path="/" element={<HomeRoute />} />
+
+            {/* recipe */}
+            <Route path="/recipe/recommend" element={<RecipeRecommendPage />} />
+            <Route path="/recipe/write" element={<RecipeWritePage />} />
+            <Route path="/recipe/read/:id" element={<RecipeReadPage />} />
+            <Route path="/recipe/:id/reviews" element={<RecipeReviewPage />} />
+
+            {/* search */}
+            <Route path="/search" element={<SearchPage />} />
+
+            {/* mypage */}
+            <Route path="/mypage" element={<MyPage />} />
+            <Route path="/mypage/edit" element={<ProfileEditPage />} />
+            <Route path="/mypage/password" element={<PasswordChangePage />} />
+            <Route path="/mypage/follow" element={<FollowListPage />} />
+            <Route path="/mypage/album" element={<CookAlbumPage />} />
+
+            {/* cooking */}
+            <Route path="/recipe/cook/:id" element={<CookingModePage />} />
+            <Route path="/recipe/cook/:id/done" element={<CookingDonePage />} />
+
+            {/* feed */}
+            <Route path="/feed" element={<FeedPage />} />
+            <Route path="/feed/trending" element={<TrendingPage />} />
+
+            {/* dev */}
+            <Route path="/design-system" element={<DesignSystemPage />} />
+          </Routes>
+        </Content>
+        <BottomBar />
+      </MobileFrame>
+    </BrowserRouter>
+  </AuthProvider>
+);
+
+export default App;

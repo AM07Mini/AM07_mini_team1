@@ -8,6 +8,13 @@
 | Backend | Spring |
 | 형태 | 모바일 웹 (앱 UI) |
 
+## 👥 멤버
+
+| <img src="https://github.com/Daanyong.png" width="100"> | <img src="https://github.com/hhaeeull.png" width="100"> | <img src="https://github.com/KaHeyon.png" width="100"> | <img src="https://github.com/Lemon0610.png" width="100"> | <img src="https://github.com/seokjoon-oh.png" width="100"> | <img src="https://github.com/yskim6559.png" width="100"> |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| [@Daanyong](https://github.com/Daanyong) | [@hhaeeull](https://github.com/hhaeeull) | [@KaHeyon](https://github.com/KaHeyon) | [@Lemon0610](https://github.com/Lemon0610) | [@seokjoon-oh](https://github.com/seokjoon-oh) | [@yskim6559](https://github.com/yskim6559) |
+| 팀원 | 팀원 | 팀원 | 팀원 | 팀원 | 팀원 |
+
 ---
 
 ## 🌿 브랜치 전략
