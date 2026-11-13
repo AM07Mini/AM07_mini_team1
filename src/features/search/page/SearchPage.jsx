@@ -266,6 +266,11 @@ const SearchPage = () => {
     });
   };
 
+  const retryLoadMore = () => {
+    setLoadMoreError('');
+    setHasMore(true);
+  };
+
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
@@ -363,7 +368,7 @@ const SearchPage = () => {
           const newRecipes = result.recipes.filter((recipe) => !recipeIds.has(recipe.id));
           const nextRecipes = [...recipes, ...newRecipes];
           setRecipes(nextRecipes);
-          setHasMore(nextRecipes.length < result.totalElements);
+          setHasMore(result.recipes.length === 20 && nextRecipes.length < result.totalElements);
           setTotalElements(result.totalElements);
           nextPageRef.current = page + 1;
         } catch (requestError) {
@@ -454,6 +459,7 @@ const SearchPage = () => {
             hasMore={hasMore}
             loadMoreRef={loadMoreRef}
             loadMoreError={loadMoreError}
+            onRetryLoadMore={retryLoadMore}
             error={error}
             suggestions={suggestions}
             suggestionsLoading={suggestionsLoading}

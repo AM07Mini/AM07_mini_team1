@@ -72,51 +72,6 @@ const mapSearchResults = (recipes) =>
       '난이도 정보 없음',
   }));
 
-const fetchCategoryUnion = async (params, categoryIds, signal, size, page) => {
-  const categoryResults = await Promise.all(
-    categoryIds.map(async (categoryId) => {
-      const firstPage = await fetchSearchPage(
-        { ...params, categoryIds: [categoryId], page: 0 },
-        signal,
-      );
-      const pages = [firstPage];
-      const totalPages = Math.ceil(firstPage.totalElements / size);
-
-      for (let currentPage = 1; currentPage < totalPages; currentPage += 1) {
-        pages.push(
-          await fetchSearchPage(
-            { ...params, categoryIds: [categoryId], page: currentPage },
-            signal,
-          ),
-        );
-      }
-
-      return pages.flatMap((result) => result.content);
-    }),
-  );
-
-  const uniqueRecipes = new Map();
-  categoryResults.flat().forEach((recipe, index) => {
-    if (!uniqueRecipes.has(recipe.id)) {
-      uniqueRecipes.set(recipe.id, { recipe, index });
-    }
-  });
-  const sortedRecipes = [...uniqueRecipes.values()].sort((left, right) => {
-    const timeDifference =
-      Date.parse(right.recipe.createdAt) - Date.parse(left.recipe.createdAt);
-    return Number.isNaN(timeDifference) || timeDifference === 0
-      ? left.index - right.index
-      : timeDifference;
-  });
-
-  return {
-    recipes: mapSearchResults(sortedRecipes
-      .slice(page * size, (page + 1) * size)
-      .map(({ recipe }) => recipe)),
-    totalElements: sortedRecipes.length,
-  };
-};
-
 export const fetchSearchFilterCatalogs = async (isLoggedIn, signal) => {
   const [flavorsOutcome, foodTypesOutcome, categoriesOutcome] = await Promise.allSettled([
     getResult('/flavors/catalog', signal),
@@ -189,14 +144,11 @@ export const fetchSearchRecipes = async (keyword, filters, signal, size = 20, pa
     expandedCategoryIds = filters.categoryIds.flatMap(
       (categoryId) => CATEGORY_ID_GROUPS[categoryId] ?? [categoryId],
     );
-    if (expandedCategoryIds.length === 1) params.categoryIds = expandedCategoryIds;
+    params.categoryIds = expandedCategoryIds;
   }
   if (filters.difficulty.length) params.difficulty = filters.difficulty[0];
   if (filters.maxCookingMinutes.length) {
     params.maxCookingMinutes = filters.maxCookingMinutes[0];
-  }
-  if (expandedCategoryIds.length > 1) {
-    return fetchCategoryUnion(params, expandedCategoryIds, signal, size, page);
   }
 
   const result = await fetchSearchPage(params, signal);

@@ -43,6 +43,24 @@ const LoadMoreMessage = styled.p`
   text-align: center;
 `;
 
+const LoadMoreFailure = styled.div`
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+`;
+
+const RetryButton = styled.button`
+  padding: 8px 16px;
+  border: 1px solid ${colors.grey3};
+  border-radius: 12px;
+  background: ${colors.white};
+  color: ${colors.dark};
+  font: inherit;
+  cursor: pointer;
+`;
+
 const SearchResultList = ({
   recipes,
   resultCountLabel,
@@ -51,6 +69,7 @@ const SearchResultList = ({
   hasMore,
   loadMoreRef,
   loadMoreError,
+  onRetryLoadMore,
   error,
   suggestions = [],
   suggestionsLoading = false,
@@ -84,11 +103,25 @@ const SearchResultList = ({
           {loadingMore && (
             <LoadMoreMessage role="status">레시피를 더 불러오는 중입니다.</LoadMoreMessage>
           )}
-          {loadMoreError && <LoadMoreMessage role="alert">{loadMoreError}</LoadMoreMessage>}
+          {loadMoreError && (
+            <LoadMoreFailure>
+              <LoadMoreMessage role="alert">{loadMoreError}</LoadMoreMessage>
+              <RetryButton type="button" onClick={onRetryLoadMore}>
+                다시 시도
+              </RetryButton>
+            </LoadMoreFailure>
+          )}
           {hasMore && <LoadMoreTrigger ref={loadMoreRef} aria-hidden="true" />}
         </>
       ) : (
-        hasMore ? (
+        loadMoreError ? (
+          <LoadMoreFailure>
+            <EmptyMessage role="alert">{loadMoreError}</EmptyMessage>
+            <RetryButton type="button" onClick={onRetryLoadMore}>
+              다시 시도
+            </RetryButton>
+          </LoadMoreFailure>
+        ) : hasMore ? (
           <>
             <EmptyMessage role="status">검색 결과를 더 확인하고 있어요.</EmptyMessage>
             <LoadMoreTrigger ref={loadMoreRef} aria-hidden="true" />
